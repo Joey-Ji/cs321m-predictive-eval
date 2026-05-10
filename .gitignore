@@ -1,0 +1,30 @@
+# Data + caches
+data/
+.hf_cache/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Python venv (managed by uv)
+.venv/
+*.egg-info/
+
+# Modal artifacts
+.modal/
+modal.toml.local
+
+# Trained model weights (large) — bake into submission ZIPs explicitly
+*.pt
+*.bin
+*.safetensors
+*.npy
+!sample_code_submission/**
+!templates/**
+
+# Submission ZIPs (regenerated from source)
+submissions/*.zip
+
+# OS junk
+.DS_Store
+.idea/
+.vscode/

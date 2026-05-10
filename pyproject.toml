@@ -1,0 +1,31 @@
+[project]
+name = "eval-comp"
+version = "0.1.0"
+description = "Predictive AI Evaluation Challenge — CS 321M competition submission."
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    # Data + I/O
+    "datasets>=2.20",
+    "huggingface-hub>=0.24",
+    "pyarrow>=15",
+    "numpy>=1.26",
+
+    # ML — CPU build of torch is fine locally; Modal will install GPU build remotely
+    "torch>=2.2",
+    "transformers>=4.41",
+    "sentence-transformers>=3.0",
+    "scikit-learn>=1.4",
+
+    # Misc
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipython>=8",
+    "jupyter>=1",
+]
+
+[tool.uv]
+# Pin to a compatible Python; 3.14 is too bleeding-edge for parts of the HF stack.
+required-version = ">=0.4"

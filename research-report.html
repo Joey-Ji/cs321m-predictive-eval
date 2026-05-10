@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research Report — Modeling Approaches</title>
+<style>
+  :root {
+    --ivory:    #FAF9F5;
+    --slate:    #141413;
+    --clay:     #D97757;
+    --oat:      #E3DACC;
+    --olive:    #788C5D;
+    --rust:     #B04A3F;
+    --gray-150: #F0EEE6;
+    --gray-300: #D1CFC5;
+    --gray-500: #87867F;
+    --gray-700: #3D3D3A;
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+    --sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono:  ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ivory);
+    color: var(--gray-700);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 56px 24px 120px;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { margin-bottom: 36px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 1.2;
+    color: var(--slate);
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--slate);
+    margin: 40px 0 14px;
+  }
+  h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 24px 0 10px;
+  }
+  p { margin-bottom: 12px; max-width: 720px; }
+  strong { color: var(--slate); }
+  a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--clay); }
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--gray-150);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--slate);
+  }
+  ul, ol { margin: 0 0 14px 24px; }
+  li { margin-bottom: 6px; }
+  section { margin-bottom: 48px; }
+
+  .tldr-dark {
+    background: var(--slate);
+    color: var(--ivory);
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin-bottom: 32px;
+  }
+  .tldr-dark .tldr-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--oat);
+    margin-bottom: 10px;
+  }
+  .tldr-dark b { color: var(--ivory); }
+  .tldr-dark p { color: var(--gray-150); margin-bottom: 8px; }
+  .tldr-dark p:last-child { margin-bottom: 0; }
+
+  .page-with-nav {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 48px;
+  }
+  @media (max-width: 920px) {
+    .page-with-nav { grid-template-columns: 1fr; }
+    .page-with-nav nav.toc { display: none; }
+  }
+  nav.toc {
+    position: sticky;
+    top: 32px;
+    align-self: start;
+    font-size: 13px;
+  }
+  nav.toc .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+  }
+  nav.toc a {
+    display: block;
+    padding: 5px 0 5px 12px;
+    border-left: 2px solid var(--gray-300);
+    color: var(--gray-700);
+    text-decoration: none;
+  }
+  nav.toc a:hover { color: var(--slate); border-color: var(--slate); }
+
+  .card {
+    border: 1.5px solid var(--gray-300);
+    border-radius: 12px;
+    background: #fff;
+    padding: 20px 24px;
+    margin: 14px 0;
+  }
+  .card .card-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gray-500);
+    margin-bottom: 10px;
+  }
+  .card h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--slate);
+    margin: 0 0 12px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 24px;
+  }
+  .stat { border-left: 2px solid var(--gray-300); padding-left: 14px; }
+  .stat .stat-value {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--slate);
+    line-height: 1.1;
+  }
+  .stat .stat-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 4px 11px;
+    line-height: 1;
+    vertical-align: middle;
+  }
+  .pill.primary  { background: var(--clay);     color: #fff; }
+  .pill.second   { background: var(--olive);    color: #fff; }
+  .pill.third    { background: var(--gray-150); color: var(--gray-700); border: 1.5px solid var(--gray-300); }
+  .pill.skip     { background: var(--rust);     color: #fff; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 13.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-300);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--sans);
+    font-weight: 600;
+    color: var(--gray-500);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .md-twin {
+    display: inline-block;
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--gray-500);
+    border: 1.5px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-decoration: none;
+    background: #fff;
+  }
+  .md-twin:hover { color: var(--slate); border-color: var(--slate); }
+</style>
+</head>
+<body>
+<div class="page-with-nav">
+  <nav class="toc">
+    <div class="label">Contents</div>
+    <a href="#headline">Headline</a>
+    <a href="#families">Three families</a>
+    <a href="#recommendation">Recommendation</a>
+    <a href="#stoploss">Stop-loss</a>
+    <a href="#calibration">Calibration</a>
+    <a href="#dropped">What we drop</a>
+    <a href="#actions">Day-0 actions</a>
+  </nav>
+
+  <main>
+    <header id="headline">
+      <p class="eyebrow">Research note &middot; modeling decision &middot; 2026-05-10</p>
+      <h1>Modeling Approaches for the Predictive AI Evaluation Challenge</h1>
+    </header>
+
+    <div class="tldr-dark">
+      <div class="tldr-label">Headline</div>
+      <p><b>Mirror the AIMS lab&rsquo;s own published pipeline.</b> Truong et al. (ICML 2025; <code>arXiv:2503.13335</code>), authored by <b>Sang Truong</b> on the CS 321M teaching team, implements <b>Rasch IRT + linear probe on Llama-3-8B embeddings</b> for item-cold-start. Reported column-holdout AUC &asymp; <b>0.804</b> &mdash; that&rsquo;s our target.</p>
+      <p>Primary pipeline: amortized IRT + content head (Stages 1, 2a, 2b, 3 from the spec). Secondary: local LLM-as-judge (Qwen2.5-7B) as ensemble component. Discipline throughout: temperature scaling + per-round Platt + clip to [0.02, 0.98]. Don&rsquo;t bother with GNNs, FT-Transformer-from-scratch, LightFM, or 3PL.</p>
+    </div>
+
+    <section id="families">
+      <h2>Three model families</h2>
+
+      <div class="card">
+        <div class="card-label">Family A &middot; <span class="pill primary">primary</span></div>
+        <h3>Latent factor (IRT) + content head</h3>
+        <p>Fit Rasch (or 2PL) on training response matrix &rarr; recover &theta;<sub>s</sub> and (b<sub>i</sub>, a<sub>i</sub>). Train regressor: item text embedding &rarr; predicted (b&#770;, a&#770;). At test: lookup &theta;<sub>s</sub> for known subject, predict (b&#770;, a&#770;) from text, combine via &sigma;(a&#770; &middot; (&theta;&#770; &minus; b&#770;)).</p>
+        <p>Naturally calibrated. Cleanest report story. Mirrors AIMS reference. Three independent 2025 papers converge on this architecture (Truong et al., Chen et al. arXiv:2510.00844, PSN-IRT arXiv:2505.15055).</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Family B &middot; <span class="pill second">ensemble</span></div>
+        <h3>LLM-as-judge (logit-based)</h3>
+        <p>Local 7B-class model (Qwen2.5-7B-Instruct preferred). Frame as yes/no, read next-token logits, return <code>p(yes) / (p(yes) + p(no))</code>. Calibrate with Venn-Abers (Giovannotti &amp; Gammerman, COPA 2024).</p>
+        <p>vLLM-batched: ~30&ndash;60s per 1000 calls on L4/A100. Few-shot via <code>labeled</code> examples is a clean ablation for the report. Best framing: ensemble component, not standalone.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Family C &middot; <span class="pill third">stretch only</span></div>
+        <h3>Rubric-based demand profiles</h3>
+        <p>Zhou et al. 2025 (<code>arXiv:2503.06378</code>) &mdash; 18 cognitive demand rubrics annotated by GPT-4o. Beats raw embeddings on OOD prediction. Requires offline GPT-4o annotation of training items + a local LLM at test time to annotate test items the same way. High implementation cost.</p>
+        <p>Pursue only if Days 7&ndash;9 free up <em>and</em> the IRT path is bottlenecking on item-text features.</p>
+      </div>
+    </section>
+
+    <section id="recommendation">
+      <h2>Recommendation</h2>
+
+      <table>
+        <thead>
+          <tr><th>Phase</th><th>Approach</th><th>Days</th><th>Submission</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="pill primary">primary</span></td>
+            <td>Rasch IRT + bge-large/mpnet content head + temperature scaling + per-round Platt</td>
+            <td>1&ndash;5</td>
+            <td>NCF baseline (Day 2) &rarr; IRT-content (Day 4) &rarr; +adaptive (Day 5)</td>
+          </tr>
+          <tr>
+            <td><span class="pill second">ensemble</span></td>
+            <td>Local LLM-judge (Qwen2.5-7B) + Venn-Abers</td>
+            <td>5&ndash;8</td>
+            <td>Standalone judge (Day 7) &rarr; ensemble v1 (Day 7&ndash;8) &rarr; few-shot variant (Day 8)</td>
+          </tr>
+          <tr>
+            <td><span class="pill third">final</span></td>
+            <td>Log-mixture ensemble; weights tuned on validation</td>
+            <td>9&ndash;11</td>
+            <td>Best ensemble locked Day 9; report draft by Day 10</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Why mirror Truong et al.</h3>
+      <ol>
+        <li>The organizers explicitly designed the competition for this pipeline (<code>torch_measure</code>, the &sect;3.4 NCF worked example, the labeling.py adaptive channel).</li>
+        <li>Naturally calibrated &mdash; the IRT logistic is a proper probability model.</li>
+        <li>Cleanest report story (decomposition into ability &times; difficulty; explicit Stage 1/2a/2b/3 mapping).</li>
+        <li>Fastest at inference (linear/MLP after embedding).</li>
+        <li>Realistic to beat 0.804 column-holdout AUC with calibration discipline + ensembling.</li>
+      </ol>
+    </section>
+
+    <section id="stoploss">
+      <h2>Stop-loss / decision criteria</h2>
+      <p>Make these binding so the meeting decision doesn&rsquo;t drift:</p>
+
+      <div class="card">
+        <div class="card-label">Day 4</div>
+        <p>If IRT + content-head validation log-likelihood is <em>below</em> the NCF baseline (Day 2), debug the IRT fit before adding more components.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Day 6 &middot; LLM-judge go/no-go</div>
+        <p>Go ahead only if (a) IRT pipeline is within 0.05 mean log-likelihood of the leaderboard top, AND (b) we have an engineer with bandwidth. Otherwise deepen IRT (hierarchical priors, benchmark-conditional difficulty, MIRT exploration).</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Day 10 &middot; hard gate</div>
+        <p>Report draft must exist by end of day. Modeling iteration freezes; remaining time is calibration + ensemble tuning + writing.</p>
+      </div>
+    </section>
+
+    <section id="calibration">
+      <h2>Calibration recipe</h2>
+
+      <div class="card">
+        <div class="card-label">Training-time</div>
+        <p>Label smoothing (&epsilon; = 0.05&ndash;0.10) baked into BCE. Optional: focal loss (Mukhoti et al., NeurIPS 2020) reduces ECE vs. plain BCE.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Post-hoc on held-out training fold</div>
+        <p>Temperature scaling (Guo et al., ICML 2017). Single scalar T optimized via cross-validated log-loss. Avoid isotonic regression at N&lt;100.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Per-round on revealed labels (K=5/category, 25 total)</div>
+        <p><b>Default:</b> global Platt on all 25 (raw_score, label) pairs. Always works; low-variance.<br>
+        <b>Per-category shifts (only if data permits):</b> within each benchmark, fit a per-category temperature only if the bucket has &ge;3 of each class. Shrink toward global Platt with a Bayesian prior.<br>
+        <b>Order:</b> on first <code>predict()</code> call of round, fit calibrators on <code>labeled</code>; cache on module global; pass every subsequent prediction through.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Output guardrail</div>
+        <p>Clip predictions to [0.02, 0.98]. Avoids catastrophic <code>log(&epsilon;)</code> on confident-wrong predictions.</p>
+      </div>
+    </section>
+
+    <section id="dropped">
+      <h2>What we drop</h2>
+      <table>
+        <thead><tr><th>Approach</th><th>Why not</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill skip">skip</span> LightFM / FM / FFM</td><td>Not probability-calibrated; degrades on no-feature-overlap items; no advantage over IRT given subjects-known</td></tr>
+          <tr><td><span class="pill skip">skip</span> 3PL IRT</td><td>Guessing parameter inappropriate for LLMs; needs N&gt;1000/item</td></tr>
+          <tr><td><span class="pill skip">skip</span> GNNs (transductive)</td><td>Cannot generate embeddings for cold-start item nodes</td></tr>
+          <tr><td><span class="pill skip">skip</span> GNNs (inductive)</td><td>Degenerates to content MLP on item side</td></tr>
+          <tr><td><span class="pill skip">skip</span> Transformer from scratch</td><td>Insufficient data vs. transfer from pretrained encoders</td></tr>
+          <tr><td><span class="pill skip">skip</span> FT-Transformer</td><td>Marginal gain over plain MLP; not worth the complexity</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="actions">
+      <h2>Day-0 actions before/at the meeting</h2>
+      <div class="card">
+        <div class="card-label">Critical</div>
+        <ol>
+          <li><b>Locate <code>torch_measure</code></b> on the course infrastructure (Codabench starter, course portal). The spec says organizers provide it. If found, use it for Stage 1; saves a day of plumbing and is signal-positive in the report.</li>
+          <li><b>Verify the 0.804 AUC anchor</b> in the AIMS textbook Chapter 3 (precise locator + split definition) before quoting it.</li>
+        </ol>
+      </div>
+
+      <a class="md-twin" href="research-report.md">Read full version &rarr; research-report.md</a>
+    </section>
+  </main>
+</div>
+</body>
+</html>

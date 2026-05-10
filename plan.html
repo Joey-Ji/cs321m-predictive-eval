@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predictive AI Evaluation Challenge — Plan</title>
+<style>
+  :root {
+    --ivory:    #FAF9F5;
+    --slate:    #141413;
+    --clay:     #D97757;
+    --oat:      #E3DACC;
+    --olive:    #788C5D;
+    --rust:     #B04A3F;
+    --gray-150: #F0EEE6;
+    --gray-300: #D1CFC5;
+    --gray-500: #87867F;
+    --gray-700: #3D3D3A;
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+    --sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono:  ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ivory);
+    color: var(--gray-700);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 56px 24px 120px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header { margin-bottom: 36px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 1.2;
+    color: var(--slate);
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--slate);
+    margin: 40px 0 14px;
+  }
+  h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 24px 0 10px;
+  }
+  p { margin-bottom: 12px; max-width: 680px; }
+  strong { color: var(--slate); }
+  a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--clay); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--gray-150);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--slate);
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--slate);
+    color: var(--gray-150);
+    padding: 16px 18px;
+    border-radius: 10px;
+    overflow-x: auto;
+    line-height: 1.55;
+    margin: 14px 0;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  ul, ol { margin: 0 0 14px 24px; }
+  li { margin-bottom: 6px; }
+
+  section { margin-bottom: 48px; }
+  hr.rule { border: none; border-top: 1px solid var(--gray-300); margin: 0 0 22px; }
+
+  /* TL;DR dark */
+  .tldr-dark {
+    background: var(--slate);
+    color: var(--ivory);
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin-bottom: 32px;
+  }
+  .tldr-dark .tldr-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--oat);
+    margin-bottom: 10px;
+  }
+  .tldr-dark b { color: var(--ivory); }
+  .tldr-dark p { color: var(--gray-150); margin-bottom: 8px; }
+  .tldr-dark p:last-child { margin-bottom: 0; }
+
+  /* Sidebar TOC */
+  .page-with-nav {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 48px;
+  }
+  @media (max-width: 920px) {
+    .page-with-nav { grid-template-columns: 1fr; }
+    .page-with-nav nav.toc { display: none; }
+  }
+  nav.toc {
+    position: sticky;
+    top: 32px;
+    align-self: start;
+    font-size: 13px;
+  }
+  nav.toc .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+  }
+  nav.toc a {
+    display: block;
+    padding: 5px 0 5px 12px;
+    border-left: 2px solid var(--gray-300);
+    color: var(--gray-700);
+    text-decoration: none;
+  }
+  nav.toc a:hover { color: var(--slate); border-color: var(--slate); }
+
+  /* Card */
+  .card {
+    border: 1.5px solid var(--gray-300);
+    border-radius: 12px;
+    background: #fff;
+    padding: 20px 24px;
+    margin: 14px 0;
+  }
+  .card .card-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gray-500);
+    margin-bottom: 10px;
+  }
+  .card h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--slate);
+    margin: 0 0 12px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Stat grid */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 24px;
+  }
+  .stat { border-left: 2px solid var(--gray-300); padding-left: 14px; }
+  .stat .stat-value {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--slate);
+    line-height: 1.1;
+  }
+  .stat .stat-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+  }
+
+  /* Timeline */
+  .timeline { position: relative; padding: 4px 0 4px 16px; margin: 16px 0; }
+  .timeline::before {
+    content: ""; position: absolute;
+    left: 16px; top: 8px; bottom: 8px;
+    width: 2px; background: var(--gray-300);
+  }
+  .tl-entry { position: relative; padding: 0 0 22px 28px; }
+  .tl-dot {
+    position: absolute; left: -5px; top: 6px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--gray-500); border: 2px solid var(--ivory);
+    box-sizing: content-box;
+  }
+  .tl-dot.now    { background: var(--clay); }
+  .tl-dot.later  { background: var(--gray-500); }
+  .tl-dot.opt    { background: var(--olive); }
+  .tl-time {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--gray-700);
+    background: var(--gray-150);
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin-bottom: 6px;
+  }
+  .tl-body { color: var(--gray-700); }
+  .tl-body strong { color: var(--slate); }
+
+  /* Risk-tag chip + table */
+  .risk-tag {
+    display: inline-block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .risk-tag.safe      { background: rgba(120,140,93,0.15);  color: var(--olive); }
+  .risk-tag.medium    { background: var(--oat);             color: #7A6A4F; }
+  .risk-tag.attention { background: rgba(217,119,87,0.15);  color: var(--clay); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 13.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-300);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--sans);
+    font-weight: 600;
+    color: var(--slate);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--gray-500);
+  }
+
+  /* Numbered list with subdued numerals */
+  ol.steps { counter-reset: step; list-style: none; margin-left: 0; }
+  ol.steps li {
+    counter-increment: step;
+    padding-left: 36px;
+    position: relative;
+    margin-bottom: 10px;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0; top: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--gray-150);
+    color: var(--gray-700);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 26px;
+    text-align: center;
+    border: 1.5px solid var(--gray-300);
+  }
+
+  .md-twin {
+    display: inline-block;
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--gray-500);
+    border: 1.5px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-decoration: none;
+    background: #fff;
+  }
+  .md-twin:hover { color: var(--slate); border-color: var(--slate); }
+</style>
+</head>
+<body>
+
+<div class="page-with-nav">
+  <nav class="toc">
+    <div class="label">Contents</div>
+    <a href="#headline">Headline</a>
+    <a href="#problem">The problem</a>
+    <a href="#state">State of the world</a>
+    <a href="#decisions">Meeting agenda</a>
+    <a href="#approach">Approach</a>
+    <a href="#milestones">Milestones</a>
+    <a href="#risks">Risks</a>
+    <a href="#blockers">Blockers</a>
+    <a href="#start">Where to start</a>
+  </nav>
+
+  <main>
+    <header id="headline">
+      <p class="eyebrow">Implementation plan &middot; CS 321M</p>
+      <h1>Predictive AI Evaluation Challenge</h1>
+    </header>
+
+    <div class="tldr-dark">
+      <div class="tldr-label">Headline &middot; updated 2026-05-10</div>
+      <p><b>12-day sprint: today through 2026-05-22.</b> 3-person team, $1,500 combined Modal credit, 50 submissions/day (1,000 total cap). Build the three-stage PGE pipeline (IRT + content head + sigmoid combine) plus diversity acquisition with online Platt calibration. LLM-judge decision deferred to Day 5 once IRT validation numbers land.</p>
+      <p>Today: smoke-test ZIP, project scaffold, data downloader, EDA, validation harness. First team meeting still to schedule.</p>
+    </div>
+
+    <section id="problem">
+      <h2>The problem in 60 seconds</h2>
+      <p>For each test row we get four text fields — <code>benchmark</code>, <code>condition</code>, <code>subject_content</code> (the AI being tested), <code>item_content</code> (the question) — and must return <code>P(subject answers item correctly)</code>. <strong>Subjects are seen in training; items are new</strong> (item-side cold-start). Metric is mean log-likelihood of true labels under our predicted probabilities.</p>
+
+      <div class="card">
+        <div class="card-label">Grading split</div>
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-value">50%</div>
+            <div class="stat-label">Leaderboard</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">50%</div>
+            <div class="stat-label">4-page report</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">&ge; 80%</div>
+            <div class="stat-label">Floor if we beat the baseline</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="state">
+      <h2>State of the world</h2>
+
+      <div class="card">
+        <div class="card-label">Locked in</div>
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Teammates</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">$1,500</div>
+            <div class="stat-label">Modal credit</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">12 days</div>
+            <div class="stat-label">To 2026-05-22</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">1,000</div>
+            <div class="stat-label">Total submissions</div>
+          </div>
+        </div>
+      </div>
+
+      <p><strong>Done:</strong> repo + starter kit + spec read; team registered on Codabench; Modal credit redeemed (×3).</p>
+      <p><strong>Not done:</strong> any Codabench submission, training-data download, EDA, validation harness, any actual model.</p>
+      <p><strong>Open (TBD at first team meeting):</strong> report ownership; LLM-judge yes/no; per-person task split.</p>
+    </section>
+
+    <section id="decisions">
+      <h2>Design decisions for first team meeting</h2>
+      <p>Anchored by the research synthesis (<a href="research-report.html">research-report.html</a>). <strong>Headline:</strong> the AIMS lab itself published a reference paper for this competition &mdash; <strong>Truong et al., ICML 2025 (<code>arXiv:2503.13335</code>)</strong> &mdash; implementing Rasch IRT + linear probe on Llama-3-8B embeddings, with reported column-holdout AUC &asymp; <strong>0.804</strong>. Mirror that pipeline.</p>
+
+      <div class="card">
+        <div class="card-label">Pre-meeting prep &middot; you/teammates before meeting</div>
+        <ol class="steps">
+          <li><strong>Upload <code>submissions/smoke_test.zip</code> to Codabench.</strong> Confirms pipeline + records floor (~&minus;0.693).</li>
+          <li><strong>Locate <code>torch_measure</code></strong> on course infrastructure (Codabench starter / portal / Canvas). If found, use it for Stage 1 instead of reimplementing.</li>
+          <li><strong>Check the public Codabench leaderboard.</strong> Has the organizer baseline dropped? Top score?</li>
+          <li><strong>Kick off the data download</strong> in the background (<code>scripts/download_data.py</code>; needs <code>pip install datasets huggingface_hub pyarrow</code> + HF login).</li>
+          <li><strong>Send teammates read-ahead:</strong> "Skim <code>plan.html</code> and <code>research-report.html</code> (5 min)."</li>
+          <li><strong>Confirm logistics:</strong> Modal coupon redeemed, on Codabench roster, no exam/travel conflicts.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Pipeline recommendation &middot; confirm at meeting</div>
+        <table>
+          <thead><tr><th>Phase</th><th>Approach</th><th>Days</th><th>Submissions</th></tr></thead>
+          <tbody>
+            <tr><td>Primary</td><td>Rasch IRT + bge-large/mpnet content head + temperature scaling + per-round Platt</td><td>1&ndash;5</td><td>NCF (D2) &rarr; IRT (D4) &rarr; +adaptive (D5)</td></tr>
+            <tr><td>Ensemble</td><td>Local LLM-judge (Qwen2.5-7B) + Venn-Abers</td><td>5&ndash;8</td><td>Judge (D7) &rarr; ensemble v1 (D7&ndash;8) &rarr; few-shot (D8)</td></tr>
+            <tr><td>Final</td><td>Log-mixture ensemble; weights tuned on validation</td><td>9&ndash;11</td><td>Best ensemble locked D9; report draft by D10</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Drop:</strong> LightFM/FM/FFM, 3PL IRT, GNNs, transformer-from-scratch, FT-Transformer. See <code>research-report.md</code> &sect;4.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Decisions the meeting MUST produce</div>
+        <ol class="steps">
+          <li><strong>Roles</strong> (4 areas, 3 people): data+validation, IRT+content head, LLM-judge+adaptive, report. Someone owns two; report owner can also own a technical area.</li>
+          <li><strong>Pipeline confirm:</strong> mirror Truong et al. as primary? (Default: yes.)</li>
+          <li><strong>LLM-judge:</strong> in / out / decide Day 5? (Default: defer to Day 5 with go/no-go criteria below.)</li>
+          <li><strong>Working agreements:</strong> repo workflow, comm channel/cadence, submission discipline rule (no Codabench submit without offline-validation gain).</li>
+          <li><strong>Modal coordination:</strong> whose credit pays for which jobs.</li>
+          <li><strong>Next sync time.</strong></li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Stop-loss / decision criteria &middot; binding</div>
+        <ul style="margin-left: 18px;">
+          <li><strong>Day 4:</strong> IRT + content-head must beat Day 2 NCF on validation log-likelihood. If not, debug IRT fit before adding components.</li>
+          <li><strong>Day 6 LLM-judge go/no-go:</strong> GO only if (a) IRT pipeline within 0.05 mean log-likelihood of leaderboard top, AND (b) engineer bandwidth available. Else deepen IRT.</li>
+          <li><strong>Day 10 hard gate:</strong> report draft must exist by EOD. Modeling freezes; remaining time = calibration + ensemble + writing.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Calibration discipline &middot; applies to every submission</div>
+        <ul style="margin-left: 18px;">
+          <li>Label smoothing (&epsilon;=0.05&ndash;0.10) in BCE training loss.</li>
+          <li>Temperature scaling on held-out training fold.</li>
+          <li>Per-round in <code>predict()</code>: global Platt on all 25 revealed labels (default); per-category temperature only if bucket has &ge;3 of each class.</li>
+          <li>Clip outputs to [0.02, 0.98].</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-label">What NOT to discuss at the meeting &middot; defer</div>
+        <ul style="margin-left: 18px;">
+          <li>Specific IRT priors / regularization choices.</li>
+          <li>LLM-judge prompt format details.</li>
+          <li>Report section structure beyond "who's writing it."</li>
+          <li>Encoder choice (bge-large vs. mpnet vs. Llama-3-8B) &mdash; empirical, decide Day 2.</li>
+          <li>Per-category vs. global Platt threshold &mdash; Day 5 conversation.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-label">3-line meeting follow-up template</div>
+        <pre>Roles: Data+val=X · IRT+content=Y · LLM-judge/adaptive=Z · Report=?
+LLM-judge: [in / out / Day 5 go-no-go]
+Next sync: [date/time]</pre>
+      </div>
+    </section>
+
+    <section id="approach">
+      <h2>Approach</h2>
+      <p>Three model families layered onto the spec's PGE pipeline, plus an active-learning channel.</p>
+
+      <div class="card">
+        <h3>Stage 1 &middot; IRT on the response matrix</h3>
+        <p>Fit per-subject ability <code>θ_s</code> and per-item parameters <code>(a_i, b_i)</code> by MLE on the training response matrix. Produces the targets for Stage 2a and the lookup table for Stage 2b.</p>
+      </div>
+
+      <div class="card">
+        <h3>Stage 2a &middot; Content head (item text &rarr; IRT params)</h3>
+        <p>Frozen <code>all-mpnet-base-v2</code> sentence encoder + small MLP regressing onto Stage 1's <code>(b̂, log â)</code>. <strong>The only stage that must generalize at test time</strong>, since every test item is new.</p>
+      </div>
+
+      <div class="card">
+        <h3>Stage 2b &middot; Subject lookup</h3>
+        <p>Subjects are not cold. Look up <code>θ̂_s</code> from Stage 1 by normalized name (extracted from the <code>Name:</code> line of <code>subject_content</code>). Population-mean fallback for unrecognized names.</p>
+      </div>
+
+      <div class="card">
+        <h3>Stage 3 &middot; Combine</h3>
+        <p><code>P(correct) = σ(â · (θ̂ &minus; b̂))</code>. Cast to native Python <code>float</code> before returning.</p>
+      </div>
+
+      <div class="card">
+        <h3>Adaptive labeling &middot; diversity acquisition + online Platt</h3>
+        <p>Ship <code>labeling.py</code> with k-means diversity (or online farthest-point sampling). The 25 revealed labels per round (K=5 &times; 5 categories) feed a one-parameter Platt calibration fit at the first <code>predict()</code> call of the round and cached on a module variable.</p>
+      </div>
+
+      <div class="card">
+        <h3>Optional &middot; Local LLM-as-judge ensemble</h3>
+        <p>7B-class instruction model declared in <code>models.txt</code>. Read next-token <code>p(yes)</code> / (<code>p(yes)</code> + <code>p(no)</code>) under a fixed prompt. Log-mixture with the IRT-content predictor, weights tuned on validation. Adds compute cost; gates on time and Modal budget.</p>
+      </div>
+    </section>
+
+    <section id="milestones">
+      <h2>12-day calendar</h2>
+      <p>Each day should land <em>something</em> submittable. Dates are aspirational targets, not contracts.</p>
+
+      <div class="timeline">
+        <div class="tl-entry">
+          <span class="tl-dot now"></span>
+          <span class="tl-time">May 10 &middot; Day 0</span>
+          <div class="tl-body"><strong>Smoke-test ZIP + scaffold + data downloader.</strong> First team meeting. Submit constant-0.5 ZIP.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot now"></span>
+          <span class="tl-time">May 11 &middot; Day 1</span>
+          <div class="tl-body"><strong>Data + EDA + validation harness</strong> (item-cold-start split). Submit per-benchmark majority class.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot later"></span>
+          <span class="tl-time">May 12 &middot; Day 2</span>
+          <div class="tl-body"><strong>NCF baseline trained on Modal,</strong> baked into ZIP. First real submission.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot later"></span>
+          <span class="tl-time">May 13 &middot; Day 3</span>
+          <div class="tl-body"><strong>IRT Stage 1 fit</strong> &rarr; subject ability lookup table. Stage 2a content head training started.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot later"></span>
+          <span class="tl-time">May 14 &middot; Day 4</span>
+          <div class="tl-body"><strong>IRT + content head end-to-end.</strong> Stage 3 sigmoid combine. Submit.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot later"></span>
+          <span class="tl-time">May 15 &middot; Day 5</span>
+          <div class="tl-body"><strong>Adaptive labeling + online Platt.</strong> Local sweep over training inputs to confirm no NaN/raise.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot opt"></span>
+          <span class="tl-time">May 16 &middot; Day 6</span>
+          <div class="tl-body"><strong>LLM-judge decision point.</strong> Go: 7B in <code>models.txt</code>, prompt template, Modal job. No-go: deepen IRT (hierarchical priors).</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot opt"></span>
+          <span class="tl-time">May 17 &middot; Day 7</span>
+          <div class="tl-body"><strong>Ensemble v1.</strong> Log-mixture weights tuned on validation.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot opt"></span>
+          <span class="tl-time">May 18 &middot; Day 8</span>
+          <div class="tl-body"><strong>Few-shot judge.</strong> Render adaptive-labeled examples through prompt. Ablation: zero- vs few-shot.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot later"></span>
+          <span class="tl-time">May 19 &middot; Day 9</span>
+          <div class="tl-body"><strong>Failure-mode analysis.</strong> Per-benchmark, per-subject error. Freeze ensemble weights.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot later"></span>
+          <span class="tl-time">May 20 &middot; Day 10</span>
+          <div class="tl-body"><strong>Report draft</strong> (must exist by today). Method, data, experiments + ablations, failure modes.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot later"></span>
+          <span class="tl-time">May 21 &middot; Day 11</span>
+          <div class="tl-body"><strong>Polish + Gradescope upload</strong> from best Codabench submission.</div>
+        </div>
+        <div class="tl-entry">
+          <span class="tl-dot now"></span>
+          <span class="tl-time">May 22 &middot; Day 12</span>
+          <div class="tl-body"><strong>Final submission day.</strong> Codabench + Gradescope locked in.</div>
+        </div>
+      </div>
+
+      <p><strong>Kill criteria:</strong> if Day 2 NCF doesn't beat 0.5 meaningfully, debug data pipeline. If Day 4 IRT doesn't beat NCF on validation, ensemble both. If Day 6 LLM-judge looks expensive without moving validation, drop it. Report draft by Day 10 is non-negotiable &mdash; it's 50% of the grade.</p>
+    </section>
+
+    <section id="risks">
+      <h2>Risks</h2>
+      <table>
+        <thead>
+          <tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>12-day window slips (illness, exams)</td>
+            <td><span class="risk-tag medium">medium</span></td>
+            <td><span class="risk-tag attention">high</span></td>
+            <td>NCF on the leaderboard by Day 2; never gate on LLM-judge</td>
+          </tr>
+          <tr>
+            <td>Report under-invested (50% of grade)</td>
+            <td><span class="risk-tag attention">high</span></td>
+            <td><span class="risk-tag attention">high</span></td>
+            <td>Draft must exist by Day 10; ablations are report material, not just signal</td>
+          </tr>
+          <tr>
+            <td>IRT fit unstable on sparse subjects</td>
+            <td><span class="risk-tag medium">medium</span></td>
+            <td><span class="risk-tag medium">medium</span></td>
+            <td>Hierarchical priors; per-benchmark logistic fallback</td>
+          </tr>
+          <tr>
+            <td>Embeddings under-represent reasoning difficulty</td>
+            <td><span class="risk-tag attention">high</span></td>
+            <td><span class="risk-tag medium">medium</span></td>
+            <td>Add benchmark/condition side features; ensemble with LLM-judge</td>
+          </tr>
+          <tr>
+            <td>Offline validation drifts from hidden test</td>
+            <td><span class="risk-tag medium">medium</span></td>
+            <td><span class="risk-tag attention">high</span></td>
+            <td>Item-cold-start AND benchmark-cold-start splits as cross-checks</td>
+          </tr>
+          <tr>
+            <td>Acquisition function NaN/raise &rarr; silent random fallback</td>
+            <td><span class="risk-tag safe">low</span></td>
+            <td><span class="risk-tag medium">medium</span></td>
+            <td>Local sweep over all training inputs; clamp + sanity-check</td>
+          </tr>
+          <tr>
+            <td>Coordination cost across 3 teammates eats time</td>
+            <td><span class="risk-tag medium">medium</span></td>
+            <td><span class="risk-tag medium">medium</span></td>
+            <td>First-meeting deliverable: per-person ownership of data / IRT / LLM-judge / report</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Full table in the MD twin.</p>
+    </section>
+
+    <section id="blockers">
+      <h2>Blockers &mdash; resolved + open</h2>
+
+      <div class="card">
+        <div class="card-label">Resolved 2026-05-10</div>
+        <ul style="margin-left: 18px;">
+          <li>Team: <strong>3 people</strong>. Modal credit: <strong>$1,500</strong> (3 &times; $500).</li>
+          <li>Codabench: <strong>registered</strong>.</li>
+          <li>Deadline: <strong>2026-05-22</strong>. Submission cap: <strong>50/day, 1,000 total</strong>.</li>
+          <li>Compute: <strong>primarily Modal</strong>.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Open &mdash; first team meeting</div>
+        <ul style="margin-left: 18px;">
+          <li><strong>Report ownership</strong> (Q7). Need a designated owner so drafting starts in parallel with modeling.</li>
+          <li><strong>LLM-judge yes/no</strong> (Q8). Decision can defer to Day 5 once IRT validation lands.</li>
+        </ul>
+      </div>
+
+      <h3>Recommended first-meeting agenda</h3>
+      <ol class="steps">
+        <li>Confirm baseline-release date and current public leaderboard score.</li>
+        <li>Per-person ownership: (a) data + validation, (b) IRT + content head, (c) LLM-judge + adaptive labeling, (d) report.</li>
+        <li>Decide LLM-judge in/out by Day 5 if not now.</li>
+        <li>Submission discipline: every Codabench submit must beat current best on offline validation.</li>
+        <li>Modal coordination: who runs what jobs on whose credit.</li>
+      </ol>
+    </section>
+
+    <section id="start">
+      <h2>Day 0 progress log &middot; 2026-05-10</h2>
+
+      <div class="card">
+        <div class="card-label">Landed today</div>
+        <ul style="margin-left: 18px;">
+          <li><strong>Project scaffold</strong> + <code>.gitignore</code>: <code>data/</code>, <code>src/</code>, <code>scripts/</code>, <code>submissions/</code>.</li>
+          <li><strong>Env</strong> &rarr; <code>uv</code> + Python 3.12, torch 2.11, transformers 5.8, sentence-transformers 5.4, datasets 4.8, scikit-learn 1.8.</li>
+          <li><strong>Smoke-test ZIP</strong> &rarr; <code>submissions/smoke_test.zip</code> (model.py + labeling.py at top level, unchanged from sample). <strong>Ready for upload.</strong></li>
+          <li><strong>CPU smoke test passing</strong> &rarr; <code>scripts/smoke_test.py</code>. <code>predict()</code> returns native float in [0,1] across 3 synthetic inputs, with <code>labeled=None</code> and with a labeled list. <code>acquisition_function()</code> returns finite float (no random fallback).</li>
+          <li><strong>Data downloaded</strong> (172 MB pulled, 547 MB on disk after join). 4.44M binary rows, 909 subjects, 70,873 items, 16 benchmarks, 215 conditions. P(label=1)=0.65.</li>
+          <li><strong>EDA done</strong> &rarr; <code>data/eda_summary.txt</code>. <strong>Surprises:</strong> subject_content is name-only (no metadata); ultrafeedback + mtbench are degenerate (drop); rewardbench is 10% of data (keep); strong difficulty spread (9.6%–80.7%, IRT should win); 215 conditions too many for one-hot; item length p99=2457 chars (top 1% truncated); half the benchmarks are multimodal/agentic (item_content may not encode the image — spot-check needed).</li>
+          <li><strong>Validation harness</strong> &rarr; <code>src/validation.py</code>. Item-cold-start + benchmark-cold-start splits, mean log-likelihood + AUC-ROC. Sanity-checked: ln 0.5 floor, perfect/anti-ranker AUC, no-leakage split.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Blocked on team / user</div>
+        <ul style="margin-left: 18px;">
+          <li>Upload <code>submissions/smoke_test.zip</code> to Codabench &mdash; confirms pipeline + gives us the floor (&asymp; &minus;0.693 mean log-likelihood).</li>
+          <li>Run <code>scripts/download_data.py</code> somewhere with HF auth + disk space, then <code>scripts/eda.py</code>.</li>
+          <li>First team meeting (agenda in Blockers section).</li>
+        </ul>
+      </div>
+
+      <a class="md-twin" href="plan.md">Read full version &rarr; plan.md</a>
+    </section>
+  </main>
+</div>
+
+</body>
+</html>
