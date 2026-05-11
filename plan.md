@@ -80,7 +80,96 @@ LightFM/FM/FFM, 3PL IRT, GNNs (transductive or inductive), transformer-from-scra
 - Choice of bge-large vs. mpnet vs. Llama-3-8B encoder — empirical, decide on Day 2.
 - Per-category vs. global Platt threshold — Day 5 conversation once validation numbers exist.
 
-### 0.5.8 3-line meeting follow-up template
+### 0.5.8 Concrete task breakdown — replication backbone vs. score-higher levers
+
+**Decision (committed):** mirror the Truong et al. pipeline. Below is the actual code work.
+
+**Backbone (~300 LoC; mandatory; lands ~0.804 if executed cleanly):**
+
+| # | Task | File | Owner | Day |
+|---|---|---|---|---|
+| 1 | Download + EDA | `scripts/download_data.py`, `scripts/eda.py` | Eng A | 1 (done — needs run) |
+| 2 | Validation harness | `src/validation.py` | Eng A | 1 (done) |
+| 3 | Fit Rasch IRT on training matrix → `data/theta.pt`, `data/item_params.pt`, `data/subject_to_id.json` | `scripts/fit_irt.py` | Eng B | 2 |
+| 4 | Extract item embeddings (start with mpnet) → `data/item_embeddings.npy` | `scripts/encode_items.py` | Eng B | 2 |
+| 5 | Train content head: embedding → predicted `b` (linear first; MLP on iter) | `scripts/train_content_head.py` | Eng B | 3 |
+| 6 | Wire all stages into `predict()` | `submissions/v1_irt/model.py` | Eng B | 3 |
+| 7 | Build + submit ZIP | `scripts/build_submission.py` | Eng A | 3 |
+
+**Score-higher levers (the actual work that beats 0.804):**
+
+| Lever | Expected lift (Δ mean log-likelihood) | Cost | Owner | When |
+|---|---|---|---|---|
+| **L1. Adaptive labeling + online Platt** in `predict()` (the competition's named lever; Truong et al. doesn't use it) | +0.01-0.03 | 1 day | Eng C | Day 5 |
+| **L2. Calibration discipline** (temperature scaling on held-out + label smoothing in BCE + clip [0.02, 0.98]) | +0.02-0.05 | 0.5 day | Eng B | Days 4-5 |
+| **L3. Per-benchmark specialization** (per-benchmark difficulty regressor OR per-benchmark temperature) | +0.01-0.03 | 1 day | Eng B | Day 6 |
+| **L4. Side features** (concatenate benchmark + condition embedding to the head input) | +0.005-0.02 | 0.5 day | Eng B | Day 4 |
+| **L5. Ensemble** (3-5 diverse predictors via log-mixture; weights tuned on validation) | +0.03-0.08 | 1 day | Eng A | Days 9-10 |
+| **L6. LLM-judge as ensemble component** | +0.01-0.05 *if it works* | 3 days | Eng C | Days 6-8 (gated; see §0.5.5) |
+| L7. EM iteration between Stage 1 IRT and Stage 2a head (matches reference exactly) | +0.005-0.02 | 0.5 day | Eng B | Day 6 |
+| L8. Encoder upgrade (mpnet → bge-large-en-v1.5 or Llama-3-8B) | +0.01-0.03 | 0.5 day | Eng B | Day 6 |
+| L9. Trace-feature exploration (item-trace length/coherence from `*_traces.parquet`) | uncertain | 1 day | stretch | Day 8+ |
+
+L1, L2, L5 are the high-floor wins everyone should land. L3, L4, L7, L8 are tuning. L6 is the high-variance bet. L9 is genuine exploration.
+
+**Replication choices we're making (not actually choices):**
+- Start encoder = `all-mpnet-base-v2` (768-d, fast, in starter `models.txt`). Upgrade encoder is Day 6 swap.
+- Start head = linear probe (matches reference). MLP only if validation supports it.
+- Start training = one-shot (fit IRT once, then fit predictor on its outputs). EM iteration is Day 6 upgrade.
+
+### 0.5.9 Stage 1 ↔ Stage 2 contract (pin this now)
+
+Stage 1 and Stage 2 can be developed in parallel if both teams agree on the file schema *now* and never break it. Stage 2 reads only two things from Stage 1; everything else is internal to a stage.
+
+**Stage 1 output contract** (produced by `scripts/fit_irt.py` and `scripts/mock_irt.py`):
+
+| File | Shape / type | Meaning | 1PL consumer | 2PL consumer |
+|---|---|---|---|---|
+| `data/irt/theta.pt` | `float32 [n_subjects]` | Per-subject ability θ | submission only | submission only |
+| `data/irt/b.pt` | `float32 [n_items]` | Per-item difficulty b | **Stage 2 (target)** + submission | **Stage 2 (target dim 1)** + submission |
+| `data/irt/log_a.pt` | `float32 [n_items]` | Per-item log-discrimination (zeros for 1PL) | submission only (used as constant) | **Stage 2 (target dim 2)** + submission |
+| `data/irt/subject_to_id.json` | `dict[str, int]` (normalized name → id) | Subject lookup | submission only | submission only |
+| `data/irt/item_to_id.json` | `dict[str, int]` (item_id → id) | **Aligns embeddings ↔ IRT params** | **Stage 2** | **Stage 2** |
+| `data/irt/fit_log.json` | metadata | Diagnostics | safe to ignore | safe to ignore |
+
+**1PL vs 2PL — what changes for Stage 2:**
+
+| Aspect | 1PL (Rasch) — v1 default | 2PL — v2 candidate (Day 4 ablation) |
+|---|---|---|
+| `train_content_head.py` flag | `--targets b` | `--targets b+log_a` |
+| Head output dim | 1 | 2 |
+| Targets | `b.pt` only | `b.pt` and `log_a.pt` jointly |
+| `head_meta.json["target_order"]` | `["b"]` | `["b", "log_a"]` |
+| Inference combine | `σ(θ − b̂)` | `σ(exp(log_â) · (θ − b̂))` |
+| Submission directory | `submissions/v1_irt/` (already built) | `submissions/v2_irt_2pl/` (build when needed) |
+
+The submission `model.py` reads `head_meta.json["target_order"]` at module init and selects the right inference path. v1's `model.py` is hardcoded for the 1PL path; v2 (when we build it) parses `target_order == ["b", "log_a"]` and uses per-item predicted log_a.
+
+**Stage 2 output contract** (produced by `scripts/train_content_head.py`):
+
+| File | Shape / type | Meaning | Consumed by |
+|---|---|---|---|
+| `data/head/head.pt` | torch state_dict | Trained content-head weights | submission |
+| `data/head/head_meta.json` | dict with keys `head_type`, `hidden`, `in_dim`, `encoder` | Architecture spec needed to instantiate head at inference | submission |
+| `data/embeddings/item_embeddings.npy` | `float32 [n_items, d]` | Per-item embeddings (cached) | Stage 2 internal; not strictly needed at submission time |
+
+**Integration point:** the submission `model.py` (e.g., `submissions/v1_irt/model.py`) is the only place Stage 1 + Stage 2 outputs combine. Stages don't talk to each other directly.
+
+**Parallel development pattern:**
+
+1. Both teams agree on the contract above (literally read this section in the meeting).
+2. Stage 2 dev runs `python scripts/mock_irt.py` once to populate `data/irt/` with synthetic-but-correctly-shaped outputs. Builds + tests entire content-head + submission pipeline against the mocks.
+3. Stage 1 dev fits real IRT, overwrites `data/irt/`. Schema is unchanged so Stage 2 just re-runs `train_content_head.py` against real targets.
+4. Day 3 integration: build `submissions/v1_irt/` against real outputs from both stages. Submit.
+5. Iterating on Stage 1 hyperparameters (1PL → 2PL, regularization sweeps) only requires re-running `train_content_head.py` afterwards; Stage 2 code never changes.
+
+**Schema-change protocol (in case the contract has to evolve):**
+
+- Adding new files to `data/irt/` is safe (Stage 2 ignores them).
+- Renaming or changing shape of `b.pt` or `item_to_id.json` is breaking — needs both teams' explicit agreement and a sync update to `train_content_head.py` and `model.py`.
+- If Stage 1 wants to predict 2PL with two parameters (b, log_a) per item that Stage 2 should jointly regress, that's a contract change: Stage 2 head output dim becomes 2, both scripts need updating. Plan ahead.
+
+### 0.5.10 3-line meeting follow-up template
 
 After the meeting, paste this in the team channel:
 
@@ -302,11 +391,25 @@ Non-negotiable for any code shipped to Codabench:
   - `auc_roc` returns 1.0 for a perfect ranker, 0.0 for the inverted ranker.
   - `item_cold_start_split` produces train/val partitions with no item overlap.
 
+### Day 0 — afternoon update (2026-05-10)
+
+- **Research synthesis** — three parallel researchers + evaluator pass produced `research-report.md` / `research-report.html`. Headline: AIMS lab itself published the canonical reference (Truong et al., ICML 2025, arXiv:2503.13335), reporting column-holdout AUC ≈ 0.804. Mirror that pipeline.
+- **Design-decisions agenda** — added §0.5 to this plan (and matching `#decisions` section in plan.html) with pre-meeting prep, pipeline recommendation table, decisions to produce, stop-loss criteria, calibration discipline, and a 3-line follow-up template.
+- **Concrete task breakdown** — added §0.5.8 with 7-task replication backbone + 9 score-higher levers ranked by ROI.
+- **IRT pipeline scaffolding** — wrote (syntax-checked, runnable once data lands):
+  - `scripts/fit_irt.py` — Rasch/2PL fit using PyTorch + Adam on BCE; outputs `data/irt/{theta,b,log_a}.pt` + lookup JSONs.
+  - `scripts/encode_items.py` — sentence-transformer encoding with deduplication; defaults to `all-mpnet-base-v2`; writes `data/embeddings/item_embeddings.npy`.
+  - `scripts/train_content_head.py` — linear probe or MLP regressor on (embedding → b); validates on item-cold-start split; writes `data/head/head.pt` + `head_meta.json`.
+  - `scripts/build_submission.py` — packages `submissions/<name>/` + `data/{irt,head}/*.pt|*.json|*.npy` into a flat ZIP.
+  - `submissions/v1_irt/model.py` — full inference path: encoder + head + θ lookup + sigmoid combine + clip to [0.02, 0.98]. Honors the `predict(input, labeled)` contract.
+  - `submissions/v1_irt/models.txt` — declares the encoder repo.
+
 ### What's blocked on the team / user
 
 - **Upload `submissions/smoke_test.zip` to Codabench.** Confirms the pipeline scores submissions and gives us our floor (~−0.693 mean log-likelihood).
 - **Run `scripts/download_data.py`** somewhere with HF auth + disk space. Then `scripts/eda.py` to see real numbers.
-- **First team meeting** — agenda in §7.
+- **Locate `torch_measure`** package on course infrastructure — if found, swap into `scripts/fit_irt.py` instead of our hand-rolled version.
+- **First team meeting** — agenda in §0.5; decisions list in §0.5.4.
 
 ---
 

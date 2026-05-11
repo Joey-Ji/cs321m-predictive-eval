@@ -460,6 +460,58 @@
       </div>
 
       <div class="card">
+        <div class="card-label">Concrete tasks &middot; backbone (~300 LoC; lands ~0.804)</div>
+        <table>
+          <thead><tr><th>#</th><th>Task</th><th>File</th><th>Owner</th><th>Day</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Download + EDA</td><td><code>scripts/download_data.py</code>, <code>scripts/eda.py</code></td><td>Eng A</td><td>1 (done)</td></tr>
+            <tr><td>2</td><td>Validation harness</td><td><code>src/validation.py</code></td><td>Eng A</td><td>1 (done)</td></tr>
+            <tr><td>3</td><td>Fit Rasch IRT</td><td><code>scripts/fit_irt.py</code></td><td>Eng B</td><td>2</td></tr>
+            <tr><td>4</td><td>Encode items</td><td><code>scripts/encode_items.py</code></td><td>Eng B</td><td>2</td></tr>
+            <tr><td>5</td><td>Train content head</td><td><code>scripts/train_content_head.py</code></td><td>Eng B</td><td>3</td></tr>
+            <tr><td>6</td><td>Wire <code>predict()</code></td><td><code>submissions/v1_irt/model.py</code></td><td>Eng B</td><td>3</td></tr>
+            <tr><td>7</td><td>Build + submit ZIP</td><td><code>scripts/build_submission.py</code></td><td>Eng A</td><td>3</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Score-higher levers &middot; the work that beats 0.804</div>
+        <table>
+          <thead><tr><th>Lever</th><th>&Delta; mll</th><th>Cost</th><th>Owner</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td><strong>L1.</strong> Adaptive labeling + online Platt</td><td>+0.01-0.03</td><td>1 d</td><td>Eng C</td><td>D5</td></tr>
+            <tr><td><strong>L2.</strong> Calibration discipline (temp + smoothing + clip)</td><td>+0.02-0.05</td><td>0.5 d</td><td>Eng B</td><td>D4-5</td></tr>
+            <tr><td><strong>L3.</strong> Per-benchmark specialization</td><td>+0.01-0.03</td><td>1 d</td><td>Eng B</td><td>D6</td></tr>
+            <tr><td><strong>L4.</strong> Side features (benchmark + condition)</td><td>+0.005-0.02</td><td>0.5 d</td><td>Eng B</td><td>D4</td></tr>
+            <tr><td><strong>L5.</strong> Log-mixture ensemble</td><td>+0.03-0.08</td><td>1 d</td><td>Eng A</td><td>D9-10</td></tr>
+            <tr><td><strong>L6.</strong> LLM-judge ensemble component <span class="pill third">gated</span></td><td>+0.01-0.05*</td><td>3 d</td><td>Eng C</td><td>D6-8</td></tr>
+            <tr><td>L7. EM iteration (matches paper exactly)</td><td>+0.005-0.02</td><td>0.5 d</td><td>Eng B</td><td>D6</td></tr>
+            <tr><td>L8. Encoder upgrade (mpnet &rarr; bge-large)</td><td>+0.01-0.03</td><td>0.5 d</td><td>Eng B</td><td>D6</td></tr>
+            <tr><td>L9. Trace features <span class="pill third">stretch</span></td><td>uncertain</td><td>1 d</td><td>stretch</td><td>D8+</td></tr>
+          </tbody>
+        </table>
+        <p>L1, L2, L5 = high-floor wins everyone should land. L3-L4, L7-L8 = tuning. L6 = high-variance bet. L9 = genuine exploration.</p>
+        <p><strong>Replication defaults (not actually choices):</strong> mpnet encoder for v1 (fast iter), linear probe head (matches reference), one-shot training (EM is L7 upgrade).</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Stage 1 &harr; Stage 2 contract &middot; pin this in the meeting</div>
+        <p>Stage 2 reads only <strong>two files</strong> from Stage 1: <code>data/irt/b.pt</code> (regression targets) and <code>data/irt/item_to_id.json</code> (alignment). Other Stage-1 outputs (<code>theta.pt</code>, <code>log_a.pt</code>, <code>subject_to_id.json</code>) are consumed only by the submission's <code>model.py</code> at inference time.</p>
+
+        <p><strong>Parallel development pattern:</strong></p>
+        <ol style="margin-left: 20px;">
+          <li>Both teams agree on the schema (literally this section) in the meeting.</li>
+          <li>Stage 2 dev runs <code>python scripts/mock_irt.py</code> once &rarr; populates <code>data/irt/</code> with synthetic-but-correctly-shaped outputs. Builds + tests the full content-head + submission pipeline against mocks.</li>
+          <li>Stage 1 dev fits real IRT, overwrites <code>data/irt/</code>. Schema unchanged &rarr; Stage 2 just re-runs <code>train_content_head.py</code> against real targets.</li>
+          <li>Day 3: build <code>submissions/v1_irt/</code> against real outputs from both stages.</li>
+          <li>Stage 1 hyperparameter sweeps don't break Stage 2 &mdash; just require re-running <code>train_content_head.py</code>.</li>
+        </ol>
+
+        <p><strong>Breaking-change rule:</strong> renaming or reshaping <code>b.pt</code> or <code>item_to_id.json</code> requires both teams' explicit agreement. Going from 1PL to 2PL with joint (b, log_a) regression is a contract change &mdash; plan ahead.</p>
+      </div>
+
+      <div class="card">
         <div class="card-label">3-line meeting follow-up template</div>
         <pre>Roles: Data+val=X · IRT+content=Y · LLM-judge/adaptive=Z · Report=?
 LLM-judge: [in / out / Day 5 go-no-go]
