@@ -3,13 +3,14 @@
 This directory contains the Stage 1 response-matrix model used to estimate:
 
 - subject/model capability vectors `U_i`
+- subject/model bias terms `S_i`
 - item loading vectors `V_j`
 - item difficulty/bias terms `Z_j`
 
 The fitted probability model is:
 
 ```text
-P(y_ij = 1) = sigmoid(U_i dot V_j + Z_j)
+P(y_ij = 1) = sigmoid(S_i + U_i dot V_j + Z_j)
 ```
 
 For the first pass we set `K=4`, so each subject has a 4-dimensional
@@ -24,7 +25,8 @@ matrix. It does not yet solve item cold-start for hidden leaderboard items.
 The intended use is:
 
 1. Fit `U`, `V`, and `Z` on the public binary response matrix.
-2. Use fitted subject vectors `U` as known subject/model capability estimates.
+2. Use fitted subject vectors `U` and subject biases `S` as known subject/model
+   capability estimates.
 3. Use fitted item parameters `(V, Z)` as targets for a later content model that
    predicts item parameters from `item_content` for unseen items.
 
@@ -51,7 +53,35 @@ data/joined.parquet
 The downloader filters the joined table to binary labels by default. In our
 run this produced `4,443,797` binary rows.
 
-## Quick K=4 Replication Run
+## Final K=4 Artifact Run
+
+For Stage 2 target generation, fit on all binary rows. This intentionally uses
+`--val-frac 0` because the goal is to produce the best pseudo-gold training-item
+parameters available from the public response matrix.
+
+From the repository root:
+
+```bash
+uv run python stage_1/k_factor_irt/fit_k_factor_irt.py \
+  --joined data/joined.parquet \
+  --k 4 \
+  --epochs 20 \
+  --batch-size 65536 \
+  --lr 0.05 \
+  --lr-factor 0.5 \
+  --lr-patience 2 \
+  --min-lr 0.0001 \
+  --weight-decay 0.0001 \
+  --smoothing 20 \
+  --val-frac 0 \
+  --out stage_1/k_factor_irt/outputs/k4_full
+```
+
+## Diagnostic K=4 Replication Run
+
+Use this when changing hyperparameters. It keeps a row-level validation slice so
+you can catch instability, but those validation rows should be included again
+for the final artifact run above.
 
 From the repository root:
 
@@ -62,6 +92,11 @@ uv run python stage_1/k_factor_irt/fit_k_factor_irt.py \
   --epochs 3 \
   --batch-size 65536 \
   --lr 0.05 \
+  --lr-factor 0.5 \
+  --lr-patience 2 \
+  --min-lr 0.0001 \
+  --weight-decay 0.0001 \
+  --smoothing 20 \
   --val-frac 0.02 \
   --out stage_1/k_factor_irt/outputs/k4_quick
 ```
@@ -69,17 +104,19 @@ uv run python stage_1/k_factor_irt/fit_k_factor_irt.py \
 The output directory is ignored by git. It will contain:
 
 ```text
-subject_capabilities.csv  # subject_id, u_0, u_1, u_2, u_3
+subject_capabilities.csv  # subject_id, subject_bias, u_0, u_1, u_2, u_3
 item_parameters.csv       # item_id, v_0, v_1, v_2, v_3, z
 fit_summary.json          # config, counts, train/validation loss history
 model_state.pt            # PyTorch state dict and id vocabularies
 ```
 
-## Metrics From The First Quick Run
+## Metrics From The Initial Dense Quick Run
 
-The initial run used a deterministic row-level validation holdout. We used
-row-level validation here because item-cold-start validation would hold out item
-vectors and bias terms that this Stage 1 model is explicitly trying to fit.
+Before adding subject bias, sparse optimization, marginal initialization, and
+the LR schedule, the initial dense run used a deterministic row-level validation
+holdout. We used row-level validation because item-cold-start validation would
+hold out item vectors and bias terms that this Stage 1 model is explicitly
+trying to fit.
 
 ```text
 n_rows                         4,443,797
@@ -106,8 +143,8 @@ true held-out label. Lower is better. Mean log likelihood is the same value with
 the sign flipped, so higher is better and it is usually negative.
 
 The factor dimensions are not individually identifiable: signs and rotations can
-change without changing predictions. Interpret `U_i dot V_j + Z_j`, not an
-individual raw coordinate as a stable semantic axis.
+change without changing predictions. Interpret `S_i + U_i dot V_j + Z_j`, not
+an individual raw coordinate as a stable semantic axis.
 
 ## Training Pipeline
 
@@ -118,16 +155,22 @@ The script:
 3. Encodes subjects and items into dense integer IDs.
 4. Creates a deterministic row-level validation split.
 5. Initializes:
-   - `subject_u = Embedding(n_subjects, K)`
-   - `item_v = Embedding(n_items, K)`
-   - `item_z = Embedding(n_items, 1)`
-6. Optimizes binary cross entropy with logits:
+   - `subject_bias = Embedding(n_subjects, 1, sparse=True)`
+   - `subject_u = Embedding(n_subjects, K, sparse=True)`
+   - `item_v = Embedding(n_items, K, sparse=True)`
+   - `item_z = Embedding(n_items, 1, sparse=True)`
+6. Initializes `subject_bias` and `item_z` from smoothed marginal correctness
+   rates. The factor embeddings start from small random normal values.
+7. Optimizes binary cross entropy with logits using `SparseAdam`, plus a small
+   batch-local L2 penalty when `--weight-decay` is positive.
+8. Applies `ReduceLROnPlateau` to the validation loss when validation is enabled,
+   otherwise to the training loss.
 
 ```text
-logit_ij = subject_u[i] dot item_v[j] + item_z[j]
+logit_ij = subject_bias[i] + subject_u[i] dot item_v[j] + item_z[j]
 ```
 
-7. Writes CSV parameter tables, a JSON summary, and a PyTorch checkpoint.
+9. Writes CSV parameter tables, a JSON summary, and a PyTorch checkpoint.
 
 ## Next Step
 

@@ -2,10 +2,11 @@
 
 The model is:
 
-    P(y_ij = 1) = sigmoid(U_i @ V_j + Z_j)
+    P(y_ij = 1) = sigmoid(S_i + U_i @ V_j + Z_j)
 
-where U_i is a K-dimensional subject/model capability vector, V_j is a
-K-dimensional item loading vector, and Z_j is an item difficulty/bias term.
+where S_i is a subject/model bias, U_i is a K-dimensional subject/model
+capability vector, V_j is a K-dimensional item loading vector, and Z_j is an
+item difficulty/bias term.
 """
 
 from __future__ import annotations
@@ -13,7 +14,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 import random
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -34,28 +34,59 @@ class FitConfig:
     epochs: int
     batch_size: int
     lr: float
+    lr_factor: float
+    lr_patience: int
+    min_lr: float
     weight_decay: float
     val_frac: float
+    smoothing: float
     seed: int
     device: str
 
 
 class KFactorIRT(nn.Module):
-    def __init__(self, n_subjects: int, n_items: int, k: int, z_init: float) -> None:
+    def __init__(
+        self,
+        n_subjects: int,
+        n_items: int,
+        k: int,
+        subject_bias_init: np.ndarray,
+        item_bias_init: np.ndarray,
+    ) -> None:
         super().__init__()
-        self.subject_u = nn.Embedding(n_subjects, k)
-        self.item_v = nn.Embedding(n_items, k)
-        self.item_z = nn.Embedding(n_items, 1)
+        self.subject_bias = nn.Embedding(n_subjects, 1, sparse=True)
+        self.subject_u = nn.Embedding(n_subjects, k, sparse=True)
+        self.item_v = nn.Embedding(n_items, k, sparse=True)
+        self.item_z = nn.Embedding(n_items, 1, sparse=True)
 
         nn.init.normal_(self.subject_u.weight, mean=0.0, std=0.1)
         nn.init.normal_(self.item_v.weight, mean=0.0, std=0.1)
-        nn.init.constant_(self.item_z.weight, z_init)
+        with torch.no_grad():
+            self.subject_bias.weight.copy_(
+                torch.as_tensor(subject_bias_init, dtype=torch.float32).view(-1, 1)
+            )
+            self.item_z.weight.copy_(
+                torch.as_tensor(item_bias_init, dtype=torch.float32).view(-1, 1)
+            )
 
     def forward(self, subjects: torch.Tensor, items: torch.Tensor) -> torch.Tensor:
+        s = self.subject_bias(subjects).squeeze(-1)
         u = self.subject_u(subjects)
         v = self.item_v(items)
         z = self.item_z(items).squeeze(-1)
-        return (u * v).sum(dim=1) + z
+        return s + (u * v).sum(dim=1) + z
+
+    def batch_l2(self, subjects: torch.Tensor, items: torch.Tensor) -> torch.Tensor:
+        s = self.subject_bias(subjects).squeeze(-1)
+        u = self.subject_u(subjects)
+        v = self.item_v(items)
+        z = self.item_z(items).squeeze(-1)
+        return (
+            s.square().mean()
+            + u.square().mean()
+            + v.square().mean()
+            + z.square().mean()
+        )
 
 
 def _hash_to_unit(value: str, seed: int) -> float:
@@ -109,6 +140,50 @@ def _make_row_split(
     )
 
 
+def _safe_logit(p: np.ndarray) -> np.ndarray:
+    p = np.clip(p, 1e-4, 1.0 - 1e-4)
+    return np.log(p / (1.0 - p))
+
+
+def _marginal_initializers(
+    subject_idx: np.ndarray,
+    item_idx: np.ndarray,
+    labels: np.ndarray,
+    train_mask: np.ndarray,
+    n_subjects: int,
+    n_items: int,
+    smoothing: float,
+) -> tuple[np.ndarray, np.ndarray, float]:
+    train_subjects = subject_idx[train_mask]
+    train_items = item_idx[train_mask]
+    train_labels = labels[train_mask]
+
+    global_rate = float(train_labels.mean())
+    global_logit = float(_safe_logit(np.asarray([global_rate]))[0])
+
+    subject_counts = np.bincount(train_subjects, minlength=n_subjects).astype(np.float64)
+    subject_sums = np.bincount(
+        train_subjects, weights=train_labels, minlength=n_subjects
+    ).astype(np.float64)
+    item_counts = np.bincount(train_items, minlength=n_items).astype(np.float64)
+    item_sums = np.bincount(train_items, weights=train_labels, minlength=n_items).astype(
+        np.float64
+    )
+
+    subject_rates = (subject_sums + smoothing * global_rate) / (
+        subject_counts + smoothing
+    )
+    item_rates = (item_sums + smoothing * global_rate) / (item_counts + smoothing)
+
+    subject_bias_init = _safe_logit(subject_rates) - global_logit
+    item_bias_init = _safe_logit(item_rates)
+    return (
+        subject_bias_init.astype(np.float32),
+        item_bias_init.astype(np.float32),
+        global_rate,
+    )
+
+
 def _loss_on_loader(
     model: KFactorIRT,
     loader: DataLoader,
@@ -151,20 +226,17 @@ def fit(config: FitConfig) -> dict[str, object]:
     item_idx, item_ids = _encode(raw_items)
 
     is_val = _make_row_split(raw_subjects, raw_items, config.val_frac, config.seed)
-    if is_val.all() or (~is_val).all():
+    if is_val.all():
         raise ValueError(
             f"Bad validation split: train={(~is_val).sum()} val={is_val.sum()}"
         )
+    has_val = bool(is_val.any())
+    train_mask = ~is_val
 
     train_ds = TensorDataset(
-        torch.from_numpy(subject_idx[~is_val]),
-        torch.from_numpy(item_idx[~is_val]),
-        torch.from_numpy(labels[~is_val]),
-    )
-    val_ds = TensorDataset(
-        torch.from_numpy(subject_idx[is_val]),
-        torch.from_numpy(item_idx[is_val]),
-        torch.from_numpy(labels[is_val]),
+        torch.from_numpy(subject_idx[train_mask]),
+        torch.from_numpy(item_idx[train_mask]),
+        torch.from_numpy(labels[train_mask]),
     )
 
     train_loader = DataLoader(
@@ -174,20 +246,45 @@ def fit(config: FitConfig) -> dict[str, object]:
         num_workers=0,
         pin_memory=config.device == "cuda",
     )
-    val_loader = DataLoader(
-        val_ds,
-        batch_size=config.batch_size,
-        shuffle=False,
-        num_workers=0,
-        pin_memory=config.device == "cuda",
-    )
+    val_loader = None
+    if has_val:
+        val_ds = TensorDataset(
+            torch.from_numpy(subject_idx[is_val]),
+            torch.from_numpy(item_idx[is_val]),
+            torch.from_numpy(labels[is_val]),
+        )
+        val_loader = DataLoader(
+            val_ds,
+            batch_size=config.batch_size,
+            shuffle=False,
+            num_workers=0,
+            pin_memory=config.device == "cuda",
+        )
 
     device = torch.device(config.device)
-    train_rate = float(labels[~is_val].mean())
-    z_init = math.log(train_rate / (1.0 - train_rate))
-    model = KFactorIRT(len(subject_ids), len(item_ids), config.k, z_init).to(device)
-    optimizer = torch.optim.AdamW(
-        model.parameters(), lr=config.lr, weight_decay=config.weight_decay
+    subject_bias_init, item_bias_init, train_rate = _marginal_initializers(
+        subject_idx=subject_idx,
+        item_idx=item_idx,
+        labels=labels,
+        train_mask=train_mask,
+        n_subjects=len(subject_ids),
+        n_items=len(item_ids),
+        smoothing=config.smoothing,
+    )
+    model = KFactorIRT(
+        len(subject_ids),
+        len(item_ids),
+        config.k,
+        subject_bias_init=subject_bias_init,
+        item_bias_init=item_bias_init,
+    ).to(device)
+    optimizer = torch.optim.SparseAdam(model.parameters(), lr=config.lr)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode="min",
+        factor=config.lr_factor,
+        patience=config.lr_patience,
+        min_lr=config.min_lr,
     )
     criterion = nn.BCEWithLogitsLoss(reduction="mean")
 
@@ -206,28 +303,47 @@ def fit(config: FitConfig) -> dict[str, object]:
 
             optimizer.zero_grad(set_to_none=True)
             logits = model(subjects, items)
-            loss = criterion(logits, batch_labels)
+            bce_loss = criterion(logits, batch_labels)
+            loss = bce_loss
+            if config.weight_decay > 0.0:
+                loss = loss + config.weight_decay * model.batch_l2(subjects, items)
             loss.backward()
             optimizer.step()
 
-            train_loss_sum += float(loss.item()) * len(batch_labels)
+            train_loss_sum += float(bce_loss.item()) * len(batch_labels)
             train_n += len(batch_labels)
-            progress.set_postfix(loss=train_loss_sum / train_n)
+            progress.set_postfix(loss=train_loss_sum / train_n, lr=optimizer.param_groups[0]["lr"])
 
         train_loss = train_loss_sum / train_n
-        val_loss = _loss_on_loader(model, val_loader, criterion, device)
-        history.append({"epoch": epoch, "train_log_loss": train_loss, "val_log_loss": val_loss})
-        print(
-            f"epoch={epoch:02d} train_log_loss={train_loss:.6f} "
-            f"val_log_loss={val_loss:.6f}"
+        val_loss = (
+            _loss_on_loader(model, val_loader, criterion, device)
+            if val_loader is not None
+            else None
         )
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        monitor_loss = val_loss if val_loss is not None else train_loss
+        scheduler.step(monitor_loss)
+        history_row = {
+            "epoch": epoch,
+            "train_log_loss": train_loss,
+            "val_log_loss": val_loss,
+            "lr": optimizer.param_groups[0]["lr"],
+        }
+        history.append(history_row)
+        if val_loss is None:
+            print(f"epoch={epoch:02d} train_log_loss={train_loss:.6f}")
+        else:
+            print(
+                f"epoch={epoch:02d} train_log_loss={train_loss:.6f} "
+                f"val_log_loss={val_loss:.6f}"
+            )
+        if monitor_loss < best_val_loss:
+            best_val_loss = monitor_loss
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
 
     if best_state is not None:
         model.load_state_dict(best_state)
 
+    subject_bias = model.subject_bias.weight.detach().cpu().numpy().reshape(-1)
     subject_u = model.subject_u.weight.detach().cpu().numpy()
     item_v = model.item_v.weight.detach().cpu().numpy()
     item_z = model.item_z.weight.detach().cpu().numpy().reshape(-1)
@@ -235,10 +351,14 @@ def fit(config: FitConfig) -> dict[str, object]:
     _write_csv(
         out_dir / "subject_capabilities.csv",
         [
-            {"subject_id": sid, **{f"u_{d}": float(subject_u[i, d]) for d in range(config.k)}}
+            {
+                "subject_id": sid,
+                "subject_bias": float(subject_bias[i]),
+                **{f"u_{d}": float(subject_u[i, d]) for d in range(config.k)},
+            }
             for i, sid in enumerate(subject_ids)
         ],
-        ["subject_id", *[f"u_{d}" for d in range(config.k)]],
+        ["subject_id", "subject_bias", *[f"u_{d}" for d in range(config.k)]],
     )
     _write_csv(
         out_dir / "item_parameters.csv",
@@ -267,14 +387,14 @@ def fit(config: FitConfig) -> dict[str, object]:
     summary = {
         "config": asdict(config),
         "n_rows": int(len(labels)),
-        "n_train_rows": int((~is_val).sum()),
+        "n_train_rows": int(train_mask.sum()),
         "n_val_rows": int(is_val.sum()),
         "n_subjects": len(subject_ids),
         "n_items": len(item_ids),
         "train_positive_rate": train_rate,
-        "val_positive_rate": float(labels[is_val].mean()),
-        "best_val_log_loss": best_val_loss,
-        "best_val_mean_log_likelihood": -best_val_loss,
+        "val_positive_rate": float(labels[is_val].mean()) if has_val else None,
+        "best_monitor_log_loss": best_val_loss,
+        "best_monitor_mean_log_likelihood": -best_val_loss,
         "history": history,
         "outputs": {
             "subject_capabilities": str(out_dir / "subject_capabilities.csv"),
@@ -296,8 +416,17 @@ def main() -> None:
     parser.add_argument("--epochs", default=15, type=int)
     parser.add_argument("--batch-size", default=8192, type=int)
     parser.add_argument("--lr", default=3e-2, type=float)
+    parser.add_argument("--lr-factor", default=0.5, type=float)
+    parser.add_argument("--lr-patience", default=2, type=int)
+    parser.add_argument("--min-lr", default=1e-4, type=float)
     parser.add_argument("--weight-decay", default=1e-4, type=float)
     parser.add_argument("--val-frac", default=0.1, type=float)
+    parser.add_argument(
+        "--smoothing",
+        default=20.0,
+        type=float,
+        help="Pseudo-count strength for subject/item marginal initialization.",
+    )
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
@@ -309,8 +438,12 @@ def main() -> None:
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.lr,
+        lr_factor=args.lr_factor,
+        lr_patience=args.lr_patience,
+        min_lr=args.min_lr,
         weight_decay=args.weight_decay,
         val_frac=args.val_frac,
+        smoothing=args.smoothing,
         seed=args.seed,
         device=args.device,
     )
