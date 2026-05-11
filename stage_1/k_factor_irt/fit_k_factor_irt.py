@@ -34,6 +34,8 @@ class FitConfig:
     epochs: int
     batch_size: int
     lr: float
+    warmup_epochs: float
+    warmup_start_factor: float
     lr_factor: float
     lr_patience: int
     min_lr: float
@@ -278,7 +280,12 @@ def fit(config: FitConfig) -> dict[str, object]:
         subject_bias_init=subject_bias_init,
         item_bias_init=item_bias_init,
     ).to(device)
-    optimizer = torch.optim.SparseAdam(model.parameters(), lr=config.lr)
+    initial_lr = (
+        config.lr * config.warmup_start_factor
+        if config.warmup_epochs > 0.0
+        else config.lr
+    )
+    optimizer = torch.optim.SparseAdam(model.parameters(), lr=initial_lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer,
         mode="min",
@@ -291,12 +298,23 @@ def fit(config: FitConfig) -> dict[str, object]:
     history = []
     best_val_loss = float("inf")
     best_state = None
+    warmup_steps = int(config.warmup_epochs * len(train_loader))
     for epoch in range(1, config.epochs + 1):
         model.train()
         train_loss_sum = 0.0
         train_n = 0
         progress = tqdm(train_loader, desc=f"epoch {epoch}/{config.epochs}", leave=False)
-        for subjects, items, batch_labels in progress:
+        for batch_idx, (subjects, items, batch_labels) in enumerate(progress, start=1):
+            global_step = (epoch - 1) * len(train_loader) + batch_idx
+            if warmup_steps > 0 and global_step <= warmup_steps:
+                alpha = global_step / warmup_steps
+                lr = config.lr * (
+                    config.warmup_start_factor
+                    + alpha * (1.0 - config.warmup_start_factor)
+                )
+                for group in optimizer.param_groups:
+                    group["lr"] = lr
+
             subjects = subjects.to(device)
             items = items.to(device)
             batch_labels = batch_labels.to(device)
@@ -321,7 +339,8 @@ def fit(config: FitConfig) -> dict[str, object]:
             else None
         )
         monitor_loss = val_loss if val_loss is not None else train_loss
-        scheduler.step(monitor_loss)
+        if epoch > config.warmup_epochs:
+            scheduler.step(monitor_loss)
         history_row = {
             "epoch": epoch,
             "train_log_loss": train_loss,
@@ -416,6 +435,18 @@ def main() -> None:
     parser.add_argument("--epochs", default=15, type=int)
     parser.add_argument("--batch-size", default=8192, type=int)
     parser.add_argument("--lr", default=3e-2, type=float)
+    parser.add_argument(
+        "--warmup-epochs",
+        default=0.0,
+        type=float,
+        help="Linearly ramp LR up to --lr over this many epochs.",
+    )
+    parser.add_argument(
+        "--warmup-start-factor",
+        default=0.1,
+        type=float,
+        help="Initial LR as a fraction of --lr when warmup is enabled.",
+    )
     parser.add_argument("--lr-factor", default=0.5, type=float)
     parser.add_argument("--lr-patience", default=2, type=int)
     parser.add_argument("--min-lr", default=1e-4, type=float)
@@ -438,6 +469,8 @@ def main() -> None:
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.lr,
+        warmup_epochs=args.warmup_epochs,
+        warmup_start_factor=args.warmup_start_factor,
         lr_factor=args.lr_factor,
         lr_patience=args.lr_patience,
         min_lr=args.min_lr,

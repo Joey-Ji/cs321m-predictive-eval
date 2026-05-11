@@ -92,6 +92,7 @@ uv run python stage_1/k_factor_irt/fit_k_factor_irt.py \
   --epochs 3 \
   --batch-size 65536 \
   --lr 0.05 \
+  --warmup-epochs 0 \
   --lr-factor 0.5 \
   --lr-patience 2 \
   --min-lr 0.0001 \
@@ -99,6 +100,12 @@ uv run python stage_1/k_factor_irt/fit_k_factor_irt.py \
   --smoothing 20 \
   --val-frac 0.02 \
   --out stage_1/k_factor_irt/outputs/k4_quick
+```
+
+For slower starts, add for example:
+
+```bash
+--lr 0.02 --warmup-epochs 2 --warmup-start-factor 0.1
 ```
 
 The output directory is ignored by git. It will contain:
@@ -138,6 +145,26 @@ epoch 2 train_log_loss=0.325680 val_log_loss=0.329251
 epoch 3 train_log_loss=0.311787 val_log_loss=0.325357
 ```
 
+## Sparse Subject-Bias Diagnostic Results
+
+After adding smoothed marginal initialization, sparse embeddings, `SparseAdam`,
+batch-local L2, the LR schedule, and subject bias, the best diagnostic run so
+far is:
+
+```text
+lr=0.05, warmup_epochs=0, weight_decay=0.0001, smoothing=20
+best_val_log_loss                0.320203
+best_val_mean_log_likelihood    -0.320203
+best_epoch                              3
+```
+
+Two slower-start checks were close but did not beat it:
+
+```text
+lr=0.02, warmup_epochs=2, warmup_start_factor=0.1  best_val_log_loss=0.320989
+lr=0.05, warmup_epochs=2, warmup_start_factor=0.1  best_val_log_loss=0.320360
+```
+
 Validation log loss is the average negative log probability assigned to the
 true held-out label. Lower is better. Mean log likelihood is the same value with
 the sign flipped, so higher is better and it is usually negative.
@@ -163,14 +190,16 @@ The script:
    rates. The factor embeddings start from small random normal values.
 7. Optimizes binary cross entropy with logits using `SparseAdam`, plus a small
    batch-local L2 penalty when `--weight-decay` is positive.
-8. Applies `ReduceLROnPlateau` to the validation loss when validation is enabled,
-   otherwise to the training loss.
+8. Optionally linearly warms the learning rate from
+   `--warmup-start-factor * --lr` to `--lr` over `--warmup-epochs`.
+9. Applies `ReduceLROnPlateau` to the validation loss when validation is enabled,
+   otherwise to the training loss. The scheduler starts after warmup.
 
 ```text
 logit_ij = subject_bias[i] + subject_u[i] dot item_v[j] + item_z[j]
 ```
 
-9. Writes CSV parameter tables, a JSON summary, and a PyTorch checkpoint.
+10. Writes CSV parameter tables, a JSON summary, and a PyTorch checkpoint.
 
 ## Next Step
 
