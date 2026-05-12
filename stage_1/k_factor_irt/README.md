@@ -173,9 +173,67 @@ The factor dimensions are not individually identifiable: signs and rotations can
 change without changing predictions. Interpret `S_i + U_i dot V_j + Z_j`, not
 an individual raw coordinate as a stable semantic axis.
 
+## Residual MLP IRT Experiment
+
+`fit_mlp_irt.py` keeps the same transductive subject/item embeddings and adds a
+nonlinear residual on top of the interpretable IRT backbone:
+
+```text
+base_ij = S_i + U_i dot V_j + Z_j
+features_ij = [S_i, Z_j, U_i, V_j, U_i * V_j, |U_i - V_j|]
+logit_ij = base_ij + MLP(features_ij)
+```
+
+The default MLP is:
+
+```text
+input_dim = 2 + 4K
+Linear(input_dim -> 128), LayerNorm, GELU, Dropout(0.10)
+Linear(128 -> 64),        LayerNorm, GELU, Dropout(0.10)
+Linear(64 -> 1)
+```
+
+The final MLP layer is zero-initialized, so training starts exactly at the IRT
+backbone and learns nonlinear corrections from there. This is still not a
+cold-start item model: item IDs are learned embeddings. Use it to test
+nonlinear headroom and to generate richer Stage 1 pseudo-targets, then use
+Stage 2 to learn item parameters from text/metadata.
+
+Diagnostic command:
+
+```bash
+uv run python stage_1/k_factor_irt/fit_mlp_irt.py \
+  --joined data/joined.parquet \
+  --k 16 \
+  --epochs 10 \
+  --batch-size 65536 \
+  --lr 0.001 \
+  --embedding-lr 0.02 \
+  --mlp-lr 0.001 \
+  --warmup-epochs 1 \
+  --warmup-start-factor 0.25 \
+  --lr-factor 0.5 \
+  --lr-patience 2 \
+  --min-lr 0.00001 \
+  --weight-decay 0.0001 \
+  --smoothing 20 \
+  --hidden-dims 128,64 \
+  --dropout 0.1 \
+  --residual-scale 0.5 \
+  --val-frac 0.02 \
+  --early-stop-patience 4 \
+  --out stage_1/k_factor_irt/outputs/mlp_k16_diag_emb002_mlp0001_res05
+```
+
+This run reached validation log loss `0.313188` at epoch 2. That is a useful
+nonlinear sanity check and slightly better than the original K=4 recipe, but it
+did not beat the tuned K=16 linear IRT run (`0.312561`). The MLP should be
+treated as a richer Stage 1 overfit/pseudo-labeling model rather than evidence
+that the item-ID-only nonlinear model generalizes better.
+
 ## Training Pipeline
 
-The script:
+The K-factor script:
 
 1. Loads `subject_id`, `item_id`, and `label` from `data/joined.parquet`.
 2. Keeps only labels in `{0, 1}`.
