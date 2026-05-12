@@ -186,14 +186,15 @@ def _marginal_initializers(
     )
 
 
-def _loss_on_loader(
+def _metrics_on_loader(
     model: KFactorIRT,
     loader: DataLoader,
     criterion: nn.Module,
     device: torch.device,
-) -> float:
+) -> tuple[float, float]:
     model.eval()
     total_loss = 0.0
+    total_correct = 0
     total_n = 0
     with torch.no_grad():
         for subjects, items, labels in loader:
@@ -202,9 +203,11 @@ def _loss_on_loader(
             labels = labels.to(device)
             logits = model(subjects, items)
             loss = criterion(logits, labels)
+            preds = logits >= 0.0
+            total_correct += int((preds == labels.bool()).sum().item())
             total_loss += float(loss.item()) * len(labels)
             total_n += len(labels)
-    return total_loss / max(total_n, 1)
+    return total_loss / max(total_n, 1), total_correct / max(total_n, 1)
 
 
 def _write_csv(path: Path, rows: list[dict[str, object]], fieldnames: list[str]) -> None:
@@ -302,6 +305,7 @@ def fit(config: FitConfig) -> dict[str, object]:
     for epoch in range(1, config.epochs + 1):
         model.train()
         train_loss_sum = 0.0
+        train_correct = 0
         train_n = 0
         progress = tqdm(train_loader, desc=f"epoch {epoch}/{config.epochs}", leave=False)
         for batch_idx, (subjects, items, batch_labels) in enumerate(progress, start=1):
@@ -328,32 +332,47 @@ def fit(config: FitConfig) -> dict[str, object]:
             loss.backward()
             optimizer.step()
 
+            preds = logits.detach() >= 0.0
+            train_correct += int((preds == batch_labels.bool()).sum().item())
             train_loss_sum += float(bce_loss.item()) * len(batch_labels)
             train_n += len(batch_labels)
-            progress.set_postfix(loss=train_loss_sum / train_n, lr=optimizer.param_groups[0]["lr"])
+            progress.set_postfix(
+                loss=train_loss_sum / train_n,
+                acc=train_correct / train_n,
+                lr=optimizer.param_groups[0]["lr"],
+            )
 
         train_loss = train_loss_sum / train_n
-        val_loss = (
-            _loss_on_loader(model, val_loader, criterion, device)
+        train_accuracy = train_correct / train_n
+        val_metrics = (
+            _metrics_on_loader(model, val_loader, criterion, device)
             if val_loader is not None
             else None
         )
+        val_loss = val_metrics[0] if val_metrics is not None else None
+        val_accuracy = val_metrics[1] if val_metrics is not None else None
         monitor_loss = val_loss if val_loss is not None else train_loss
         if epoch > config.warmup_epochs:
             scheduler.step(monitor_loss)
         history_row = {
             "epoch": epoch,
             "train_log_loss": train_loss,
+            "train_accuracy": train_accuracy,
             "val_log_loss": val_loss,
+            "val_accuracy": val_accuracy,
             "lr": optimizer.param_groups[0]["lr"],
         }
         history.append(history_row)
         if val_loss is None:
-            print(f"epoch={epoch:02d} train_log_loss={train_loss:.6f}")
+            print(
+                f"epoch={epoch:02d} train_log_loss={train_loss:.6f} "
+                f"train_accuracy={train_accuracy:.6f}"
+            )
         else:
             print(
                 f"epoch={epoch:02d} train_log_loss={train_loss:.6f} "
-                f"val_log_loss={val_loss:.6f}"
+                f"train_accuracy={train_accuracy:.6f} "
+                f"val_log_loss={val_loss:.6f} val_accuracy={val_accuracy:.6f}"
             )
         if monitor_loss < best_val_loss:
             best_val_loss = monitor_loss

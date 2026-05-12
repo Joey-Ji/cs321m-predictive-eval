@@ -32,7 +32,9 @@ The intended use is:
 
 ## Data Preparation
 
-Do not check downloaded data or generated fitted artifacts into git.
+Do not check downloaded raw data into git. Most generated fitted artifacts also
+stay out of git, except the small K=4 Parquet latent export committed on the
+`yiheng/stage-1-k4` branch for Stage 2 handoff.
 
 From the repository root, download and join the public training data:
 
@@ -65,7 +67,7 @@ From the repository root:
 uv run python stage_1/k_factor_irt/fit_k_factor_irt.py \
   --joined data/joined.parquet \
   --k 4 \
-  --epochs 20 \
+  --epochs 8 \
   --batch-size 65536 \
   --lr 0.05 \
   --lr-factor 0.5 \
@@ -74,7 +76,28 @@ uv run python stage_1/k_factor_irt/fit_k_factor_irt.py \
   --weight-decay 0.0001 \
   --smoothing 20 \
   --val-frac 0 \
-  --out stage_1/k_factor_irt/outputs/k4_full
+  --out stage_1/k_factor_irt/outputs/full_train_k4_lr005
+```
+
+This run used all `4,443,797` binary rows and reached:
+
+```text
+K=4 train_log_loss=0.2919 train_accuracy=86.50%
+```
+
+The loadable Stage 2 handoff artifacts are:
+
+```text
+stage_1/k_factor_irt/artifacts/k4_full_train/subject_capabilities.parquet
+stage_1/k_factor_irt/artifacts/k4_full_train/item_parameters.parquet
+stage_1/k_factor_irt/artifacts/k4_full_train/manifest.json
+```
+
+Schemas:
+
+```text
+subject_capabilities.parquet: subject_id, subject_bias, u_0, u_1, u_2, u_3
+item_parameters.parquet:      item_id, v_0, v_1, v_2, v_3, z
 ```
 
 ## Diagnostic K=4 Replication Run
