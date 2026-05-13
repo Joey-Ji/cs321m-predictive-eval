@@ -1,0 +1,58 @@
+name: contract
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  contract-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Generate joined.parquet stub for mock_irt
+        run: |
+          mkdir -p data
+          uv run python - <<'PY'
+          # Tiny synthetic joined.parquet so mock_irt has something to read.
+          import pyarrow as pa
+          import pyarrow.parquet as pq
+
+          rows = []
+          for s in range(8):
+              for i in range(20):
+                  rows.append({
+                      "subject_content": f"Name: Subject-{s}\nOrganization: Test",
+                      "item_id": f"item_{i:04d}",
+                      "item_content": f"Synthetic item {i} body text.",
+                      "benchmark": f"bench_{i % 3}",
+                      "condition": "zero-shot",
+                      "label": float((s + i) % 2),
+                  })
+          schema = pa.schema([
+              ("subject_content", pa.string()),
+              ("item_id", pa.string()),
+              ("item_content", pa.string()),
+              ("benchmark", pa.string()),
+              ("condition", pa.string()),
+              ("label", pa.float32()),
+          ])
+          pq.write_table(pa.Table.from_pylist(rows, schema=schema), "data/joined.parquet")
+          PY
+
+      - name: Mock Stage 1 outputs (1PL)
+        run: uv run python scripts/mock_irt.py --model 1pl
+
+      - name: Run contract check
+        run: uv run python tests/check_contract.py
