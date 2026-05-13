@@ -2,22 +2,22 @@
 
 Stanford CS 321M team submission. 3 people, 12-day sprint, deadline **2026-05-22**.
 
-> Quick links: [`plan.md`](plan.md) — strategy & calendar · [`research-report.md`](research-report.md) — why this pipeline · [`STARTER_KIT.md`](STARTER_KIT.md) — original competition spec.
+> Quick links: [`STARTER_KIT.md`](STARTER_KIT.md) — original competition spec · [`Predictive Evaluation Challenge.pdf`](Predictive%20Evaluation%20Challenge.pdf) — full problem statement.
 
 ---
 
 ## What we're building
 
-A `predict(input, labeled=None) -> float` that given four text fields (benchmark, condition, subject_content, item_content) returns the probability that the AI subject answers the item correctly. **Test items are new**; test subjects are seen in training. Metric: mean log-likelihood.
+A `predict(input, labeled=None) -> float` that, given four text fields (benchmark, condition, subject_content, item_content), returns the probability that the AI subject answers the item correctly. **Test items are new**; test subjects are seen in training. Metric: mean log-likelihood.
 
-**Our pipeline** mirrors Truong et al. 2025 (ICML; arXiv:2503.13335) — the AIMS lab's own reference paper for this exact competition:
+**Our pipeline** mirrors Truong et al. 2025 (ICML; arXiv:2503.13335) — the AIMS lab's own reference paper for this competition. Reported column-holdout AUC ≈ 0.804; that's our target.
 
 1. **Stage 1.** Fit Rasch IRT on training response matrix → `θ_s` per subject, `b_i` per item.
 2. **Stage 2a.** Sentence-transformer + small head learns `item_text → b̂`. Generalizes to new items.
 3. **Stage 2b.** Lookup `θ̂_s` for known subjects (test subjects are warm).
 4. **Stage 3.** Combine: `P = σ(θ̂ − b̂)`. Clip, return as Python float.
 
-Plus: adaptive labeling for online Platt calibration, optional LLM-judge ensemble. Details: see `plan.md §3` and `research-report.md`.
+Plus: adaptive labeling for online Platt calibration; optional LLM-judge ensemble (Day 5+ decision).
 
 ---
 
@@ -50,8 +50,6 @@ make smoke-test SUB=submissions/v1_irt
 ```
 eval_comp/
 ├── README.md              ← you are here
-├── plan.md / .html        ← 12-day calendar, design decisions, meeting agenda
-├── research-report.md     ← why the IRT pipeline, with sources
 ├── STARTER_KIT.md         ← original competition spec (data format, submission contract)
 ├── Makefile               ← workflow shortcuts
 ├── pyproject.toml         ← uv-managed deps
@@ -82,8 +80,8 @@ eval_comp/
 │   ├── embeddings/        ← Stage 2a part 1 cache
 │   └── head/              ← Stage 2a part 2 weights
 │
-├── sample_code_submission/  ← starter-kit reference, unchanged
-└── templates/               ← starter-kit reference, unchanged
+├── sample_code_submission/  ← starter-kit reference (minimal contract example)
+└── templates/               ← starter-kit reference (HF-loading patterns)
 ```
 
 ---
@@ -117,7 +115,26 @@ data/joined.parquet ─────────────────┐
                                                       submissions/v1_irt.zip → upload
 ```
 
-Stage 1 ↔ Stage 2 contract: see `plan.md §0.5.9`. Two-line summary: Stage 2 reads `data/irt/b.pt` (regression targets) and `data/irt/item_to_id.json` (alignment). Everything else is consumed by the submission at inference time.
+---
+
+## Stage 1 ↔ Stage 2 contract (read before parallel work)
+
+Stage 2 (the content head) reads only two things from Stage 1:
+
+- `data/irt/b.pt` — `float32 [n_items]`, regression targets
+- `data/irt/item_to_id.json` — `dict[str, int]`, aligns embedding rows with IRT params
+
+Everything else (`theta.pt`, `log_a.pt`, `subject_to_id.json`) is consumed only at inference by the submission's `model.py`, NOT by Stage 2 training.
+
+**Parallel development pattern:**
+
+1. Stage 2 dev runs `make irt-mock` → populates `data/irt/` with synthetic-but-correctly-shaped outputs.
+2. Builds + tests entire content-head + submission pipeline against the mocks.
+3. When real Stage 1 lands, just re-run `make head`. No code changes needed.
+
+**Breaking-change rule:** renaming or changing shape of `b.pt` / `item_to_id.json` needs both teams' explicit agreement. Going from 1PL to 2PL with joint `(b, log_a)` regression is a contract change (Stage 2 output dim becomes 2). See `scripts/train_content_head.py --targets b+log_a`.
+
+Run `make test` after touching any of these to confirm the contract still holds.
 
 ---
 
@@ -127,19 +144,43 @@ Stage 1 ↔ Stage 2 contract: see `plan.md §0.5.9`. Two-line summary: Stage 2 r
 |---|---|---|
 | Data + validation | `scripts/download_data.py`, `scripts/eda.py`, `src/validation.py` | _TBD_ |
 | Stage 1 (IRT) | `scripts/fit_irt.py`, `scripts/mock_irt.py` | _TBD_ |
-| Stage 2a (content head) | `scripts/encode_items.py`, `scripts/train_content_head.py`, `submissions/v1_irt/model.py` | **you (Joey)** |
+| Stage 2a (content head) | `scripts/encode_items.py`, `scripts/train_content_head.py`, `submissions/v1_irt/model.py` | **Joey** |
 | LLM-judge / adaptive labeling (Day 5+) | `submissions/v2_*/labeling.py`, `submissions/v2_*/model.py` | _TBD_ |
 | Report | `report/` (when we create it) | _TBD_ |
 
-Fill in names after the first team meeting. Decisions tracked in `plan.md §0.5.4`.
+Fill in names after the first team meeting.
+
+---
+
+## 12-day calendar (high level)
+
+| Date | Day | Goal | Submission |
+|---|---|---|---|
+| 05-10 | 0 | Scaffold; smoke test | constant 0.5 (floor) |
+| 05-11 | 1 | Data + EDA + validation harness | per-benchmark majority class |
+| 05-12 | 2 | NCF baseline on Modal | NCF baseline |
+| 05-13 | 3 | Stage 1 IRT fit; Stage 2a head training | _(none — IRT lands tomorrow)_ |
+| 05-14 | 4 | IRT + content head end-to-end | v1_irt |
+| 05-15 | 5 | Adaptive labeling + Platt calibration | v1_irt + adaptive |
+| 05-16 | 6 | LLM-judge go/no-go (criteria below) | LLM-judge or IRT-v2 |
+| 05-17–18 | 7–8 | Ensemble work / few-shot judge | ensemble v1, v2 |
+| 05-19 | 9 | Failure-mode analysis; freeze weights | best ensemble |
+| 05-20 | 10 | **Report draft (hard gate)** | final tuning if any |
+| 05-21 | 11 | Polish + Gradescope upload | reserve |
+| 05-22 | 12 | **Final submission day** | final |
+
+**Stop-loss criteria:**
+- Day 4: IRT + content-head must beat Day 2 NCF on validation log-likelihood, else debug the IRT fit.
+- Day 6 LLM-judge go: only if (a) IRT pipeline is within 0.05 mll of leaderboard top AND (b) engineer bandwidth available.
+- Day 10: report draft must exist by EOD. Modeling iteration freezes.
 
 ---
 
 ## Daily workflow
 
 1. `git pull --rebase`
-2. Make changes on a branch (or push directly to main if the team agreed — see `plan.md §0.5.4`).
-3. Before committing model/script changes:
+2. Make changes on a feature branch; open a PR for review.
+3. Before opening a PR:
    - `make test` — sanity-checks the Stage 1↔2 contract.
    - For submissions: `make smoke-test SUB=submissions/<name>` — verifies `predict()` returns proper floats.
 4. Before submitting to Codabench:
@@ -169,16 +210,15 @@ Full details: `STARTER_KIT.md`. Submission contract spec: `Predictive Evaluation
 3. **No outbound network calls at test time.** Everything in the ZIP or declared in `models.txt`.
 4. **`acquisition_function` must never raise, time out, or return NaN/inf** — if it does, the whole round falls back to random sampling.
 5. **`subject_content` is text, not a dict.** Parse the `Name:` line; treat metadata lines as optional. Don't rely on raw-string equality for the subject lookup.
-6. **Filter binary labels.** Some training rows have continuous-scored labels; the `download_data.py` script filters these by default.
+6. **Filter binary labels.** Some training rows have continuous-scored labels; `download_data.py` filters these by default.
 
 ---
 
 ## When in doubt
 
-- **What approach are we using?** → `research-report.md` §10 ("Recommendation")
-- **What's the schedule?** → `plan.md §4` (12-day calendar)
-- **What should I work on today?** → `plan.md §0.5.8` (task breakdown)
-- **How does my piece connect to the others?** → `plan.md §0.5.9` (Stage 1↔2 contract)
-- **What's the meeting agenda?** → `plan.md §0.5`
-- **How do I add a new HF model?** → add repo to `submissions/<name>/models.txt` (max 5 total)
+- **What approach are we using?** → "What we're building" section above; details in `submissions/v1_irt/model.py`.
+- **How does my piece connect to the others?** → "Stage 1 ↔ Stage 2 contract" section above.
+- **What should I work on today?** → check the calendar above + your row in the ownership table.
+- **How do I add a new HF model?** → add repo to `submissions/<name>/models.txt` (max 5 total).
 - **My script broke something.** → `make test` and post the error in the team channel.
+- **What's the historical context / research?** → ask Joey (working notes live on the `dev` branch).
