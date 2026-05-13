@@ -1,0 +1,174 @@
+"""Contract test for K-factor Stage 1 artifacts.
+
+Run:
+    python tests/check_kfactor_contract.py --stage1 data/stage1/kfactor_k4
+    python tests/check_kfactor_contract.py --make-fixture data/fixtures/kfactor
+    python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+REQUIRED_STAGE1_FILES = {
+    "subject_state.pt": "subject K-factor parameters",
+    "item_targets.pt": "item K-factor targets",
+    "subject_to_id.json": "raw subject id -> int id",
+    "subject_name_to_id.json": "normalized subject name -> int id",
+    "item_to_id.json": "raw item_id -> int id",
+    "manifest.json": "Stage 1 run metadata",
+}
+
+
+def _is_contiguous(mapping: dict, n: int) -> bool:
+    return sorted(mapping.values()) == list(range(n))
+
+
+def _load_pt(path: Path):
+    import torch
+
+    try:
+        return torch.load(path, map_location="cpu", weights_only=True)
+    except TypeError:
+        return torch.load(path, map_location="cpu")
+
+
+def _check_finite_tensor(name: str, tensor, errs: list[str]) -> None:
+    import torch
+
+    if not torch.isfinite(tensor).all():
+        errs.append(f"{name} contains NaN/inf")
+
+
+def check_stage1(stage1_dir: Path) -> list[str]:
+    import torch
+
+    errs: list[str] = []
+    if not stage1_dir.is_dir():
+        return [f"FATAL: stage1 directory {stage1_dir} does not exist"]
+
+    for filename, desc in REQUIRED_STAGE1_FILES.items():
+        if not (stage1_dir / filename).exists():
+            errs.append(f"MISSING: {stage1_dir / filename} ({desc})")
+    if errs:
+        return errs
+
+    subject_state = _load_pt(stage1_dir / "subject_state.pt")
+    item_targets = _load_pt(stage1_dir / "item_targets.pt")
+    subject_to_id = json.loads((stage1_dir / "subject_to_id.json").read_text())
+    subject_name_to_id = json.loads((stage1_dir / "subject_name_to_id.json").read_text())
+    item_to_id = json.loads((stage1_dir / "item_to_id.json").read_text())
+
+    for key in ("subject_bias", "subject_u", "fallback_bias", "fallback_u"):
+        if key not in subject_state:
+            errs.append(f"subject_state.pt missing key: {key}")
+    for key in ("item_v", "item_z"):
+        if key not in item_targets:
+            errs.append(f"item_targets.pt missing key: {key}")
+    if errs:
+        return errs
+
+    subject_bias = subject_state["subject_bias"]
+    subject_u = subject_state["subject_u"]
+    fallback_bias = subject_state["fallback_bias"]
+    fallback_u = subject_state["fallback_u"]
+    item_v = item_targets["item_v"]
+    item_z = item_targets["item_z"]
+
+    if subject_bias.dtype != torch.float32 or subject_bias.ndim != 1:
+        errs.append(f"subject_bias must be float32 [n_subjects], got {subject_bias.dtype} {tuple(subject_bias.shape)}")
+    if subject_u.dtype != torch.float32 or subject_u.ndim != 2:
+        errs.append(f"subject_u must be float32 [n_subjects, k], got {subject_u.dtype} {tuple(subject_u.shape)}")
+    if fallback_u.dtype != torch.float32 or fallback_u.ndim != 1:
+        errs.append(f"fallback_u must be float32 [k], got {fallback_u.dtype} {tuple(fallback_u.shape)}")
+    if item_v.dtype != torch.float32 or item_v.ndim != 2:
+        errs.append(f"item_v must be float32 [n_items, k], got {item_v.dtype} {tuple(item_v.shape)}")
+    if item_z.dtype != torch.float32 or item_z.ndim != 1:
+        errs.append(f"item_z must be float32 [n_items], got {item_z.dtype} {tuple(item_z.shape)}")
+
+    if errs:
+        return errs
+
+    n_subjects, k = subject_u.shape
+    n_items = item_v.shape[0]
+    if subject_bias.shape != (n_subjects,):
+        errs.append(f"subject_bias length {len(subject_bias)} != subject_u rows {n_subjects}")
+    if fallback_u.shape != (k,):
+        errs.append(f"fallback_u shape {tuple(fallback_u.shape)} != ({k},)")
+    if item_v.shape[1] != k:
+        errs.append(f"item_v k {item_v.shape[1]} != subject_u k {k}")
+    if item_z.shape != (n_items,):
+        errs.append(f"item_z length {len(item_z)} != item_v rows {n_items}")
+
+    if torch.is_tensor(fallback_bias):
+        if fallback_bias.ndim != 0:
+            errs.append(f"fallback_bias tensor must be scalar, got shape {tuple(fallback_bias.shape)}")
+        elif not torch.isfinite(fallback_bias):
+            errs.append("fallback_bias contains NaN/inf")
+    elif not isinstance(fallback_bias, (int, float)) or not math.isfinite(float(fallback_bias)):
+        errs.append(f"fallback_bias must be finite float or scalar tensor, got {type(fallback_bias).__name__}")
+
+    for name, tensor in (
+        ("subject_bias", subject_bias),
+        ("subject_u", subject_u),
+        ("fallback_u", fallback_u),
+        ("item_v", item_v),
+        ("item_z", item_z),
+    ):
+        _check_finite_tensor(name, tensor, errs)
+
+    if len(subject_to_id) != n_subjects:
+        errs.append(f"subject_to_id size {len(subject_to_id)} != n_subjects {n_subjects}")
+    if len(subject_name_to_id) != n_subjects:
+        errs.append(f"subject_name_to_id size {len(subject_name_to_id)} != n_subjects {n_subjects}")
+    if len(item_to_id) != n_items:
+        errs.append(f"item_to_id size {len(item_to_id)} != n_items {n_items}")
+
+    if not _is_contiguous(subject_to_id, n_subjects):
+        errs.append("subject_to_id ids must be contiguous 0..n_subjects-1")
+    if not _is_contiguous(subject_name_to_id, n_subjects):
+        errs.append("subject_name_to_id ids must be contiguous 0..n_subjects-1")
+    if not _is_contiguous(item_to_id, n_items):
+        errs.append("item_to_id ids must be contiguous 0..n_items-1")
+
+    print(f"  K-factor Stage 1: subjects={n_subjects:,} items={n_items:,} k={k}")
+    return errs
+
+
+def main(stage1_dir: Path | None, make_fixture_dir: Path | None) -> int:
+    if make_fixture_dir is not None:
+        from scripts.make_kfactor_fixture import main as make_fixture
+
+        make_fixture(make_fixture_dir, seed=0, n_subjects=5, n_items=20, k=4)
+        return 0
+
+    if stage1_dir is None:
+        print("ERROR: provide --stage1 or --make-fixture", file=sys.stderr)
+        return 2
+
+    print("K-factor contract check")
+    print(f"  stage1: {stage1_dir}")
+    errs = check_stage1(stage1_dir)
+    if not errs:
+        print("\nPASS - K-factor contract is satisfied.")
+        return 0
+
+    print(f"\nFAIL - {len(errs)} contract violation(s):")
+    for err in errs:
+        print(f"  - {err}")
+    return 1 if any(not e.startswith("MISSING") for e in errs) else 2
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--stage1", type=Path)
+    parser.add_argument("--make-fixture", type=Path)
+    args = parser.parse_args()
+    sys.exit(main(args.stage1, args.make_fixture))

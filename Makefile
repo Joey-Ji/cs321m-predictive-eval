@@ -1,4 +1,4 @@
-.PHONY: help install data eda irt irt-2pl irt-mock irt-mock-2pl encode encode-bge head head-mlp head-2pl submission smoke-test test test-quick clean clean-state list
+.PHONY: help install data eda irt irt-2pl irt-mock irt-mock-2pl encode encode-bge head head-mlp head-2pl kfactor-fixture test-kfactor kfactor-encode-dummy kfactor-head kfactor-eval submission smoke-test test test-quick clean clean-state list
 
 # Default encoder for encode_items.py; override with `make encode ENCODER=...`
 ENCODER ?= sentence-transformers/all-mpnet-base-v2
@@ -25,6 +25,13 @@ help:
 	@echo "    make head                 Train linear head, --targets b (1PL)"
 	@echo "    make head-mlp             Train MLP head, --targets b"
 	@echo "    make head-2pl             Train MLP head, --targets b+log_a (2PL)"
+	@echo ""
+	@echo "  K-factor Stage 2:"
+	@echo "    make kfactor-fixture      Generate synthetic K-factor fixture"
+	@echo "    make test-kfactor         Validate K-factor Stage 1 contract"
+	@echo "    make kfactor-encode-dummy Encode fixture items with deterministic dummy encoder"
+	@echo "    make kfactor-head         Train fixture K-factor linear head"
+	@echo "    make kfactor-eval         Evaluate fixture K-factor response metrics"
 	@echo ""
 	@echo "  Submissions:"
 	@echo "    make submission NAME=v1_irt          Build submissions/v1_irt.zip"
@@ -75,6 +82,21 @@ head-mlp:
 
 head-2pl:
 	uv run python scripts/train_content_head.py --head mlp --targets b+log_a --epochs 200
+
+kfactor-fixture:
+	uv run python scripts/make_kfactor_fixture.py --out data/fixtures/kfactor
+
+test-kfactor:
+	uv run python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1
+
+kfactor-encode-dummy:
+	uv run python scripts/encode_items.py --joined data/fixtures/kfactor/joined.parquet --out data/fixtures/kfactor/embeddings --encoder dummy --dummy-dim 8
+
+kfactor-head:
+	uv run python scripts/train_kfactor_head.py --stage1 data/fixtures/kfactor/stage1 --emb data/fixtures/kfactor/embeddings --out data/fixtures/kfactor/stage2 --head linear --epochs 5 --val-frac 0.2
+
+kfactor-eval:
+	uv run python scripts/evaluate_stage2.py --joined data/fixtures/kfactor/joined.parquet --stage1 data/fixtures/kfactor/stage1 --stage2 data/fixtures/kfactor/stage2 --emb data/fixtures/kfactor/embeddings
 
 submission:
 	@if [ -z "$(NAME)" ]; then echo "ERROR: usage: make submission NAME=v1_irt"; exit 1; fi

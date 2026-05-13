@@ -6,9 +6,9 @@ A submission directory must contain at minimum a model.py. Optionally:
   - requirements.txt
   - Any auxiliary state files (head.pt, theta.pt, subject_to_id.json, ...).
 
-This script copies the named submission's contents into a flat ZIP at the
-top level (which is what Codabench expects). It refuses to include the data/
-and submissions/ subdirs to keep ZIPs lean.
+This script copies the named submission's runtime contents into a flat ZIP at
+the top level (which is what Codabench expects). Include dirs are scanned
+recursively, but only known runtime state files are flattened into the ZIP.
 
 Usage:
     python scripts/build_submission.py v1_irt
@@ -25,19 +25,49 @@ from pathlib import Path
 
 REQUIRED = {"model.py"}
 OPTIONAL = {"labeling.py", "models.txt", "requirements.txt"}
+RUNTIME_STATE_FILES = {
+    # v1_irt
+    "head.pt",
+    "head_meta.json",
+    "theta.pt",
+    "log_a.pt",
+    "subject_to_id.json",
+    # v1_kfactor
+    "target_scaler.json",
+    "subject_state.pt",
+    "subject_name_to_id.json",
+    "calibration.json",
+}
+SUBMISSION_RUNTIME_STATE_FILES = {
+    "v1_kfactor": {
+        "head.pt",
+        "head_meta.json",
+        "target_scaler.json",
+        "subject_state.pt",
+        "subject_name_to_id.json",
+        "calibration.json",
+    },
+    "v1_irt": {
+        "head.pt",
+        "head_meta.json",
+        "theta.pt",
+        "log_a.pt",
+        "subject_to_id.json",
+    },
+}
 
 
-def gather_state_files(submission_dir: Path, extra_dirs: list[Path]) -> list[Path]:
-    """Return paths of state files (.pt, .npy, .json, .pkl) to include."""
-    files: list[Path] = []
+def gather_state_files(extra_dirs: list[Path], allowed_names: set[str]) -> list[Path]:
+    """Return runtime state files from include dirs, flattened by filename."""
+    files_by_name: dict[str, Path] = {}
     for d in extra_dirs:
         if not d.exists():
             print(f"WARN: include dir not found: {d}", file=sys.stderr)
             continue
-        for p in sorted(d.iterdir()):
-            if p.suffix in (".pt", ".npy", ".json", ".pkl"):
-                files.append(p)
-    return files
+        for p in sorted(d.rglob("*")):
+            if p.is_file() and p.name in allowed_names:
+                files_by_name[p.name] = p
+    return [files_by_name[name] for name in sorted(files_by_name)]
 
 
 def main(name: str, includes: list[Path], out_dir: Path) -> None:
@@ -55,12 +85,13 @@ def main(name: str, includes: list[Path], out_dir: Path) -> None:
     if zip_path.exists():
         zip_path.unlink()
 
-    state_files = gather_state_files(sub_dir, includes)
+    allowed_state_files = SUBMISSION_RUNTIME_STATE_FILES.get(name, RUNTIME_STATE_FILES)
+    state_files = gather_state_files(includes, allowed_state_files)
 
     print(f"Building {zip_path} ...")
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
         for p in sorted(sub_dir.iterdir()):
-            if p.is_file() and (p.name in REQUIRED or p.name in OPTIONAL or p.suffix in (".pt", ".npy", ".json", ".pkl")):
+            if p.is_file() and (p.name in REQUIRED or p.name in OPTIONAL or p.name in allowed_state_files):
                 z.write(p, p.name)
                 print(f"  + {p.name}")
         for p in state_files:
