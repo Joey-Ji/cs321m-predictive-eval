@@ -1,224 +1,246 @@
-# eval_comp — Predictive AI Evaluation Challenge
+# Starting Kit
 
-Stanford CS 321M team submission. 3 people, 12-day sprint, deadline **2026-05-22**.
+This starting kit supports the active code-submission path for the Predictive
+AI Evaluation Challenge.
 
-> Quick links: [`STARTER_KIT.md`](STARTER_KIT.md) — original competition spec · [`Predictive Evaluation Challenge.pdf`](Predictive%20Evaluation%20Challenge.pdf) — full problem statement.
+Download:
 
----
+- the starter kit from Codabench
+- the public training dataset from
+  `https://huggingface.co/datasets/aims-foundations/measurement-db`
 
-## What we're building
+The real competition materializes a hidden test slice at runtime. The active
+configuration samples 5000 hidden items per submission, stratified across data
+categories, and your `predict()` is called once per hidden subject-item pair.
+Codabench currently allows up to 50 scored submissions per team per calendar
+day (UTC).
 
-A `predict(input, labeled=None) -> float` that, given four text fields (benchmark, condition, subject_content, item_content), returns the probability that the AI subject answers the item correctly. **Test items are new**; test subjects are seen in training. Metric: mean log-likelihood.
+## Contents
 
-**Our pipeline** mirrors Truong et al. 2025 (ICML; arXiv:2503.13335) — the AIMS lab's own reference paper for this competition. Reported column-holdout AUC ≈ 0.804; that's our target.
-
-1. **Stage 1.** Fit Rasch IRT on training response matrix → `θ_s` per subject, `b_i` per item.
-2. **Stage 2a.** Sentence-transformer + small head learns `item_text → b̂`. Generalizes to new items.
-3. **Stage 2b.** Lookup `θ̂_s` for known subjects (test subjects are warm).
-4. **Stage 3.** Combine: `P = σ(θ̂ − b̂)`. Clip, return as Python float.
-
-Plus: adaptive labeling for online Platt calibration; optional LLM-judge ensemble (Day 5+ decision).
-
----
-
-## Quickstart
-
-```bash
-# 1. Install deps (uv-managed)
-uv sync
-
-# 2. Download training data once (needs HF auth + disk)
-make data
-
-# 3. For parallel dev BEFORE real Stage 1 fits:
-make irt-mock          # synthetic Stage 1 outputs in data/irt/
-
-# 4. Run the full v1 pipeline locally
-make irt               # Stage 1: Rasch IRT fit (overwrites data/irt/)
-make encode            # Stage 2a part 1: encode items
-make head              # Stage 2a part 2: train content head
-make submission NAME=v1_irt
-make smoke-test SUB=submissions/v1_irt
+```text
+starting_kit/
+  README.md
+  sample_code_submission/
+    model.py
+    labeling.py
+  templates/
+    hf_submission/
+    labeling_addon/
 ```
 
-`make help` lists all targets.
+## Loading The Public Training Data
 
----
+The HuggingFace repo is a collection of Parquet tables, not a single
+`datasets` split. Do **not** use:
 
-## Project structure
-
-```
-eval_comp/
-├── README.md              ← you are here
-├── STARTER_KIT.md         ← original competition spec (data format, submission contract)
-├── Makefile               ← workflow shortcuts
-├── pyproject.toml         ← uv-managed deps
-│
-├── src/                   ← shared library code
-│   └── validation.py      ← item-cold-start splits, log-likelihood + AUC scoring
-│
-├── scripts/               ← pipeline scripts (one per stage)
-│   ├── download_data.py   ← HF dataset → data/joined.parquet
-│   ├── eda.py             ← one-page data summary
-│   ├── fit_irt.py         ← Stage 1: Rasch/2PL IRT
-│   ├── mock_irt.py        ← Stage 1 mocks for parallel dev
-│   ├── encode_items.py    ← Stage 2a part 1: sentence-transformer encoding
-│   ├── train_content_head.py  ← Stage 2a part 2: text → IRT params regressor
-│   ├── build_submission.py    ← package a submission dir + state into a ZIP
-│   └── smoke_test.py      ← local CPU test of a submission's predict()
-│
-├── submissions/           ← one subdir per submission version (+ built ZIPs)
-│   ├── smoke_test/        ← constant 0.5 baseline (verifies pipeline)
-│   └── v1_irt/            ← Rasch + linear content head
-│
-├── tests/                 ← lightweight contract tests
-│   └── check_contract.py  ← verifies Stage 1 outputs match the schema Stage 2 expects
-│
-├── data/                  ← gitignored — generated artifacts
-│   ├── joined.parquet     ← four-field training rows (from download_data.py)
-│   ├── irt/               ← Stage 1 outputs (theta, b, log_a, lookups)
-│   ├── embeddings/        ← Stage 2a part 1 cache
-│   └── head/              ← Stage 2a part 2 weights
-│
-├── sample_code_submission/  ← starter-kit reference (minimal contract example)
-└── templates/               ← starter-kit reference (HF-loading patterns)
+```python
+load_dataset("aims-foundations/measurement-db")
 ```
 
----
+That shortcut lets HuggingFace auto-select files and may mix response tables
+with `*_traces.parquet` tables that have different schemas. Load the response
+tables explicitly and keep the registry tables separate:
 
-## Pipeline at a glance
+```python
+from datasets import Features, Value, load_dataset
+from huggingface_hub import HfApi
 
+REPO_ID = "aims-foundations/measurement-db"
+REGISTRY_FILES = {"subjects.parquet", "items.parquet", "benchmarks.parquet"}
+
+repo_files = HfApi().list_repo_files(repo_id=REPO_ID, repo_type="dataset")
+response_files = sorted(
+    name
+    for name in repo_files
+    if name.endswith(".parquet")
+    and name not in REGISTRY_FILES
+    and not name.endswith("_traces.parquet")
+)
+
+response_features = Features(
+    {
+        "subject_id": Value("string"),
+        "item_id": Value("string"),
+        "benchmark_id": Value("string"),
+        "trial": Value("int64"),
+        "test_condition": Value("string"),
+        "response": Value("float64"),
+        "correct_answer": Value("string"),
+        "trace": Value("string"),
+    }
+)
+
+responses = load_dataset(
+    REPO_ID,
+    data_files=response_files,
+    features=response_features,
+    split="train",
+)
+items = load_dataset(REPO_ID, data_files="items.parquet", split="train")
+subjects = load_dataset(REPO_ID, data_files="subjects.parquet", split="train")
+benchmarks = load_dataset(REPO_ID, data_files="benchmarks.parquet", split="train")
 ```
-download_data.py
-        │
-        ▼
-data/joined.parquet ─────────────────┐
-        │                            │
-        ▼                            ▼
-   scripts/eda.py            fit_irt.py  OR  mock_irt.py
-                                      │
-                                      ▼
-                            data/irt/{theta,b,log_a}.pt
-                            data/irt/{subject,item}_to_id.json
-                                      │
-                                      │              ┌─── encode_items.py ──→ data/embeddings/
-                                      │              │
-                                      └──────────────┴──→ train_content_head.py
-                                                                  │
-                                                                  ▼
-                                                          data/head/{head.pt, head_meta.json}
-                                                                  │
-                                                                  ▼
-                                                      build_submission.py NAME=v1_irt
-                                                                  │
-                                                                  ▼
-                                                      submissions/v1_irt.zip → upload
+
+To convert a response row into the shape your `predict()` function sees, join
+through the registry tables. The hosted runtime passes `subject_content` as a
+string beginning with a `Name:` line; optional metadata may be appended as
+additional lines when available.
+
+```python
+items_by_id = {row["item_id"]: row for row in items}
+subjects_by_id = {row["subject_id"]: row for row in subjects}
+benchmarks_by_id = {row["benchmark_id"]: row for row in benchmarks}
+
+
+def render_subject_content(subject, fallback_subject_id):
+    display_name = subject.get("display_name") or fallback_subject_id
+    lines = [f"Name: {display_name}"]
+    optional_fields = (
+        ("provider", "Organization"),
+        ("params", "Parameters"),
+        ("release_date", "Released"),
+        ("family", "Family"),
+    )
+    for key, label in optional_fields:
+        value = subject.get(key)
+        if value:
+            lines.append(f"{label}: {value}")
+    return "\n".join(lines)
+
+
+def to_training_example(row):
+    item = items_by_id.get(row["item_id"], {})
+    subject = subjects_by_id.get(row["subject_id"], {})
+    benchmark = benchmarks_by_id.get(row["benchmark_id"], {})
+    benchmark_id = benchmark.get("benchmark_id") or row["benchmark_id"]
+
+    return {
+        "benchmark": benchmark_id,
+        "condition": row["test_condition"] or "none",
+        "subject_content": render_subject_content(subject, row["subject_id"]),
+        "item_content": item.get("content"),
+        "label": row["response"],
+    }
 ```
 
----
+Use the public `benchmark_id` for the `benchmark` field to match hosted runtime
+inputs; `benchmarks.parquet["name"]` is human-readable metadata and may differ
+from the identifier passed to `predict()`.
 
-## Stage 1 ↔ Stage 2 contract (read before parallel work)
+Treat `subject_content` as text, not as a dict or a stable serialization of the
+full `subjects.parquet` row. At test time, extra metadata lines should be parsed
+defensively because they may be absent.
 
-Stage 2 (the content head) reads only two things from Stage 1:
+Some public response tables are binary and some are continuous/scored. For a
+binary correctness model, filter or transform `label` values to match your
+training objective. If you need raw model outputs, load the `*_traces.parquet`
+files separately; they intentionally do not have the same schema as the
+response tables.
 
-- `data/irt/b.pt` — `float32 [n_items]`, regression targets
-- `data/irt/item_to_id.json` — `dict[str, int]`, aligns embedding rows with IRT params
+## Which Starter To Use
 
-Everything else (`theta.pt`, `log_a.pt`, `subject_to_id.json`) is consumed only at inference by the submission's `model.py`, NOT by Stage 2 training.
+- `sample_code_submission/`
+  Minimal `model.py` plus an optional `labeling.py` example. Remove
+  `labeling.py` if you want the platform's default random label sample.
+- `templates/hf_submission/`
+  Local HuggingFace inference using repos declared in `models.txt`.
+- `templates/labeling_addon/`
+  Optional `labeling.py` example.
 
-**Parallel development pattern:**
+## Required Submission Contract
 
-1. Stage 2 dev runs `make irt-mock` → populates `data/irt/` with synthetic-but-correctly-shaped outputs.
-2. Builds + tests entire content-head + submission pipeline against the mocks.
-3. When real Stage 1 lands, just re-run `make head`. No code changes needed.
+Your ZIP must contain `model.py` with:
 
-**Breaking-change rule:** renaming or changing shape of `b.pt` / `item_to_id.json` needs both teams' explicit agreement. Going from 1PL to 2PL with joint `(b, log_a)` regression is a contract change (Stage 2 output dim becomes 2). See `scripts/train_content_head.py --targets b+log_a`.
+```python
+def predict(input: dict, labeled: list[dict] | None = None) -> float:
+    ...
+```
 
-Run `make test` after touching any of these to confirm the contract still holds.
+`input` keys:
 
----
+| key | meaning |
+| --- | --- |
+| `benchmark` | benchmark identifier (e.g. `mmlupro`, `ai2d_test`) |
+| `condition` | test condition (e.g. `zero-shot`); `"none"` when not applicable |
+| `subject_content` | description of the AI subject under evaluation, including a name line and any organizer-provided metadata |
+| `item_content` | the question/prompt/task text the subject is asked |
 
-## Ownership
+`predict()` returns a single float in `[0, 1]`: the predicted probability that
+the subject answers the item correctly.
 
-| Area | Files | Owner |
-|---|---|---|
-| Data + validation | `scripts/download_data.py`, `scripts/eda.py`, `src/validation.py` | _TBD_ |
-| Stage 1 (IRT) | `scripts/fit_irt.py`, `scripts/mock_irt.py` | _TBD_ |
-| Stage 2a (content head) | `scripts/encode_items.py`, `scripts/train_content_head.py`, `submissions/v1_irt/model.py` | **Joey** |
-| LLM-judge / adaptive labeling (Day 5+) | `submissions/v2_*/labeling.py`, `submissions/v2_*/model.py` | _TBD_ |
-| Report | `report/` (when we create it) | _TBD_ |
+Training data lives on the public HuggingFace dataset with the same four string
+input fields after joining the response tables to the registry tables shown
+above. Download it and preprocess it however you prefer before submitting.
 
-Fill in names after the first team meeting.
+Module-level code runs once when the container starts. Do all heavy setup
+(load weights, tokenizers, prompt templates, or lookup tables) at module init.
+Training must happen **offline**. Small fitted state should be baked into the
+submission ZIP; large checkpoints should be uploaded to a HuggingFace model
+repository and declared in `models.txt`.
 
----
+## Adaptive Labeling
 
-## 12-day calendar (high level)
+You may include `labeling.py` with:
 
-| Date | Day | Goal | Submission |
-|---|---|---|---|
-| 05-10 | 0 | Scaffold; smoke test | constant 0.5 (floor) |
-| 05-11 | 1 | Data + EDA + validation harness | per-benchmark majority class |
-| 05-12 | 2 | NCF baseline on Modal | NCF baseline |
-| 05-13 | 3 | Stage 1 IRT fit; Stage 2a head training | _(none — IRT lands tomorrow)_ |
-| 05-14 | 4 | IRT + content head end-to-end | v1_irt |
-| 05-15 | 5 | Adaptive labeling + Platt calibration | v1_irt + adaptive |
-| 05-16 | 6 | LLM-judge go/no-go (criteria below) | LLM-judge or IRT-v2 |
-| 05-17–18 | 7–8 | Ensemble work / few-shot judge | ensemble v1, v2 |
-| 05-19 | 9 | Failure-mode analysis; freeze weights | best ensemble |
-| 05-20 | 10 | **Report draft (hard gate)** | final tuning if any |
-| 05-21 | 11 | Polish + Gradescope upload | reserve |
-| 05-22 | 12 | **Final submission day** | final |
+```python
+def acquisition_function(input: dict) -> float:
+    ...
+```
 
-**Stop-loss criteria:**
-- Day 4: IRT + content-head must beat Day 2 NCF on validation log-likelihood, else debug the IRT fit.
-- Day 6 LLM-judge go: only if (a) IRT pipeline is within 0.05 mll of leaderboard top AND (b) engineer bandwidth available.
-- Day 10: report draft must exist by EOD. Modeling iteration freezes.
+`acquisition_function()` is called once per hidden `(model_id, item_id)` pair
+before `predict()`. Higher scores indicate pairs you want labeled more. The
+platform selects the top **K=5** inputs per data category, resolves their
+ground-truth labels, and passes them to `predict()` as the `labeled` argument: a
+list of dicts with the same shape as `input` plus a `label` field (0 or 1).
 
----
+If you don't include `labeling.py`, the platform reveals a default random sample
+per data category. If `acquisition_function()` raises an exception, times out,
+or returns a non-finite value for any candidate, the platform falls back to that
+same random-selection default for the round. Your `predict()` should handle the
+empty-list case cleanly.
 
-## Daily workflow
+## HuggingFace And GPU Routing
 
-1. `git pull --rebase`
-2. Make changes on a feature branch; open a PR for review.
-3. Before opening a PR:
-   - `make test` — sanity-checks the Stage 1↔2 contract.
-   - For submissions: `make smoke-test SUB=submissions/<name>` — verifies `predict()` returns proper floats.
-4. Before submitting to Codabench:
-   - Validate offline on the cold-start split (see `src/validation.py`).
-   - Confirm offline score beats current best. **Submission discipline rule:** no Codabench submit without an offline gain.
+If you need local HuggingFace repos, list them in `models.txt`. The platform
+pre-downloads those repos before participant code runs and routes the submission
+to the smallest GPU tier that fits the largest declared model. The active bundle
+allows at most `5` repos in `models.txt`.
 
----
+Active parameter bands:
 
-## Submission contract (Codabench)
+| Max params | Typical GPU tier | Tier timeout |
+| --- | --- | --- |
+| `<= 1B` | T4 | 30 min |
+| `<= 8B` | L4 | 30 min |
+| `<= 20B` | A100 | 30 min |
+| `<= 70B` | A100-4 or H100 | 60 min |
+| `<= 140B` | A100-8 | 60 min |
+| `<= 250B` | A100-mega | 60 min |
 
-ZIP must contain at the top level:
+Submissions above `300B` parameters or `1000 GB` total repository size are
+rejected during classification. Organizers may disable tiers operationally if
+capacity changes.
 
-- `model.py` (required) — defines `predict(input: dict, labeled: list[dict] | None = None) -> float`
-- `labeling.py` (optional) — defines `acquisition_function(input: dict) -> float`
-- `models.txt` (optional) — HF repos to pre-fetch (max 5; 300B params total)
-- `requirements.txt` (optional) — extra pip deps (organizer-controlled; usually disabled)
-- Any auxiliary state files (`.pt`, `.npy`, `.json`)
+If your code imports GPU or HuggingFace libraries but does not declare
+`models.txt`, the platform may still route it to a GPU tier based on source-code
+patterns. Do not rely on runtime HuggingFace downloads inside the submission
+container.
 
-Full details: `STARTER_KIT.md`. Submission contract spec: `Predictive Evaluation Challenge.pdf §3.3`.
+## Runtime Policy
 
----
+- submissions have **no outbound internet access** except the organizer's
+  internal data-service; calling third-party hosted LLM endpoints, remote
+  embedding services, external object storage, remote databases, webhooks, or
+  external cloud functions is blocked
+- `models.txt` guarantees that repo files are pre-downloaded, not that every
+  repo will load automatically
+- `trust_remote_code` is organizer-controlled and defaults to disabled in the
+  example deployment
+- additive submission `requirements.txt` support is organizer-controlled and
+  defaults to disabled in the example deployment
+- when additive dependency installs are enabled, normal named pip requirements
+  are accepted into a per-submission dependency layer; avoid pip options,
+  editable installs, and source-build-only packages
 
-## Gotchas (read before debugging)
-
-1. **`predict()` must return a native Python `float`**, not `numpy.float32` or `torch.Tensor`. CSV serialization fails otherwise. Wrap with `float(...)`.
-2. **Module-level init for everything heavy.** Encoders, weights, calibration caches load at import time. Loading inside `predict()` re-loads on every round.
-3. **No outbound network calls at test time.** Everything in the ZIP or declared in `models.txt`.
-4. **`acquisition_function` must never raise, time out, or return NaN/inf** — if it does, the whole round falls back to random sampling.
-5. **`subject_content` is text, not a dict.** Parse the `Name:` line; treat metadata lines as optional. Don't rely on raw-string equality for the subject lookup.
-6. **Filter binary labels.** Some training rows have continuous-scored labels; `download_data.py` filters these by default.
-
----
-
-## When in doubt
-
-- **What approach are we using?** → "What we're building" section above; details in `submissions/v1_irt/model.py`.
-- **How does my piece connect to the others?** → "Stage 1 ↔ Stage 2 contract" section above.
-- **What should I work on today?** → check the calendar above + your row in the ownership table.
-- **How do I add a new HF model?** → add repo to `submissions/<name>/models.txt` (max 5 total).
-- **My script broke something.** → `make test` and post the error in the team channel.
-- **What's the historical context / research?** → ask Joey (working notes live on the `dev` branch).
+The organizers provide the `torch_measure` package to facilitate measurement
+model implementation. Using it is not required.

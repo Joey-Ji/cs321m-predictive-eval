@@ -14,7 +14,9 @@
 
 ## Contract-breaking change?
 
-- [ ] No — touches only one stage; the file schema in `README.md §"Stage 1 ↔ Stage 2 contract"` is unchanged.
+The Stage 1 ↔ Stage 2 contract is the file schema written by `scripts/fit_irt.py` / `scripts/mock_irt.py` and consumed by `scripts/train_content_head.py` + `submissions/v1_irt/model.py`. Specifically: shapes of `data/irt/b.pt`, `data/irt/theta.pt`, `data/irt/log_a.pt`, and the keys in `data/irt/{subject,item}_to_id.json`.
+
+- [ ] No — touches only one stage; the file schema above is unchanged.
 - [ ] Yes — needs explicit sign-off from the other stage's owner. Briefly describe what breaks below.
 
 ## Notes
