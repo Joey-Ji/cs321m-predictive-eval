@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Next Steps — Stage 2 adaptation after PR #1</title>
+<style>
+  :root {
+    --ivory:    #FAF9F5;
+    --slate:    #141413;
+    --clay:     #D97757;
+    --oat:      #E3DACC;
+    --olive:    #788C5D;
+    --rust:     #B04A3F;
+    --gray-150: #F0EEE6;
+    --gray-300: #D1CFC5;
+    --gray-500: #87867F;
+    --gray-700: #3D3D3A;
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+    --sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono:  ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ivory);
+    color: var(--gray-700);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 56px 24px 120px;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { margin-bottom: 36px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-500); margin-bottom: 12px; }
+  h1 { font-family: var(--serif); font-weight: 500; font-size: 32px; line-height: 1.2; color: var(--slate); letter-spacing: -0.01em; margin-bottom: 14px; }
+  h2 { font-family: var(--serif); font-weight: 500; font-size: 22px; color: var(--slate); margin: 40px 0 14px; }
+  h3 { font-family: var(--sans); font-weight: 600; font-size: 14px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 10px; }
+  p { margin-bottom: 12px; max-width: 720px; }
+  strong { color: var(--slate); }
+  a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--clay); }
+  code { font-family: var(--mono); font-size: 13px; background: var(--gray-150); padding: 1px 5px; border-radius: 4px; color: var(--slate); }
+  pre { font-family: var(--mono); font-size: 13px; background: var(--slate); color: var(--gray-150); padding: 16px 18px; border-radius: 10px; overflow-x: auto; line-height: 1.55; margin: 14px 0; }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  ul, ol { margin: 0 0 14px 24px; }
+  li { margin-bottom: 6px; }
+  section { margin-bottom: 48px; }
+
+  .tldr-dark { background: var(--slate); color: var(--ivory); border-radius: 12px; padding: 22px 26px; margin-bottom: 32px; }
+  .tldr-dark .tldr-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--oat); margin-bottom: 10px; }
+  .tldr-dark b { color: var(--ivory); }
+  .tldr-dark p { color: var(--gray-150); margin-bottom: 8px; }
+  .tldr-dark p:last-child { margin-bottom: 0; }
+
+  .page-with-nav { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 48px; }
+  @media (max-width: 920px) { .page-with-nav { grid-template-columns: 1fr; } .page-with-nav nav.toc { display: none; } }
+  nav.toc { position: sticky; top: 32px; align-self: start; font-size: 13px; }
+  nav.toc .label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-500); margin-bottom: 12px; }
+  nav.toc a { display: block; padding: 5px 0 5px 12px; border-left: 2px solid var(--gray-300); color: var(--gray-700); text-decoration: none; }
+  nav.toc a:hover { color: var(--slate); border-color: var(--slate); }
+
+  .card { border: 1.5px solid var(--gray-300); border-radius: 12px; background: #fff; padding: 20px 24px; margin: 14px 0; }
+  .card .card-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-500); margin-bottom: 10px; }
+  .card h3 { font-family: var(--serif); font-weight: 500; font-size: 18px; color: var(--slate); margin: 0 0 12px; text-transform: none; letter-spacing: 0; }
+
+  .pill { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--sans); font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 11px; line-height: 1; vertical-align: middle; }
+  .pill.now   { background: var(--clay);     color: #fff; }
+  .pill.next  { background: var(--olive);    color: #fff; }
+  .pill.later { background: var(--gray-150); color: var(--gray-700); border: 1.5px solid var(--gray-300); }
+  .pill.warn  { background: var(--rust);     color: #fff; }
+
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--gray-300); vertical-align: top; }
+  th { font-family: var(--sans); font-weight: 600; color: var(--gray-500); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .risk-tag { display: inline-block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 6px; font-weight: 600; vertical-align: middle; }
+  .risk-tag.safe      { background: rgba(120,140,93,0.15);  color: var(--olive); }
+  .risk-tag.medium    { background: var(--oat);             color: #7A6A4F; }
+  .risk-tag.attention { background: rgba(217,119,87,0.15);  color: var(--clay); }
+
+  ol.steps { counter-reset: step; list-style: none; margin-left: 0; }
+  ol.steps li { counter-increment: step; padding-left: 36px; position: relative; margin-bottom: 10px; }
+  ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--gray-150); color: var(--gray-700); font-family: var(--mono); font-size: 12px; line-height: 26px; text-align: center; border: 1.5px solid var(--gray-300); }
+
+  .md-twin { display: inline-block; margin-top: 32px; font-family: var(--mono); font-size: 12px; color: var(--gray-500); border: 1.5px solid var(--gray-300); border-radius: 8px; padding: 8px 14px; text-decoration: none; background: #fff; }
+  .md-twin:hover { color: var(--slate); border-color: var(--slate); }
+</style>
+</head>
+<body>
+<div class="page-with-nav">
+  <nav class="toc">
+    <div class="label">Contents</div>
+    <a href="#tldr">Headline</a>
+    <a href="#changed">What changed</a>
+    <a href="#joey">Joey's path</a>
+    <a href="#scaffold">Parallel scaffold</a>
+    <a href="#risks">Risks</a>
+    <a href="#start">Where to start</a>
+  </nav>
+
+  <main>
+    <header id="tldr">
+      <p class="eyebrow">Implementation plan &middot; 2026-05-12</p>
+      <h1>Stage 2 adaptation after PR #1</h1>
+    </header>
+
+    <div class="tldr-dark">
+      <div class="tldr-label">Headline</div>
+      <p><b>Yiheng's K-factor MIRT (PR #1) is real Stage 1.</b> Formula: <code>logit = S<sub>i</sub> + U<sub>i</sub>&middot;V<sub>j</sub> + Z<sub>j</sub></code>, K=4, train acc 86.5%. Output schema is Parquet under <code>stage_1/k_factor_irt/artifacts/</code> &mdash; <em>not</em> the <code>.pt</code> layout my scaffold assumed.</p>
+      <p>Joey owns: schema reconciliation today &rarr; a <strong>Stage 1 adapter</strong> (decouples Stage 2 from Stage 1's variant) &rarr; adapt content-head + v1_irt submission to predict (V<sub>j</sub>, Z<sub>j</sub>) jointly &rarr; first real Codabench submission. Adapter is the parallelism unlock for the team.</p>
+    </div>
+
+    <section id="changed">
+      <h2>What changed</h2>
+
+      <div class="card">
+        <div class="card-label">PR #1 &middot; @devYaoYH</div>
+        <p>K-factor MIRT (K=4): per-subject scalar bias + K-dim vector, per-item K-dim loading vector + scalar difficulty. Subject &times; item interaction via dot product. More expressive than 1PL/Rasch.</p>
+        <p><strong>Artifacts:</strong></p>
+        <pre><code>stage_1/k_factor_irt/artifacts/k4_full_train/
+├── manifest.json
+├── subject_capabilities.parquet   # rows: subject_id, S_i, U_i (K-dim)
+└── item_parameters.parquet        # rows: item_id, V_j (K-dim), Z_j</code></pre>
+      </div>
+
+      <div class="card">
+        <div class="card-label">What breaks in our scaffold</div>
+        <table>
+          <thead><tr><th>File</th><th>Why it breaks</th></tr></thead>
+          <tbody>
+            <tr><td><code>scripts/train_content_head.py</code></td><td>Reads <code>.pt</code>; head out_dim = 1 or 2. Needs Parquet + K+1 output.</td></tr>
+            <tr><td><code>submissions/v1_irt/model.py</code></td><td>Combines <code>&sigma;(&theta;&minus;b)</code>. Needs bilinear <code>&sigma;(S + U&middot;V + Z)</code>.</td></tr>
+            <tr><td><code>scripts/mock_irt.py</code></td><td>Writes <code>.pt</code> in 1PL/2PL shape. Needs Parquet in K-factor shape.</td></tr>
+            <tr><td><code>tests/check_contract.py</code></td><td>Checks <code>.pt</code> schema. Needs Parquet + manifest checks.</td></tr>
+            <tr><td><code>scripts/build_submission.py</code></td><td>Default <code>--include</code> paths are stale.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="joey">
+      <h2>Joey's path (in order)</h2>
+      <ol class="steps">
+        <li><strong><span class="pill now">today</span> Schema reconciliation.</strong> Pull PR #1, inspect parquet column types + <code>manifest.json</code>. Sync with Yiheng on: is K fixed? where do future runs write? does manifest include K + model_type + encoder version? Document the agreed schema in the artifacts/<run>/README.</li>
+        <li><strong><span class="pill now">today</span> Stage 1 adapter.</strong> <code>src/stage1_adapter.py</code> &mdash; single API surface: <code>load_manifest()</code>, <code>load_subjects() &rarr; (subject_to_id, S, U)</code>, <code>load_items() &rarr; (item_to_id, V, Z)</code>. Every Stage 2 file imports through this; future Stage 1 changes touch only the adapter.</li>
+        <li><strong><span class="pill next">day 1</span> Update mocks + contract test.</strong> <code>mock_irt.py</code> writes Parquet matching the new schema (with <code>--k</code> flag); <code>check_contract.py</code> validates Parquet shape + manifest. <code>make irt-mock &amp;&amp; make test</code> green before touching the head.</li>
+        <li><strong><span class="pill next">day 1</span> Rewrite <code>train_content_head.py</code>.</strong> Read targets via adapter; head out_dim = <code>K + 1</code>; MSE on full (V, Z) target. Per-dim val R&sup2; reported in <code>head_meta.json</code>.</li>
+        <li><strong><span class="pill next">day 1-2</span> Rewrite <code>submissions/v1_irt/model.py</code>.</strong> Module init loads encoder + head + manifest + subject params. <code>predict()</code>: normalize subject &rarr; lookup (S, U); encode item &rarr; head &rarr; split into (V_hat, Z_hat); combine <code>&sigma;(S + U&middot;V_hat + Z_hat)</code>; clip + native float.</li>
+        <li><strong><span class="pill later">day 2</span> End-to-end + first real submission.</strong> Run against K=4 artifacts. Smoke-test. Submit. Expect: meaningful jump above the 0.5 floor.</li>
+      </ol>
+    </section>
+
+    <section id="scaffold">
+      <h2>How the scaffold enables parallel work</h2>
+
+      <div class="card">
+        <div class="card-label">The key decoupling</div>
+        <h3>Stage 1 adapter</h3>
+        <p><code>src/stage1_adapter.py</code> is the <strong>only file</strong> in Stage 2 that knows about Stage 1's storage format. When Yiheng iterates (K=4 &rarr; K=8, or swaps to <code>fit_mlp_irt.py</code>), only the adapter changes. Trainer, inference, tests stay untouched.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Submissions directory pattern</div>
+        <p>One subdir per variant. Independent. Nobody blocks anyone.</p>
+        <pre>submissions/
+├── smoke_test/             (floor)
+├── v1_irt_k4/              Joey  &middot; first real
+├── v2_irt_k4_mlp/          Joey  &middot; MLP head iteration
+├── v3_irt_k8/              Joey  &middot; after Yiheng's K=8
+├── v4_llm_judge_zs/        C     &middot; zero-shot judge
+├── v4_llm_judge_fs/        C     &middot; few-shot w/ labeled
+└── final_ensemble/         joint &middot; log-mixture</pre>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Manifest-driven config</div>
+        <p><code>manifest.json</code> carries K, model type, run name, encoder. Stage 2 reads it and configures itself &mdash; no hardcoded constants. Avoids invisible coupling when K changes.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">CI + submission discipline</div>
+        <p><code>tests/check_contract.py</code> gates every PR via the existing GH Actions workflow. A schema-break PR shows red before review. Plus: <strong>no Codabench submit without an offline-validation gain</strong> &mdash; prevents the team from racing on the leaderboard and burning the 1000-total cap.</p>
+      </div>
+    </section>
+
+    <section id="risks">
+      <h2>Risks</h2>
+      <table>
+        <thead><tr><th>Risk</th><th>L</th><th>I</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>Yiheng iterates Stage 1 schema again</td><td><span class="risk-tag medium">M</span></td><td><span class="risk-tag medium">M</span></td><td>Adapter absorbs it; only <code>stage1_adapter.py</code> changes</td></tr>
+          <tr><td>Content head can't predict K-dim V<sub>j</sub> accurately</td><td><span class="risk-tag medium">M</span></td><td><span class="risk-tag attention">H</span></td><td>Inspect per-dim R&sup2;; fallback to Z-only if V dims are noisy</td></tr>
+          <tr><td>Subject-name normalization disagrees across stages</td><td><span class="risk-tag medium">M</span></td><td><span class="risk-tag attention">H</span></td><td>Pin one <code>normalize_subject()</code> in the adapter; both stages call it</td></tr>
+          <tr><td>K=4 overfits vs simpler Rasch</td><td><span class="risk-tag medium">M</span></td><td><span class="risk-tag medium">M</span></td><td>Compare validation mll vs. K=1; fall back if K=4 doesn't help</td></tr>
+          <tr><td>Two teammates push to same submissions/ subdir</td><td><span class="risk-tag safe">L</span></td><td><span class="risk-tag medium">M</span></td><td>One owner per directory; doc in README</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="start">
+      <h2>Where to start</h2>
+      <p>First commit today: <code>git checkout -b joey/stage1-adapter</code>, write <code>src/stage1_adapter.py</code> against PR #1's parquet outputs, ship a PR. Everything else flows from that.</p>
+
+      <a class="md-twin" href="next-steps.md">Read full version &rarr; next-steps.md</a>
+    </section>
+  </main>
+</div>
+</body>
+</html>
