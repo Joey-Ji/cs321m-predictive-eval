@@ -20,7 +20,7 @@ import torch.nn as nn
 
 try:
     from src.features import FEATURE_TEXT_VERSION, build_item_feature_text
-except Exception:
+except ImportError:
     FEATURE_TEXT_VERSION = "benchmark_condition_item_v1"
 
     def _clean_field(value) -> str:

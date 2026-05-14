@@ -24,7 +24,7 @@ import torch.nn as nn
 
 try:
     from src.features import RAW_ITEM_TEXT_VERSION
-except Exception:
+except ImportError:
     RAW_ITEM_TEXT_VERSION = "item_content_v1"
 
 EPS = 1e-6

@@ -182,7 +182,7 @@ def main(
                 "encoder": enc_meta.get("encoder"),
                 "encoder_dim": enc_meta.get("dim"),
                 "feature_text_version": enc_meta.get("feature_text_version"),
-                "max_chars": enc_meta.get("max_chars"),
+                "max_chars": enc_meta.get("max_chars", 4000),
                 "val_frac": val_frac,
                 "seed": seed,
                 "split": "item-cold",
