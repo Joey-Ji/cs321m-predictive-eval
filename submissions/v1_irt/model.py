@@ -40,6 +40,12 @@ def _normalize_subject(subject_content: str) -> str:
 
 ROOT = Path(__file__).parent
 META = json.loads((ROOT / "head_meta.json").read_text())
+FEATURE_TEXT_VERSION = META.get("feature_text_version", "item_content_v1")
+if FEATURE_TEXT_VERSION != "item_content_v1":
+    raise ValueError(
+        f"v1_irt encodes raw item_content at runtime, but head_meta.json has "
+        f"feature_text_version={FEATURE_TEXT_VERSION!r}. Rebuild the IRT head with raw item_content embeddings."
+    )
 ENCODER_REPO = META["encoder"]
 HEAD_TYPE = META["head_type"]
 HIDDEN = int(META.get("hidden", 256))

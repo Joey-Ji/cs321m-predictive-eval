@@ -3,22 +3,19 @@
 from __future__ import annotations
 
 import math
+from numbers import Real
 from typing import Any
 
 FEATURE_TEXT_VERSION = "benchmark_condition_item_v1"
+RAW_ITEM_TEXT_VERSION = "item_content_v1"
 
 
 def _clean_field(value: Any) -> str:
     """Convert common missing/null sentinels into stable empty strings."""
     if value is None:
         return ""
-    if isinstance(value, float) and math.isnan(value):
+    if isinstance(value, Real) and math.isnan(float(value)):
         return ""
-    try:
-        if value is not value:
-            return ""
-    except Exception:
-        pass
     return str(value)
 
 

@@ -111,7 +111,7 @@ MAX_CHARS = int(HEAD_META.get("max_chars", 4000))
 if HEAD_META.get("feature_text_version") not in (None, FEATURE_TEXT_VERSION):
     raise ValueError(
         f"runtime feature text version {FEATURE_TEXT_VERSION!r} does not match "
-        f"head version {HEAD_META.get('feature_text_version')!r}"
+        f"head version {HEAD_META.get('feature_text_version')!r}; rebuild the submission with current src/features.py"
     )
 
 IN_DIM = int(HEAD_META["in_dim"])

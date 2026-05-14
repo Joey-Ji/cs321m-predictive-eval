@@ -86,16 +86,16 @@ head-2pl:
 kfactor-fixture:
 	uv run python scripts/make_kfactor_fixture.py --out data/fixtures/kfactor
 
-test-kfactor:
+test-kfactor: kfactor-fixture
 	uv run python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1
 
-kfactor-encode-dummy:
-	uv run python scripts/encode_items.py --joined data/fixtures/kfactor/joined.parquet --out data/fixtures/kfactor/embeddings --encoder dummy --dummy-dim 8
+kfactor-encode-dummy: kfactor-fixture
+	uv run python scripts/encode_items.py --joined data/fixtures/kfactor/joined.parquet --out data/fixtures/kfactor/embeddings --encoder dummy --dummy-dim 8 --feature-text-version benchmark_condition_item_v1
 
-kfactor-head:
+kfactor-head: kfactor-encode-dummy
 	uv run python scripts/train_kfactor_head.py --stage1 data/fixtures/kfactor/stage1 --emb data/fixtures/kfactor/embeddings --out data/fixtures/kfactor/stage2 --head linear --epochs 5 --val-frac 0.2
 
-kfactor-eval:
+kfactor-eval: kfactor-head
 	uv run python scripts/evaluate_stage2.py --joined data/fixtures/kfactor/joined.parquet --stage1 data/fixtures/kfactor/stage1 --stage2 data/fixtures/kfactor/stage2 --emb data/fixtures/kfactor/embeddings
 
 submission:

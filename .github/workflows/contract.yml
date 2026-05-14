@@ -56,3 +56,9 @@ jobs:
 
       - name: Run contract check
         run: uv run python tests/check_contract.py
+
+      - name: Generate K-factor fixture
+        run: uv run python tests/check_kfactor_contract.py --make-fixture data/fixtures/kfactor
+
+      - name: Run K-factor contract check
+        run: uv run python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1

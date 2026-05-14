@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.features import FEATURE_TEXT_VERSION
 from src.kfactor import load_item_targets, validation_item_ids
 
 
@@ -75,6 +76,11 @@ def main(
     item_id_order = [str(iid) for iid in json.loads((emb_dir / "item_id_order.json").read_text())]
     embeddings = np.load(emb_dir / "item_embeddings.npy").astype(np.float32)
     enc_meta = json.loads((emb_dir / "encoder_meta.json").read_text())
+    if enc_meta.get("feature_text_version") != FEATURE_TEXT_VERSION:
+        raise ValueError(
+            f"K-factor head requires embeddings with feature_text_version={FEATURE_TEXT_VERSION!r}; "
+            f"got {enc_meta.get('feature_text_version')!r}"
+        )
     if embeddings.ndim != 2 or embeddings.shape[0] != len(item_id_order):
         raise ValueError(f"embedding shape {embeddings.shape} inconsistent with {len(item_id_order)} item IDs")
 
