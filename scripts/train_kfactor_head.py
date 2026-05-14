@@ -76,6 +76,7 @@ def main(
     item_id_order = [str(iid) for iid in json.loads((emb_dir / "item_id_order.json").read_text())]
     embeddings = np.load(emb_dir / "item_embeddings.npy").astype(np.float32)
     enc_meta = json.loads((emb_dir / "encoder_meta.json").read_text())
+    # K-factor is new, so require the enriched benchmark/condition/item text explicitly.
     if enc_meta.get("feature_text_version") != FEATURE_TEXT_VERSION:
         raise ValueError(
             f"K-factor head requires embeddings with feature_text_version={FEATURE_TEXT_VERSION!r}; "
@@ -181,6 +182,7 @@ def main(
                 "encoder": enc_meta.get("encoder"),
                 "encoder_dim": enc_meta.get("dim"),
                 "feature_text_version": enc_meta.get("feature_text_version"),
+                "max_chars": enc_meta.get("max_chars"),
                 "val_frac": val_frac,
                 "seed": seed,
                 "split": "item-cold",

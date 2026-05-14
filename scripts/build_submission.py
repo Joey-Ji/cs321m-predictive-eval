@@ -108,7 +108,7 @@ def main(name: str, includes: list[Path] | None, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     zip_path = out_dir / f"{name}.zip"
 
-    if includes is None:
+    if not includes:
         includes = [Path(p) for p in SUBMISSION_DEFAULT_INCLUDES.get(name, ["data/head", "data/irt"])]
 
     allowed_state_files = SUBMISSION_RUNTIME_STATE_FILES.get(name, RUNTIME_STATE_FILES)

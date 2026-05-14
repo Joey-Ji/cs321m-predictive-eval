@@ -79,6 +79,7 @@ def main(
     item_id_order = json.loads((emb_dir / "item_id_order.json").read_text())
     embeddings = np.load(emb_dir / "item_embeddings.npy")
     enc_meta = json.loads((emb_dir / "encoder_meta.json").read_text())
+    # Older IRT embedding runs predate feature_text_version and used raw item_content.
     if enc_meta.get("feature_text_version") not in (None, RAW_ITEM_TEXT_VERSION):
         raise ValueError(
             f"IRT content head expects raw item text embeddings ({RAW_ITEM_TEXT_VERSION}); "
