@@ -1,0 +1,5 @@
+outputs/
+*.pt
+*.bin
+*.safetensors
+*.npy

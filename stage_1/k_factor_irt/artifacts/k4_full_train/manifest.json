@@ -1,0 +1,17 @@
+{
+  "model": "plain K-dimensional logistic MIRT / K-factor IRT",
+  "k": 4,
+  "source_output_dir": "stage_1/k_factor_irt/outputs/full_train_k4_lr005",
+  "n_subjects": 909,
+  "n_items": 70873,
+  "n_train_rows": 4443797,
+  "val_frac": 0.0,
+  "train_log_loss": 0.29185475477819145,
+  "train_accuracy": 0.8650408648279838,
+  "loss": "BCEWithLogitsLoss over S_i + U_i dot V_j + Z_j",
+  "optimizer": "SparseAdam",
+  "files": {
+    "subject_capabilities": "stage_1/k_factor_irt/artifacts/k4_full_train/subject_capabilities.parquet",
+    "item_parameters": "stage_1/k_factor_irt/artifacts/k4_full_train/item_parameters.parquet"
+  }
+}
