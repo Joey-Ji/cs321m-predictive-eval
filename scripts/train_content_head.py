@@ -27,6 +27,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.features import RAW_ITEM_TEXT_VERSION
+
 
 def build_head(in_dim: int, out_dim: int, head_type: str, hidden: int):
     import torch.nn as nn
@@ -77,6 +79,12 @@ def main(
     item_id_order = json.loads((emb_dir / "item_id_order.json").read_text())
     embeddings = np.load(emb_dir / "item_embeddings.npy")
     enc_meta = json.loads((emb_dir / "encoder_meta.json").read_text())
+    # Older IRT embedding runs predate feature_text_version and used raw item_content.
+    if enc_meta.get("feature_text_version") not in (None, RAW_ITEM_TEXT_VERSION):
+        raise ValueError(
+            f"IRT content head expects raw item text embeddings ({RAW_ITEM_TEXT_VERSION}); "
+            f"got {enc_meta.get('feature_text_version')!r}"
+        )
 
     rows = []
     for row_idx, iid in enumerate(item_id_order):
@@ -145,6 +153,7 @@ def main(
                 "targets": targets,                 # "b" or "b+log_a"
                 "target_order": ["b"] if out_dim == 1 else ["b", "log_a"],
                 "encoder": enc_meta["encoder"],
+                "feature_text_version": enc_meta.get("feature_text_version", RAW_ITEM_TEXT_VERSION),
                 "n_train": int(len(X_train)),
                 "n_val": int(len(X_val)),
                 "val_mse": float(np.mean(per_dim_mse)),
@@ -164,7 +173,7 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--irt", default="data/irt", type=Path)
-    parser.add_argument("--emb", default="data/embeddings", type=Path)
+    parser.add_argument("--emb", default="data/embeddings/mpnet_v1", type=Path)
     parser.add_argument("--out", default="data/head", type=Path)
     parser.add_argument("--head", choices=("linear", "mlp"), default="linear")
     parser.add_argument("--hidden", type=int, default=256)

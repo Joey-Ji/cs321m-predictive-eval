@@ -22,6 +22,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+try:
+    from src.features import RAW_ITEM_TEXT_VERSION
+except ImportError:
+    RAW_ITEM_TEXT_VERSION = "item_content_v1"
+
 EPS = 1e-6
 CLIP_LO, CLIP_HI = 0.02, 0.98
 NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE)
@@ -40,6 +45,12 @@ def _normalize_subject(subject_content: str) -> str:
 
 ROOT = Path(__file__).parent
 META = json.loads((ROOT / "head_meta.json").read_text())
+HEAD_FEATURE_TEXT_VERSION = META.get("feature_text_version", RAW_ITEM_TEXT_VERSION)
+if HEAD_FEATURE_TEXT_VERSION != RAW_ITEM_TEXT_VERSION:
+    raise ValueError(
+        f"v1_irt encodes raw item_content at runtime, but head_meta.json has "
+        f"feature_text_version={HEAD_FEATURE_TEXT_VERSION!r}. Rebuild the IRT head with raw item_content embeddings."
+    )
 ENCODER_REPO = META["encoder"]
 HEAD_TYPE = META["head_type"]
 HIDDEN = int(META.get("hidden", 256))
