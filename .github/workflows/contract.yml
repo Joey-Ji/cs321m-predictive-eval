@@ -84,3 +84,16 @@ jobs:
 
       - name: Run K-factor Stage 2 contract check
         run: uv run python tests/check_kfactor_contract.py --stage2 data/fixtures/kfactor/stage2
+
+      - name: Generate K-factor Stage 1 parquet fixture
+        run: uv run python scripts/make_kfactor_stage1_fixture.py --out data/fixtures/kfactor/stage1_parquet
+
+      - name: Export K-factor Stage 1 contract from parquet fixture
+        run: |
+          uv run python scripts/export_kfactor_stage1.py \
+            --subject-parquet data/fixtures/kfactor/stage1_parquet/subject_capabilities.parquet \
+            --item-parquet data/fixtures/kfactor/stage1_parquet/item_parameters.parquet \
+            --out-dir data/stage1/kfactor_k4/
+
+      - name: Run exported K-factor Stage 1 contract check
+        run: uv run python tests/check_kfactor_contract.py --stage1 data/stage1/kfactor_k4/

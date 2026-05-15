@@ -13,6 +13,7 @@ import argparse
 import json
 import math
 import sys
+import warnings
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -28,17 +29,39 @@ REQUIRED_STAGE1_FILES = {
 }
 
 
-def _is_contiguous(mapping: dict, n: int) -> bool:
-    return sorted(mapping.values()) == list(range(n))
+def _check_contiguous_mapping(name: str, mapping: object, n: int, errs: list[str]) -> None:
+    if not isinstance(mapping, dict):
+        errs.append(f"{name} must be a JSON object, got {type(mapping).__name__}")
+        return
+    values = list(mapping.values())
+    if not all(isinstance(value, int) and not isinstance(value, bool) for value in values):
+        errs.append(f"{name} ids must all be integers")
+        return
+    if sorted(values) != list(range(n)):
+        errs.append(f"{name} ids must be contiguous 0..{n - 1}")
 
 
-def _load_pt(path: Path):
+def _load_pt(path: Path, errs: list[str]):
     import torch
 
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        try:
+            obj = torch.load(path, map_location="cpu", weights_only=True)
+        except TypeError:
+            obj = torch.load(path, map_location="cpu")
+    if caught:
+        first = str(caught[0].message)
+        errs.append(f"{path.name} emitted warning while loading: {first}")
+    return obj
+
+
+def _load_json(path: Path, errs: list[str]) -> object:
     try:
-        return torch.load(path, map_location="cpu", weights_only=True)
-    except TypeError:
-        return torch.load(path, map_location="cpu")
+        return json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        errs.append(f"{path.name} failed to parse as JSON: {exc}")
+        return {}
 
 
 def _check_finite_tensor(name: str, tensor, errs: list[str]) -> None:
@@ -61,11 +84,19 @@ def check_stage1(stage1_dir: Path) -> list[str]:
     if errs:
         return errs
 
-    subject_state = _load_pt(stage1_dir / "subject_state.pt")
-    item_targets = _load_pt(stage1_dir / "item_targets.pt")
-    subject_to_id = json.loads((stage1_dir / "subject_to_id.json").read_text())
-    subject_name_to_id = json.loads((stage1_dir / "subject_name_to_id.json").read_text())
-    item_to_id = json.loads((stage1_dir / "item_to_id.json").read_text())
+    subject_state = _load_pt(stage1_dir / "subject_state.pt", errs)
+    item_targets = _load_pt(stage1_dir / "item_targets.pt", errs)
+    subject_to_id = _load_json(stage1_dir / "subject_to_id.json", errs)
+    subject_name_to_id = _load_json(stage1_dir / "subject_name_to_id.json", errs)
+    item_to_id = _load_json(stage1_dir / "item_to_id.json", errs)
+    manifest = _load_json(stage1_dir / "manifest.json", errs)
+
+    if not isinstance(subject_state, dict):
+        errs.append(f"subject_state.pt must load to dict, got {type(subject_state).__name__}")
+    if not isinstance(item_targets, dict):
+        errs.append(f"item_targets.pt must load to dict, got {type(item_targets).__name__}")
+    if errs:
+        return errs
 
     for key in ("subject_bias", "subject_u", "fallback_bias", "fallback_u"):
         if key not in subject_state:
@@ -83,12 +114,30 @@ def check_stage1(stage1_dir: Path) -> list[str]:
     item_v = item_targets["item_v"]
     item_z = item_targets["item_z"]
 
+    for name, tensor in (
+        ("subject_bias", subject_bias),
+        ("subject_u", subject_u),
+        ("fallback_u", fallback_u),
+        ("item_v", item_v),
+        ("item_z", item_z),
+    ):
+        if not torch.is_tensor(tensor):
+            errs.append(f"{name} must be a tensor, got {type(tensor).__name__}")
+    if torch.is_tensor(fallback_bias):
+        pass
+    elif not isinstance(fallback_bias, (int, float)):
+        errs.append(f"fallback_bias must be a scalar tensor or python float, got {type(fallback_bias).__name__}")
+    if errs:
+        return errs
+
     if subject_bias.dtype != torch.float32 or subject_bias.ndim != 1:
         errs.append(f"subject_bias must be float32 [n_subjects], got {subject_bias.dtype} {tuple(subject_bias.shape)}")
     if subject_u.dtype != torch.float32 or subject_u.ndim != 2:
         errs.append(f"subject_u must be float32 [n_subjects, k], got {subject_u.dtype} {tuple(subject_u.shape)}")
     if fallback_u.dtype != torch.float32 or fallback_u.ndim != 1:
         errs.append(f"fallback_u must be float32 [k], got {fallback_u.dtype} {tuple(fallback_u.shape)}")
+    if torch.is_tensor(fallback_bias) and fallback_bias.dtype != torch.float32:
+        errs.append(f"fallback_bias tensor must be float32, got {fallback_bias.dtype}")
     if item_v.dtype != torch.float32 or item_v.ndim != 2:
         errs.append(f"item_v must be float32 [n_items, k], got {item_v.dtype} {tuple(item_v.shape)}")
     if item_z.dtype != torch.float32 or item_z.ndim != 1:
@@ -99,6 +148,8 @@ def check_stage1(stage1_dir: Path) -> list[str]:
 
     n_subjects, k = subject_u.shape
     n_items = item_v.shape[0]
+    if k != 4:
+        errs.append(f"K-factor v1 expects k=4, got {k}")
     if subject_bias.shape != (n_subjects,):
         errs.append(f"subject_bias length {len(subject_bias)} != subject_u rows {n_subjects}")
     if fallback_u.shape != (k,):
@@ -125,19 +176,31 @@ def check_stage1(stage1_dir: Path) -> list[str]:
     ):
         _check_finite_tensor(name, tensor, errs)
 
-    if len(subject_to_id) != n_subjects:
+    if isinstance(subject_to_id, dict) and len(subject_to_id) != n_subjects:
         errs.append(f"subject_to_id size {len(subject_to_id)} != n_subjects {n_subjects}")
-    if len(subject_name_to_id) != n_subjects:
+    if isinstance(subject_name_to_id, dict) and len(subject_name_to_id) != n_subjects:
         errs.append(f"subject_name_to_id size {len(subject_name_to_id)} != n_subjects {n_subjects}")
-    if len(item_to_id) != n_items:
+    if isinstance(item_to_id, dict) and len(item_to_id) != n_items:
         errs.append(f"item_to_id size {len(item_to_id)} != n_items {n_items}")
 
-    if not _is_contiguous(subject_to_id, n_subjects):
-        errs.append("subject_to_id ids must be contiguous 0..n_subjects-1")
-    if not _is_contiguous(subject_name_to_id, n_subjects):
-        errs.append("subject_name_to_id ids must be contiguous 0..n_subjects-1")
-    if not _is_contiguous(item_to_id, n_items):
-        errs.append("item_to_id ids must be contiguous 0..n_items-1")
+    _check_contiguous_mapping("subject_to_id", subject_to_id, n_subjects, errs)
+    _check_contiguous_mapping("subject_name_to_id", subject_name_to_id, n_subjects, errs)
+    _check_contiguous_mapping("item_to_id", item_to_id, n_items, errs)
+
+    manifest_required = {"command", "git_sha", "n_subjects", "n_items", "k"}
+    if not isinstance(manifest, dict):
+        errs.append(f"manifest.json must be a JSON object, got {type(manifest).__name__}")
+    else:
+        missing_manifest = sorted(manifest_required - set(manifest))
+        if missing_manifest:
+            errs.append(f"manifest.json missing keys: {missing_manifest}")
+        else:
+            if int(manifest["n_subjects"]) != n_subjects:
+                errs.append(f"manifest n_subjects {manifest['n_subjects']} != {n_subjects}")
+            if int(manifest["n_items"]) != n_items:
+                errs.append(f"manifest n_items {manifest['n_items']} != {n_items}")
+            if int(manifest["k"]) != k:
+                errs.append(f"manifest k {manifest['k']} != {k}")
 
     print(f"  K-factor Stage 1: subjects={n_subjects:,} items={n_items:,} k={k}")
     return errs
