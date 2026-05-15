@@ -6,6 +6,8 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE)
@@ -16,6 +18,17 @@ def normalize_subject(subject_content: str) -> str:
         return ""
     m = NAME_LINE.search(subject_content)
     return m.group(1).strip().lower() if m else subject_content.strip().lower()
+
+
+def _git_sha() -> str | None:
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
 
 
 def main(out_dir: Path, seed: int, n_subjects: int, n_items: int, k: int) -> None:
@@ -92,7 +105,9 @@ def main(out_dir: Path, seed: int, n_subjects: int, n_items: int, k: int) -> Non
     (stage1_dir / "manifest.json").write_text(
         json.dumps(
             {
+                "command": sys.argv,
                 "fixture": True,
+                "git_sha": _git_sha(),
                 "seed": seed,
                 "n_subjects": n_subjects,
                 "n_items": n_items,

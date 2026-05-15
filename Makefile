@@ -1,4 +1,4 @@
-.PHONY: help install data eda irt irt-2pl irt-mock irt-mock-2pl encode encode-bge head head-mlp head-2pl kfactor-fixture test-kfactor kfactor-encode-dummy kfactor-head kfactor-eval submission smoke-test test test-quick clean clean-state list
+.PHONY: help install data eda irt irt-2pl irt-mock irt-mock-2pl encode encode-bge head head-mlp head-2pl kfactor-export kfactor kfactor-fixture test-kfactor kfactor-encode-dummy kfactor-head kfactor-eval submission smoke-test test test-quick clean clean-state list
 
 # Default encoder for encode_items.py; override with `make encode ENCODER=...`
 ENCODER ?= sentence-transformers/all-mpnet-base-v2
@@ -27,6 +27,8 @@ help:
 	@echo "    make head-2pl             Train MLP head, --targets b+log_a (2PL)"
 	@echo ""
 	@echo "  K-factor Stage 2:"
+	@echo "    make kfactor-export       Export committed K=4 Stage 1 parquets -> data/stage1/kfactor_k4/"
+	@echo "    make kfactor              Alias for kfactor-export"
 	@echo "    make kfactor-fixture      Generate synthetic K-factor fixture"
 	@echo "    make test-kfactor         Validate K-factor Stage 1 contract"
 	@echo "    make kfactor-encode-dummy Encode fixture items with deterministic dummy encoder"
@@ -82,6 +84,14 @@ head-mlp:
 
 head-2pl:
 	uv run python scripts/train_content_head.py --head mlp --targets b+log_a --epochs 200
+
+kfactor-export:
+	python scripts/export_kfactor_stage1.py \
+	  --subject-parquet stage_1/k_factor_irt/artifacts/k4_full_train/subject_capabilities.parquet \
+	  --item-parquet    stage_1/k_factor_irt/artifacts/k4_full_train/item_parameters.parquet \
+	  --out-dir         data/stage1/kfactor_k4/
+
+kfactor: kfactor-export
 
 kfactor-fixture:
 	uv run python scripts/make_kfactor_fixture.py --out data/fixtures/kfactor
