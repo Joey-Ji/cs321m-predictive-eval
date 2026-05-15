@@ -35,6 +35,7 @@ RUNTIME_STATE_FILES = {
     "target_scaler.json",
     "subject_state.pt",
     "subject_name_to_id.json",
+    "side_feature_meta.json",
     "calibration.json",
 }
 SUBMISSION_RUNTIME_STATE_FILES = {
@@ -44,6 +45,7 @@ SUBMISSION_RUNTIME_STATE_FILES = {
         "target_scaler.json",
         "subject_state.pt",
         "subject_name_to_id.json",
+        "side_feature_meta.json",
         "calibration.json",
     },
     "v1_irt": {
@@ -61,6 +63,7 @@ SUBMISSION_REQUIRED_STATE_FILES = {
         "target_scaler.json",
         "subject_state.pt",
         "subject_name_to_id.json",
+        "side_feature_meta.json",
     },
     "v1_irt": {
         "head.pt",

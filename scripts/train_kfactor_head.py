@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.features import FEATURE_TEXT_VERSION
+from src.features import EMBEDDING_REPRESENTATION_VERSION, REPRESENTATION_VERSION
 from src.kfactor import load_item_targets, validation_item_ids
 
 
@@ -76,14 +76,26 @@ def main(
     item_id_order = [str(iid) for iid in json.loads((emb_dir / "item_id_order.json").read_text())]
     embeddings = np.load(emb_dir / "item_embeddings.npy").astype(np.float32)
     enc_meta = json.loads((emb_dir / "encoder_meta.json").read_text())
-    # K-factor is new, so require the enriched benchmark/condition/item text explicitly.
-    if enc_meta.get("feature_text_version") != FEATURE_TEXT_VERSION:
+    # K-factor expects content-only embeddings; benchmark/condition enter as side features.
+    if enc_meta.get("representation_version") != EMBEDDING_REPRESENTATION_VERSION:
         raise ValueError(
-            f"K-factor head requires embeddings with feature_text_version={FEATURE_TEXT_VERSION!r}; "
-            f"got {enc_meta.get('feature_text_version')!r}"
+            f"K-factor head requires embeddings with representation_version={EMBEDDING_REPRESENTATION_VERSION!r}; "
+            f"got {enc_meta.get('representation_version')!r}"
         )
     if embeddings.ndim != 2 or embeddings.shape[0] != len(item_id_order):
         raise ValueError(f"embedding shape {embeddings.shape} inconsistent with {len(item_id_order)} item IDs")
+
+    side_features = np.load(emb_dir / "item_side_features.npy").astype(np.float32)
+    vocab = json.loads((emb_dir / "side_feature_meta.json").read_text())
+    side_feature_dim = int(vocab["side_feature_dim"])
+    if side_features.ndim != 2 or side_features.shape[0] != embeddings.shape[0]:
+        raise ValueError(
+            f"side feature shape {side_features.shape} inconsistent with embeddings {embeddings.shape}"
+        )
+    if side_features.shape[1] != side_feature_dim:
+        raise ValueError(
+            f"side feature dim {side_features.shape[1]} != vocab side_feature_dim {side_feature_dim}"
+        )
 
     rows: list[tuple[int, np.ndarray, str]] = []
     for row_idx, item_id in enumerate(item_id_order):
@@ -95,7 +107,10 @@ def main(
     if not rows:
         raise ValueError("no overlapping item IDs between embeddings and Stage 1 item targets")
 
-    X = np.stack([embeddings[row_idx] for row_idx, _, _ in rows]).astype(np.float32)
+    X_emb = np.stack([embeddings[row_idx] for row_idx, _, _ in rows]).astype(np.float32)
+    X_side = np.stack([side_features[row_idx] for row_idx, _, _ in rows]).astype(np.float32)
+    X = np.concatenate([X_emb, X_side], axis=1).astype(np.float32)
+    embedding_dim = int(X_emb.shape[1])
     y = np.stack([target for _, target, _ in rows]).astype(np.float32)
     iids = [item_id for _, _, item_id in rows]
     held_out = validation_item_ids(iids, val_frac=val_frac, seed=seed)
@@ -176,12 +191,15 @@ def main(
                 "head_type": head_type,
                 "hidden": hidden,
                 "in_dim": in_dim,
+                "embedding_dim": embedding_dim,
+                "side_feature_dim": side_feature_dim,
                 "out_dim": out_dim,
                 "k": k,
                 "target_order": target_order,
                 "encoder": enc_meta.get("encoder"),
                 "encoder_dim": enc_meta.get("dim"),
-                "feature_text_version": enc_meta.get("feature_text_version"),
+                "representation_version": REPRESENTATION_VERSION,
+                "embedding_representation_version": enc_meta.get("representation_version"),
                 "max_chars": enc_meta.get("max_chars", 4000),
                 "val_frac": val_frac,
                 "seed": seed,
@@ -193,6 +211,7 @@ def main(
             indent=2,
         )
     )
+    (out_dir / "side_feature_meta.json").write_text(json.dumps(vocab, indent=2))
     (out_dir / "target_scaler.json").write_text(
         json.dumps(
             {

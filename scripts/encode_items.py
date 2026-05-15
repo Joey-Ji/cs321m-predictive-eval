@@ -1,18 +1,22 @@
 """Stage 2a (part 1): encode every unique training item with a sentence transformer.
 
-Reads data/joined.parquet (or data/items.parquet directly).
-Writes:
-  data/embeddings/item_embeddings.npy   — float32 [n_items, d]
-  data/embeddings/item_id_order.json    — list[str] indexing rows of the npy
-  data/embeddings/encoder_meta.json     — encoder name, dim, count, text version
+The encoder consumes only raw `item_content`. Benchmark and condition are
+recorded as one-hot side features (built from the full training set) and
+concatenated to the embedding at head input — see `src/features.py`.
 
-Default encoder: sentence-transformers/all-mpnet-base-v2 (768-d, fast).
-Upgrade options: BAAI/bge-large-en-v1.5 (1024-d, MTEB 64.23).
+Reads data/joined.parquet (or data/items.parquet directly).
+Writes (into --out, default data/embeddings/mpnet_v1/):
+  item_embeddings.npy        — float32 [n_items, d]
+  item_id_order.json         — list[str] indexing rows of the npy
+  encoder_meta.json          — encoder name, dim, count, representation
+  item_side_features.npy     — float32 [n_items, side_feature_dim]
+  side_feature_meta.json     — one-hot vocab + dims for benchmark/condition
+
+Default encoder: sentence-transformers/all-mpnet-base-v2 (768-d).
 
 Usage:
     python scripts/encode_items.py
     python scripts/encode_items.py --encoder BAAI/bge-large-en-v1.5 --batch 64
-    python scripts/encode_items.py --feature-text-version benchmark_condition_item_v1
 """
 
 from __future__ import annotations
@@ -25,10 +29,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.features import FEATURE_TEXT_VERSION, RAW_ITEM_TEXT_VERSION, build_item_feature_text
-
-
-TEXT_VERSIONS = {RAW_ITEM_TEXT_VERSION, FEATURE_TEXT_VERSION}
+from src.features import (
+    EMBEDDING_REPRESENTATION_VERSION,
+    RAW_ITEM_TEXT_VERSION,
+    build_side_feature_vocab,
+    encode_side_features,
+)
 
 
 def _dummy_embedding(text: str, dim: int):
@@ -46,41 +52,40 @@ def main(
     encoder: str,
     batch: int,
     max_chars: int,
-    feature_text_version: str,
     dummy_dim: int,
 ) -> None:
     import numpy as np
     import pyarrow.parquet as pq
 
-    if feature_text_version not in TEXT_VERSIONS:
-        raise ValueError(f"unsupported feature text version {feature_text_version!r}; expected one of {sorted(TEXT_VERSIONS)}")
-
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Reading {joined_path} ...")
-    columns = ["item_id", "item_content"]
-    if feature_text_version == FEATURE_TEXT_VERSION:
-        columns = ["item_id", "benchmark", "condition", "item_content"]
-    table = pq.read_table(joined_path, columns=columns)
+    table = pq.read_table(joined_path, columns=["item_id", "benchmark", "condition", "item_content"])
     rows = table.to_pylist()
 
-    seen: dict[str, str] = {}
+    vocab = build_side_feature_vocab(rows)
+    print(
+        f"  side features: benchmark_dim={vocab['benchmark_dim']} "
+        f"condition_dim={vocab['condition_dim']} "
+        f"side_feature_dim={vocab['side_feature_dim']}"
+    )
+
+    seen_texts: dict[str, str] = {}
+    seen_rows: dict[str, dict] = {}
     saw_null_item_id = False
     for row in rows:
         raw_iid = row.get("item_id")
         saw_null_item_id = saw_null_item_id or raw_iid is None
         iid = "" if raw_iid is None else str(raw_iid)
-        if iid not in seen:
-            if feature_text_version == RAW_ITEM_TEXT_VERSION:
-                seen[iid] = ("" if row.get("item_content") is None else str(row.get("item_content")))[:max_chars]
-            else:
-                seen[iid] = build_item_feature_text(row, max_chars=max_chars)
-    print(f"  unique items: {len(seen):,}")
+        if iid not in seen_texts:
+            seen_texts[iid] = ("" if row.get("item_content") is None else str(row.get("item_content")))[:max_chars]
+            seen_rows[iid] = row
+    print(f"  unique items: {len(seen_texts):,}")
     if saw_null_item_id:
         print("WARN: one or more rows had null item_id; deduplicated under empty-string item id", file=sys.stderr)
 
-    item_id_order = list(seen.keys())
-    texts = [seen[iid] for iid in item_id_order]
+    item_id_order = list(seen_texts.keys())
+    texts = [seen_texts[iid] for iid in item_id_order]
 
     is_dummy = encoder == "dummy"
     if is_dummy:
@@ -104,7 +109,12 @@ def main(
             normalize_embeddings=False,
         ).astype(np.float32)
 
+    side_features = np.stack(
+        [encode_side_features(seen_rows[iid], vocab) for iid in item_id_order]
+    ).astype(np.float32)
+
     np.save(out_dir / "item_embeddings.npy", emb)
+    np.save(out_dir / "item_side_features.npy", side_features)
     (out_dir / "item_id_order.json").write_text(json.dumps(item_id_order))
     (out_dir / "encoder_meta.json").write_text(
         json.dumps(
@@ -113,7 +123,8 @@ def main(
                 "dim": dim,
                 "count": len(item_id_order),
                 "max_chars": max_chars,
-                "feature_text_version": feature_text_version,
+                "representation_version": EMBEDDING_REPRESENTATION_VERSION,
+                "feature_text_version": RAW_ITEM_TEXT_VERSION,
                 "dummy": is_dummy,
                 "batch": batch,
                 "command": " ".join(sys.argv),
@@ -121,22 +132,18 @@ def main(
             indent=2,
         )
     )
+    (out_dir / "side_feature_meta.json").write_text(json.dumps(vocab, indent=2))
     print(f"Done. Wrote {emb.shape} to {out_dir}/item_embeddings.npy")
+    print(f"      Wrote {side_features.shape} to {out_dir}/item_side_features.npy")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--joined", default="data/joined.parquet", type=Path)
-    parser.add_argument("--out", default="data/embeddings", type=Path)
+    parser.add_argument("--out", default="data/embeddings/mpnet_v1", type=Path)
     parser.add_argument("--encoder", default="sentence-transformers/all-mpnet-base-v2")
     parser.add_argument("--batch", type=int, default=128)
     parser.add_argument("--max-chars", type=int, default=4000, help="Truncate item text to this many chars before encoding.")
-    parser.add_argument(
-        "--feature-text-version",
-        default=RAW_ITEM_TEXT_VERSION,
-        choices=sorted(TEXT_VERSIONS),
-        help="Text format to encode. Defaults to legacy raw item_content for v1_irt compatibility.",
-    )
     parser.add_argument("--dummy-dim", type=int, default=8, help="Embedding dimension when --encoder dummy is used.")
     args = parser.parse_args()
-    main(args.joined, args.out, args.encoder, args.batch, args.max_chars, args.feature_text_version, args.dummy_dim)
+    main(args.joined, args.out, args.encoder, args.batch, args.max_chars, args.dummy_dim)

@@ -60,8 +60,11 @@ jobs:
       - name: Generate K-factor fixture
         run: uv run python tests/check_kfactor_contract.py --make-fixture data/fixtures/kfactor
 
-      - name: Run K-factor contract check
+      - name: Run K-factor Stage 1 contract check
         run: uv run python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1
+
+      - name: Run side-feature unit tests
+        run: uv run python tests/test_side_features.py
 
       - name: K-factor Stage 2 smoke chain
         run: |
@@ -69,8 +72,7 @@ jobs:
             --joined data/fixtures/kfactor/joined.parquet \
             --out data/fixtures/kfactor/embeddings \
             --encoder dummy \
-            --dummy-dim 8 \
-            --feature-text-version benchmark_condition_item_v1
+            --dummy-dim 8
           uv run python scripts/train_kfactor_head.py \
             --stage1 data/fixtures/kfactor/stage1 \
             --emb data/fixtures/kfactor/embeddings \
@@ -79,3 +81,6 @@ jobs:
             --epochs 2 \
             --val-frac 0.2
           V1_KFACTOR_DUMMY_ENCODER=1 uv run python scripts/smoke_test.py submissions/v1_kfactor
+
+      - name: Run K-factor Stage 2 contract check
+        run: uv run python tests/check_kfactor_contract.py --stage2 data/fixtures/kfactor/stage2

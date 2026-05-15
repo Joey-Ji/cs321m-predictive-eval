@@ -173,7 +173,7 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--irt", default="data/irt", type=Path)
-    parser.add_argument("--emb", default="data/embeddings", type=Path)
+    parser.add_argument("--emb", default="data/embeddings/mpnet_v1", type=Path)
     parser.add_argument("--out", default="data/head", type=Path)
     parser.add_argument("--head", choices=("linear", "mlp"), default="linear")
     parser.add_argument("--hidden", type=int, default=256)

@@ -66,6 +66,11 @@ def _predict_item_params(stage2_dir: Path, emb_dir: Path, item_ids: set[str]):
     scaler = json.loads((stage2_dir / "target_scaler.json").read_text())
     item_id_order = [str(iid) for iid in json.loads((emb_dir / "item_id_order.json").read_text())]
     embeddings = np.load(emb_dir / "item_embeddings.npy").astype(np.float32)
+    side_features = np.load(emb_dir / "item_side_features.npy").astype(np.float32)
+    if side_features.shape[0] != embeddings.shape[0]:
+        raise ValueError(
+            f"side features rows {side_features.shape[0]} != embedding rows {embeddings.shape[0]}"
+        )
     emb_by_id = {iid: idx for idx, iid in enumerate(item_id_order)}
 
     missing = sorted(iid for iid in item_ids if iid not in emb_by_id)
@@ -82,7 +87,9 @@ def _predict_item_params(stage2_dir: Path, emb_dir: Path, item_ids: set[str]):
     head.eval()
 
     rows = [emb_by_id[iid] for iid in sorted(item_ids)]
-    X = torch.from_numpy(embeddings[rows])
+    X = torch.from_numpy(
+        np.concatenate([embeddings[rows], side_features[rows]], axis=1).astype(np.float32)
+    )
     mean = torch.tensor(scaler["mean"], dtype=torch.float32)
     std = torch.tensor(scaler["std"], dtype=torch.float32)
     with torch.no_grad():

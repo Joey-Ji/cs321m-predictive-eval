@@ -1,9 +1,10 @@
-"""Contract test for K-factor Stage 1 artifacts.
+"""Contract test for K-factor Stage 1 and (optionally) Stage 2 artifacts.
 
 Run:
     python tests/check_kfactor_contract.py --stage1 data/stage1/kfactor_k4
     python tests/check_kfactor_contract.py --make-fixture data/fixtures/kfactor
     python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1
+    python tests/check_kfactor_contract.py --stage2 data/fixtures/kfactor/stage2
 """
 
 from __future__ import annotations
@@ -142,20 +143,86 @@ def check_stage1(stage1_dir: Path) -> list[str]:
     return errs
 
 
-def main(stage1_dir: Path | None, make_fixture_dir: Path | None) -> int:
+REPRESENTATION_VERSION = "item_text_plus_side_features_v1"
+REQUIRED_STAGE2_FILES = {
+    "head.pt": "trained K-factor head weights",
+    "head_meta.json": "head architecture + representation metadata",
+    "target_scaler.json": "per-target mean/std for inverse-transform",
+    "side_feature_meta.json": "one-hot vocab for benchmark + condition",
+}
+
+
+def check_stage2(stage2_dir: Path) -> list[str]:
+    errs: list[str] = []
+    if not stage2_dir.is_dir():
+        return [f"FATAL: stage2 directory {stage2_dir} does not exist"]
+
+    for filename, desc in REQUIRED_STAGE2_FILES.items():
+        if not (stage2_dir / filename).exists():
+            errs.append(f"MISSING: {stage2_dir / filename} ({desc})")
+    if errs:
+        return errs
+
+    head_meta = json.loads((stage2_dir / "head_meta.json").read_text())
+    vocab = json.loads((stage2_dir / "side_feature_meta.json").read_text())
+
+    rep = head_meta.get("representation_version")
+    if rep != REPRESENTATION_VERSION:
+        errs.append(
+            f"head_meta.json representation_version {rep!r} != expected {REPRESENTATION_VERSION!r}"
+        )
+
+    for key in ("in_dim", "embedding_dim", "side_feature_dim"):
+        if key not in head_meta:
+            errs.append(f"head_meta.json missing key: {key}")
+    if errs:
+        return errs
+
+    in_dim = int(head_meta["in_dim"])
+    embedding_dim = int(head_meta["embedding_dim"])
+    side_feature_dim = int(head_meta["side_feature_dim"])
+    if embedding_dim + side_feature_dim != in_dim:
+        errs.append(
+            f"in_dim {in_dim} != embedding_dim {embedding_dim} + side_feature_dim {side_feature_dim}"
+        )
+
+    vocab_dim = int(vocab.get("side_feature_dim", -1))
+    if vocab_dim != side_feature_dim:
+        errs.append(
+            f"side_feature_meta.json side_feature_dim {vocab_dim} != head_meta side_feature_dim {side_feature_dim}"
+        )
+    if int(vocab.get("benchmark_dim", -1)) + int(vocab.get("condition_dim", -1)) != vocab_dim:
+        errs.append(
+            f"side_feature_meta.json benchmark_dim + condition_dim != side_feature_dim {vocab_dim}"
+        )
+
+    print(
+        f"  K-factor Stage 2: in_dim={in_dim} embedding_dim={embedding_dim} "
+        f"side_feature_dim={side_feature_dim} representation={rep!r}"
+    )
+    return errs
+
+
+def main(stage1_dir: Path | None, stage2_dir: Path | None, make_fixture_dir: Path | None) -> int:
     if make_fixture_dir is not None:
         from scripts.make_kfactor_fixture import main as make_fixture
 
         make_fixture(make_fixture_dir, seed=0, n_subjects=5, n_items=20, k=4)
         return 0
 
-    if stage1_dir is None:
-        print("ERROR: provide --stage1 or --make-fixture", file=sys.stderr)
+    if stage1_dir is None and stage2_dir is None:
+        print("ERROR: provide --stage1, --stage2, or --make-fixture", file=sys.stderr)
         return 2
 
     print("K-factor contract check")
-    print(f"  stage1: {stage1_dir}")
-    errs = check_stage1(stage1_dir)
+    errs: list[str] = []
+    if stage1_dir is not None:
+        print(f"  stage1: {stage1_dir}")
+        errs.extend(check_stage1(stage1_dir))
+    if stage2_dir is not None:
+        print(f"  stage2: {stage2_dir}")
+        errs.extend(check_stage2(stage2_dir))
+
     if not errs:
         print("\nPASS - K-factor contract is satisfied.")
         return 0
@@ -169,6 +236,7 @@ def main(stage1_dir: Path | None, make_fixture_dir: Path | None) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage1", type=Path)
+    parser.add_argument("--stage2", type=Path)
     parser.add_argument("--make-fixture", type=Path)
     args = parser.parse_args()
-    sys.exit(main(args.stage1, args.make_fixture))
+    sys.exit(main(args.stage1, args.stage2, args.make_fixture))

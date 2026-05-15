@@ -90,7 +90,7 @@ test-kfactor: kfactor-fixture
 	uv run python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1
 
 kfactor-encode-dummy: kfactor-fixture
-	uv run python scripts/encode_items.py --joined data/fixtures/kfactor/joined.parquet --out data/fixtures/kfactor/embeddings --encoder dummy --dummy-dim 8 --feature-text-version benchmark_condition_item_v1
+	uv run python scripts/encode_items.py --joined data/fixtures/kfactor/joined.parquet --out data/fixtures/kfactor/embeddings --encoder dummy --dummy-dim 8
 
 kfactor-head: kfactor-encode-dummy
 	uv run python scripts/train_kfactor_head.py --stage1 data/fixtures/kfactor/stage1 --emb data/fixtures/kfactor/embeddings --out data/fixtures/kfactor/stage2 --head linear --epochs 5 --val-frac 0.2
