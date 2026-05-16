@@ -52,6 +52,32 @@ ROOT = Path(__file__).resolve().parent
 DUMMY_ENCODER = os.environ.get("V1_KFACTOR_DUMMY_ENCODER") == "1"
 
 
+def _resolve_cache_dir() -> str | None:
+    """Find an HF cache dir the runtime can use (mirrors templates/hf_submission)."""
+    candidates = [
+        os.environ.get("HF_HOME", "").strip(),
+        os.environ.get("TRANSFORMERS_CACHE", "").strip(),
+        "/app/hf_cache",
+        str(ROOT / ".hf_cache"),
+    ]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = Path(candidate)
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            continue
+        if os.access(path, os.W_OK):
+            os.environ.setdefault("HF_HOME", str(path))
+            return str(path)
+    return None
+
+
+HF_CACHE_DIR = _resolve_cache_dir()
+print(f"[v1_kfactor] HF cache dir: {HF_CACHE_DIR}", flush=True)
+
+
 def _repo_root() -> Path:
     return ROOT.parent.parent
 
@@ -138,13 +164,23 @@ if int(VOCAB["side_feature_dim"]) != SIDE_FEATURE_DIM:
         f"side_feature_meta side_feature_dim {VOCAB['side_feature_dim']} != head side_feature_dim {SIDE_FEATURE_DIM}"
     )
 
+ENCODER = None
+ENCODER_OK = False
+ENCODER_LOAD_ERROR: str | None = None
 if DUMMY_ENCODER:
     ENCODER = _DummyEncoder(EMBEDDING_DIM)
+    ENCODER_OK = True
 else:
-    from sentence_transformers import SentenceTransformer  # noqa: E402
+    try:
+        from sentence_transformers import SentenceTransformer  # noqa: E402
 
-    ENCODER = SentenceTransformer(HEAD_META["encoder"])
-ENCODER.eval()
+        ENCODER = SentenceTransformer(HEAD_META["encoder"], cache_folder=HF_CACHE_DIR)
+        ENCODER_OK = True
+    except Exception as exc:  # noqa: BLE001
+        ENCODER_LOAD_ERROR = repr(exc)
+        print(f"[v1_kfactor] encoder load failed: {ENCODER_LOAD_ERROR}", flush=True)
+if ENCODER_OK:
+    ENCODER.eval()
 
 HEAD = _build_head(IN_DIM, OUT_DIM, str(HEAD_META["head_type"]), int(HEAD_META.get("hidden", 256)))
 HEAD.load_state_dict(_torch_load(_resolve_file("head.pt", "stage2")))
@@ -198,21 +234,53 @@ def _sigmoid(logit: float) -> float:
     return z / (1.0 + z)
 
 
+def _apply_calibration(logit: float) -> float:
+    if CALIBRATION is not None and CALIBRATION.get("improved"):
+        return float(CALIBRATION.get("alpha", 1.0)) * logit + float(CALIBRATION.get("beta", 0.0))
+    return logit
+
+
+def _clip_prob(p: float) -> float:
+    if not math.isfinite(p):
+        return 0.5
+    return float(max(min(p, CLIP_HI), CLIP_LO))
+
+
+def _subject_only_prob(input: dict) -> float:
+    """Fallback when the full pipeline can't run (e.g. encoder unavailable).
+
+    Uses only the Stage 1 per-subject bias (item contribution = 0); this is
+    always cheaper and never depends on the encoder. Returns the marginal floor
+    if even the subject lookup fails.
+    """
+    try:
+        subject_bias, _ = _subject_params(str(input.get("subject_content") or ""))
+        return _clip_prob(_sigmoid(_apply_calibration(float(subject_bias))))
+    except Exception:  # noqa: BLE001
+        return 0.654  # marginal p(correct) from training data
+
+
 def predict(input: dict, labeled: list[dict] | None = None) -> float:
     """Return probability that the subject answers the item correctly.
 
-    The initial K-factor submission ignores online labeled examples; adaptive
-    calibration can be layered on this interface later.
+    Layered fallback: full K-factor scoring -> Stage 1 subject-only -> marginal.
+    predict() never raises; any exception degrades gracefully so the platform
+    always receives a valid float and the round is scored.
     """
-    item_v_tuple, item_z = _item_params(
-        str(input.get("item_content") or ""),
-        str(input.get("benchmark") or ""),
-        str(input.get("condition") or ""),
-    )
-    subject_bias, subject_u = _subject_params(str(input.get("subject_content") or ""))
-    item_v = torch.tensor(item_v_tuple, dtype=torch.float32)
-    logit = subject_bias + float((subject_u * item_v).sum()) + item_z
-    if CALIBRATION is not None and CALIBRATION.get("improved"):
-        logit = float(CALIBRATION.get("alpha", 1.0)) * logit + float(CALIBRATION.get("beta", 0.0))
-    p = _sigmoid(logit)
-    return float(max(min(p, CLIP_HI), CLIP_LO))
+    if not ENCODER_OK:
+        return _subject_only_prob(input)
+    try:
+        item_v_tuple, item_z = _item_params(
+            str(input.get("item_content") or ""),
+            str(input.get("benchmark") or ""),
+            str(input.get("condition") or ""),
+        )
+        subject_bias, subject_u = _subject_params(str(input.get("subject_content") or ""))
+        item_v = torch.tensor(item_v_tuple, dtype=torch.float32)
+        logit = subject_bias + float((subject_u * item_v).sum()) + item_z
+        logit = _apply_calibration(logit)
+        p = _sigmoid(logit)
+        return _clip_prob(p)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[v1_kfactor] predict() fell back to subject-only: {exc!r}", flush=True)
+        return _subject_only_prob(input)
