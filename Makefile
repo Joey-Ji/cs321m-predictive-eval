@@ -30,7 +30,7 @@ help:
 	@echo "    make kfactor-export       Export committed K=4 Stage 1 parquets -> data/stage1/kfactor_k4/"
 	@echo "    make kfactor              Alias for kfactor-export"
 	@echo "    make kfactor-fixture      Generate synthetic K-factor fixture"
-	@echo "    make test-kfactor         Validate K-factor Stage 1 contract"
+	@echo "    make test-kfactor         Validate K-factor Stage 1/export contracts"
 	@echo "    make kfactor-encode-dummy Encode fixture items with deterministic dummy encoder"
 	@echo "    make kfactor-head         Train fixture K-factor linear head"
 	@echo "    make kfactor-eval         Evaluate fixture K-factor response metrics"
@@ -89,6 +89,7 @@ kfactor-export:
 	python scripts/export_kfactor_stage1.py \
 	  --subject-parquet stage_1/k_factor_irt/artifacts/k4_full_train/subject_capabilities.parquet \
 	  --item-parquet    stage_1/k_factor_irt/artifacts/k4_full_train/item_parameters.parquet \
+	  --subjects-parquet data/subjects.parquet \
 	  --out-dir         data/stage1/kfactor_k4/
 
 kfactor: kfactor-export
@@ -98,6 +99,15 @@ kfactor-fixture:
 
 test-kfactor: kfactor-fixture
 	uv run python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1
+	uv run python scripts/make_kfactor_stage1_fixture.py --out data/fixtures/kfactor/stage1_parquet
+	uv run python scripts/export_kfactor_stage1.py \
+	  --subject-parquet data/fixtures/kfactor/stage1_parquet/subject_capabilities.parquet \
+	  --item-parquet data/fixtures/kfactor/stage1_parquet/item_parameters.parquet \
+	  --subjects-parquet data/fixtures/kfactor/stage1_parquet/subjects.parquet \
+	  --out-dir data/fixtures/kfactor/stage1_exported
+	uv run python tests/check_kfactor_contract.py \
+	  --stage1 data/fixtures/kfactor/stage1_exported \
+	  --joined data/fixtures/kfactor/stage1_parquet/joined.parquet
 
 kfactor-encode-dummy: kfactor-fixture
 	uv run python scripts/encode_items.py --joined data/fixtures/kfactor/joined.parquet --out data/fixtures/kfactor/embeddings --encoder dummy --dummy-dim 8
