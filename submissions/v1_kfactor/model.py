@@ -199,6 +199,14 @@ FALLBACK_U = SUBJECT_STATE["fallback_u"].detach().cpu().float()
 CALIBRATION_PATH = _resolve_file("calibration.json", "stage2", required=False)
 CALIBRATION = json.loads(CALIBRATION_PATH.read_text()) if CALIBRATION_PATH else None
 
+ONLINE_PLATT_MIN_EXAMPLES = 4
+ONLINE_PLATT_L2 = 0.05
+ONLINE_PLATT_MIN_ALPHA = 0.05
+ONLINE_PLATT_MAX_ALPHA = 3.0
+ONLINE_PLATT_MAX_ABS_BETA = 3.0
+_ONLINE_PLATT_CACHE_KEY: str | None = None
+_ONLINE_PLATT_CACHE: tuple[float, float] | None = None
+
 
 @lru_cache(maxsize=2048)
 def _item_params(item_content: str, benchmark: str, condition: str) -> tuple[tuple[float, ...], float]:
@@ -234,16 +242,173 @@ def _sigmoid(logit: float) -> float:
     return z / (1.0 + z)
 
 
-def _apply_calibration(logit: float) -> float:
+def _offline_calibration_params() -> tuple[float, float]:
     if CALIBRATION is not None and CALIBRATION.get("improved"):
-        return float(CALIBRATION.get("alpha", 1.0)) * logit + float(CALIBRATION.get("beta", 0.0))
-    return logit
+        return float(CALIBRATION.get("alpha", 1.0)), float(CALIBRATION.get("beta", 0.0))
+    return 1.0, 0.0
+
+
+def _apply_calibration(logit: float) -> float:
+    alpha, beta = _offline_calibration_params()
+    return alpha * logit + beta
 
 
 def _clip_prob(p: float) -> float:
     if not math.isfinite(p):
         return 0.5
     return float(max(min(p, CLIP_HI), CLIP_LO))
+
+
+def _raw_logit(input: dict) -> float:
+    item_v_tuple, item_z = _item_params(
+        str(input.get("item_content") or ""),
+        str(input.get("benchmark") or ""),
+        str(input.get("condition") or ""),
+    )
+    subject_bias, subject_u = _subject_params(str(input.get("subject_content") or ""))
+    item_v = torch.tensor(item_v_tuple, dtype=torch.float32)
+    return subject_bias + float((subject_u * item_v).sum()) + item_z
+
+
+def _label_value(row: dict) -> int | None:
+    label = row.get("label")
+    if isinstance(label, bool):
+        return int(label)
+    if isinstance(label, Real):
+        value = float(label)
+        if math.isfinite(value) and value in (0.0, 1.0):
+            return int(value)
+    return None
+
+
+def _labeled_cache_key(labeled: list[dict] | None) -> str | None:
+    if not labeled:
+        return None
+    payload = []
+    for row in labeled:
+        if not isinstance(row, dict):
+            continue
+        payload.append(
+            (
+                str(row.get("benchmark") or ""),
+                str(row.get("condition") or ""),
+                str(row.get("subject_content") or ""),
+                str(row.get("item_content") or ""),
+                str(row.get("label")),
+            )
+        )
+    if not payload:
+        return None
+    encoded = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8", errors="surrogatepass"
+    )
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _fit_online_platt(labeled: list[dict]) -> tuple[float, float] | None:
+    logits: list[float] = []
+    labels: list[int] = []
+    skipped = 0
+    for row in labeled:
+        if not isinstance(row, dict):
+            skipped += 1
+            continue
+        y = _label_value(row)
+        if y is None:
+            skipped += 1
+            continue
+        try:
+            logit = _raw_logit(row)
+        except Exception:
+            skipped += 1
+            continue
+        if not math.isfinite(logit):
+            skipped += 1
+            continue
+        logits.append(float(logit))
+        labels.append(y)
+
+    if len(logits) < ONLINE_PLATT_MIN_EXAMPLES or len(set(labels)) < 2:
+        if labeled:
+            print(
+                "[v1_kfactor] online Platt skipped: "
+                f"usable={len(logits)} positives={sum(labels)} skipped={skipped}",
+                flush=True,
+            )
+        return None
+
+    prior_alpha, prior_beta = _offline_calibration_params()
+    if not math.isfinite(prior_alpha) or prior_alpha <= 0.0:
+        prior_alpha = 1.0
+    if not math.isfinite(prior_beta):
+        prior_beta = 0.0
+    prior_alpha = max(min(prior_alpha, ONLINE_PLATT_MAX_ALPHA), ONLINE_PLATT_MIN_ALPHA)
+    prior_beta = max(min(prior_beta, ONLINE_PLATT_MAX_ABS_BETA), -ONLINE_PLATT_MAX_ABS_BETA)
+
+    try:
+        x = torch.tensor(logits, dtype=torch.float32)
+        y = torch.tensor(labels, dtype=torch.float32)
+        prior_log_alpha = torch.tensor(math.log(prior_alpha), dtype=torch.float32)
+        prior_beta_t = torch.tensor(prior_beta, dtype=torch.float32)
+        log_alpha = torch.nn.Parameter(prior_log_alpha.clone())
+        beta = torch.nn.Parameter(prior_beta_t.clone())
+        opt = torch.optim.LBFGS(
+            [log_alpha, beta],
+            lr=0.25,
+            max_iter=30,
+            line_search_fn="strong_wolfe",
+        )
+        loss_fn = torch.nn.BCEWithLogitsLoss()
+
+        def closure():
+            opt.zero_grad()
+            alpha = torch.exp(log_alpha)
+            loss = loss_fn(alpha * x + beta, y)
+            reg = ONLINE_PLATT_L2 * (
+                (log_alpha - prior_log_alpha).pow(2) + (beta - prior_beta_t).pow(2)
+            )
+            total = loss + reg
+            total.backward()
+            return total
+
+        opt.step(closure)
+        alpha = float(torch.exp(log_alpha).detach())
+        beta_v = float(beta.detach())
+    except Exception as exc:  # noqa: BLE001
+        print(f"[v1_kfactor] online Platt fit failed: {exc!r}", flush=True)
+        return None
+
+    if not (math.isfinite(alpha) and math.isfinite(beta_v)):
+        return None
+    alpha = max(min(alpha, ONLINE_PLATT_MAX_ALPHA), ONLINE_PLATT_MIN_ALPHA)
+    beta_v = max(min(beta_v, ONLINE_PLATT_MAX_ABS_BETA), -ONLINE_PLATT_MAX_ABS_BETA)
+    print(
+        "[v1_kfactor] online Platt fit: "
+        f"n={len(labels)} positives={sum(labels)} skipped={skipped} "
+        f"alpha={alpha:.3f} beta={beta_v:.3f}",
+        flush=True,
+    )
+    return alpha, beta_v
+
+
+def _online_calibration_params(labeled: list[dict] | None) -> tuple[float, float] | None:
+    global _ONLINE_PLATT_CACHE_KEY, _ONLINE_PLATT_CACHE
+
+    key = _labeled_cache_key(labeled)
+    if key is None:
+        return None
+    if key != _ONLINE_PLATT_CACHE_KEY:
+        _ONLINE_PLATT_CACHE_KEY = key
+        _ONLINE_PLATT_CACHE = _fit_online_platt(labeled or [])
+    return _ONLINE_PLATT_CACHE
+
+
+def _calibrate_logit(logit: float, labeled: list[dict] | None) -> float:
+    online = _online_calibration_params(labeled)
+    if online is not None:
+        alpha, beta = online
+        return alpha * logit + beta
+    return _apply_calibration(logit)
 
 
 def _subject_only_prob(input: dict) -> float:
@@ -263,6 +428,7 @@ def _subject_only_prob(input: dict) -> float:
 def predict(input: dict, labeled: list[dict] | None = None) -> float:
     """Return probability that the subject answers the item correctly.
 
+    Uses revealed per-round labels for online Platt calibration when possible.
     Layered fallback: full K-factor scoring -> Stage 1 subject-only -> marginal.
     predict() never raises; any exception degrades gracefully so the platform
     always receives a valid float and the round is scored.
@@ -270,15 +436,7 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
     if not ENCODER_OK:
         return _subject_only_prob(input)
     try:
-        item_v_tuple, item_z = _item_params(
-            str(input.get("item_content") or ""),
-            str(input.get("benchmark") or ""),
-            str(input.get("condition") or ""),
-        )
-        subject_bias, subject_u = _subject_params(str(input.get("subject_content") or ""))
-        item_v = torch.tensor(item_v_tuple, dtype=torch.float32)
-        logit = subject_bias + float((subject_u * item_v).sum()) + item_z
-        logit = _apply_calibration(logit)
+        logit = _calibrate_logit(_raw_logit(input), labeled)
         p = _sigmoid(logit)
         return _clip_prob(p)
     except Exception as exc:  # noqa: BLE001
