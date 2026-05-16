@@ -4,6 +4,7 @@ Run:
     python tests/check_kfactor_contract.py --stage1 data/stage1/kfactor_k4
     python tests/check_kfactor_contract.py --make-fixture data/fixtures/kfactor
     python tests/check_kfactor_contract.py --stage1 data/fixtures/kfactor/stage1
+    python tests/check_kfactor_contract.py --stage1 data/stage1/kfactor_k4 --joined data/joined.parquet
     python tests/check_kfactor_contract.py --stage2 data/fixtures/kfactor/stage2
 """
 
@@ -12,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 import warnings
 from pathlib import Path
@@ -27,6 +29,14 @@ REQUIRED_STAGE1_FILES = {
     "item_to_id.json": "raw item_id -> int id",
     "manifest.json": "Stage 1 run metadata",
 }
+NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE)
+
+
+def _normalize_subject(subject_content: str) -> str:
+    if not subject_content:
+        return ""
+    m = NAME_LINE.search(subject_content)
+    return m.group(1).strip().lower() if m else subject_content.strip().lower()
 
 
 def _check_contiguous_mapping(name: str, mapping: object, n: int, errs: list[str]) -> None:
@@ -206,6 +216,47 @@ def check_stage1(stage1_dir: Path) -> list[str]:
     return errs
 
 
+def check_subject_name_hit_rate(stage1_dir: Path, joined_path: Path, min_hit_rate: float) -> list[str]:
+    errs: list[str] = []
+    if not joined_path.exists():
+        return [f"FATAL: joined parquet {joined_path} does not exist"]
+
+    subject_name_to_id_path = stage1_dir / "subject_name_to_id.json"
+    if not subject_name_to_id_path.exists():
+        return [f"MISSING: {subject_name_to_id_path} (normalized subject name -> int id)"]
+
+    subject_name_to_id = _load_json(subject_name_to_id_path, errs)
+    if not isinstance(subject_name_to_id, dict):
+        errs.append(f"subject_name_to_id.json must be a JSON object, got {type(subject_name_to_id).__name__}")
+        return errs
+
+    import pyarrow.parquet as pq
+
+    parquet_file = pq.ParquetFile(joined_path)
+    if "subject_content" not in parquet_file.schema_arrow.names:
+        return [f"{joined_path} missing required subject_content column"]
+
+    subject_contents = parquet_file.read(columns=["subject_content"]).column("subject_content").to_pylist()
+    subject_keys = {_normalize_subject("" if value is None else str(value)) for value in subject_contents}
+    if not subject_keys:
+        return [f"{joined_path} contains no subject_content values"]
+
+    hits = sum(1 for key in subject_keys if key in subject_name_to_id)
+    hit_rate = hits / len(subject_keys)
+    print(
+        f"  K-factor subject lookup hit-rate: {hits}/{len(subject_keys)} "
+        f"({hit_rate:.1%}) against {joined_path}"
+    )
+    if hit_rate < min_hit_rate:
+        missing = sorted(key for key in subject_keys if key not in subject_name_to_id)
+        preview = ", ".join(repr(key) for key in missing[:5])
+        errs.append(
+            f"subject_name_to_id hit-rate {hit_rate:.1%} < required {min_hit_rate:.1%}; "
+            f"missing keys include {preview}"
+        )
+    return errs
+
+
 REPRESENTATION_VERSION = "item_text_plus_side_features_v1"
 REQUIRED_STAGE2_FILES = {
     "head.pt": "trained K-factor head weights",
@@ -266,7 +317,13 @@ def check_stage2(stage2_dir: Path) -> list[str]:
     return errs
 
 
-def main(stage1_dir: Path | None, stage2_dir: Path | None, make_fixture_dir: Path | None) -> int:
+def main(
+    stage1_dir: Path | None,
+    stage2_dir: Path | None,
+    make_fixture_dir: Path | None,
+    joined_path: Path | None,
+    min_subject_hit_rate: float,
+) -> int:
     if make_fixture_dir is not None:
         from scripts.make_kfactor_fixture import main as make_fixture
 
@@ -276,12 +333,20 @@ def main(stage1_dir: Path | None, stage2_dir: Path | None, make_fixture_dir: Pat
     if stage1_dir is None and stage2_dir is None:
         print("ERROR: provide --stage1, --stage2, or --make-fixture", file=sys.stderr)
         return 2
+    if joined_path is not None and stage1_dir is None:
+        print("ERROR: --joined requires --stage1", file=sys.stderr)
+        return 2
+    if not 0.0 <= min_subject_hit_rate <= 1.0:
+        print("ERROR: --min-subject-hit-rate must be between 0 and 1", file=sys.stderr)
+        return 2
 
     print("K-factor contract check")
     errs: list[str] = []
     if stage1_dir is not None:
         print(f"  stage1: {stage1_dir}")
         errs.extend(check_stage1(stage1_dir))
+        if joined_path is not None:
+            errs.extend(check_subject_name_hit_rate(stage1_dir, joined_path, min_subject_hit_rate))
     if stage2_dir is not None:
         print(f"  stage2: {stage2_dir}")
         errs.extend(check_stage2(stage2_dir))
@@ -301,5 +366,7 @@ if __name__ == "__main__":
     parser.add_argument("--stage1", type=Path)
     parser.add_argument("--stage2", type=Path)
     parser.add_argument("--make-fixture", type=Path)
+    parser.add_argument("--joined", type=Path, help="Optional joined.parquet for subject lookup hit-rate checks.")
+    parser.add_argument("--min-subject-hit-rate", type=float, default=1.0)
     args = parser.parse_args()
-    sys.exit(main(args.stage1, args.stage2, args.make_fixture))
+    sys.exit(main(args.stage1, args.stage2, args.make_fixture, args.joined, args.min_subject_hit_rate))

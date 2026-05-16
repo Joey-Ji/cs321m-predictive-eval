@@ -93,7 +93,11 @@ jobs:
           uv run python scripts/export_kfactor_stage1.py \
             --subject-parquet data/fixtures/kfactor/stage1_parquet/subject_capabilities.parquet \
             --item-parquet data/fixtures/kfactor/stage1_parquet/item_parameters.parquet \
+            --subjects-parquet data/fixtures/kfactor/stage1_parquet/subjects.parquet \
             --out-dir data/stage1/kfactor_k4/
 
       - name: Run exported K-factor Stage 1 contract check
-        run: uv run python tests/check_kfactor_contract.py --stage1 data/stage1/kfactor_k4/
+        run: |
+          uv run python tests/check_kfactor_contract.py \
+            --stage1 data/stage1/kfactor_k4/ \
+            --joined data/fixtures/kfactor/stage1_parquet/joined.parquet
