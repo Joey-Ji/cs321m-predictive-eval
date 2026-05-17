@@ -4,7 +4,7 @@ Runs the three existing scripts in `scripts/` against data stored in a Modal
 Volume:
 
     scripts/encode_items.py        (GPU, encodes ~70K items with mpnet-base-v2)
-    scripts/train_kfactor_head.py  (CPU, trains the linear head)
+    scripts/train_kfactor_head.py  (CPU, trains the linear or MLP head)
     scripts/evaluate_stage2.py     (CPU, offline log-likelihood + AUC)
 
 The Modal Volume `eval-comp-data` mirrors the local `data/` directory layout,
@@ -23,8 +23,10 @@ RUN THE PIPELINE:
 
     modal run modal_stage2.py                  # encode + train + eval
     modal run modal_stage2.py --stage encode   # just encode
-    modal run modal_stage2.py --stage train    # just train
-    modal run modal_stage2.py --stage eval     # just evaluate
+    modal run modal_stage2.py --stage train    # just train the default linear head
+    modal run modal_stage2.py --stage train --head mlp --out data/stage2/kfactor_mpnet_mlp_v1
+    modal run modal_stage2.py --stage eval     # just evaluate the default linear head
+    modal run modal_stage2.py --stage eval --out data/stage2/kfactor_mpnet_mlp_v1
 
 PULL RESULTS BACK LOCALLY (after running):
 
@@ -120,6 +122,8 @@ def encode_items(batch: int = 128, max_chars: int = 4000) -> None:
 )
 def train_head(
     head: str = "linear",
+    hidden: int = 256,
+    out: str = "data/stage2/kfactor_mpnet_linear_v1",
     epochs: int = 200,
     lr: float = 1e-3,
     val_frac: float = 0.1,
@@ -131,8 +135,9 @@ def train_head(
             "scripts/train_kfactor_head.py",
             "--stage1", "data/stage1/kfactor_k4",
             "--emb", "data/embeddings/mpnet_v1",
-            "--out", "data/stage2/kfactor_mpnet_linear_v1",
+            "--out", out,
             "--head", head,
+            "--hidden", str(hidden),
             "--epochs", str(epochs),
             "--lr", str(lr),
             "--val-frac", str(val_frac),
@@ -147,14 +152,19 @@ def train_head(
     volumes={DATA_DIR: volume},
     timeout=30 * 60,
 )
-def evaluate(split: str = "item-cold", val_frac: float = 0.1, seed: int = 0) -> None:
+def evaluate(
+    stage2: str = "data/stage2/kfactor_mpnet_linear_v1",
+    split: str = "item-cold",
+    val_frac: float = 0.1,
+    seed: int = 0,
+) -> None:
     _run(
         [
             "python",
             "scripts/evaluate_stage2.py",
             "--joined", "data/joined.parquet",
             "--stage1", "data/stage1/kfactor_k4",
-            "--stage2", "data/stage2/kfactor_mpnet_linear_v1",
+            "--stage2", stage2,
             "--emb", "data/embeddings/mpnet_v1",
             "--split", split,
             "--val-frac", str(val_frac),
@@ -165,7 +175,17 @@ def evaluate(split: str = "item-cold", val_frac: float = 0.1, seed: int = 0) -> 
 
 
 @app.local_entrypoint()
-def main(stage: str = "all") -> None:
+def main(
+    stage: str = "all",
+    head: str = "linear",
+    hidden: int = 256,
+    epochs: int = 200,
+    lr: float = 1e-3,
+    out: str = "data/stage2/kfactor_mpnet_linear_v1",
+    split: str = "item-cold",
+    val_frac: float = 0.1,
+    seed: int = 0,
+) -> None:
     """Run the requested stage(s). `stage` is one of: encode | train | eval | all."""
     if stage not in ("encode", "train", "eval", "all"):
         raise SystemExit(f"unknown stage {stage!r}; expected encode|train|eval|all")
@@ -174,8 +194,16 @@ def main(stage: str = "all") -> None:
         encode_items.remote()
     if stage in ("train", "all"):
         print(">>> train_head")
-        train_head.remote()
+        train_head.remote(
+            head=head,
+            hidden=hidden,
+            out=out,
+            epochs=epochs,
+            lr=lr,
+            val_frac=val_frac,
+            seed=seed,
+        )
     if stage in ("eval", "all"):
         print(">>> evaluate")
-        evaluate.remote()
+        evaluate.remote(stage2=out, split=split, val_frac=val_frac, seed=seed)
     print(">>> done")
