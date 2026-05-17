@@ -207,6 +207,14 @@ ONLINE_PLATT_MAX_ABS_BETA = 3.0
 _ONLINE_PLATT_CACHE_KEY: str | None = None
 _ONLINE_PLATT_CACHE: tuple[float, float] | None = None
 
+PER_SUBJECT_SHIFT_KAPPA = 5.0
+PER_SUBJECT_SHIFT_LABEL_SMOOTH = 0.5
+PER_SUBJECT_SHIFT_MIN_OBS = 1
+PER_SUBJECT_SHIFT_CLIP = 1.0
+
+_PER_SUBJECT_CACHE_KEY: str | None = None
+_PER_SUBJECT_CACHE: dict[str, float] | None = None
+
 
 @lru_cache(maxsize=2048)
 def _item_params(item_content: str, benchmark: str, condition: str) -> tuple[tuple[float, ...], float]:
@@ -391,6 +399,64 @@ def _fit_online_platt(labeled: list[dict]) -> tuple[float, float] | None:
     return alpha, beta_v
 
 
+def _logit_prob(p: float) -> float:
+    p = max(min(float(p), 1.0 - 1e-6), 1e-6)
+    return math.log(p / (1.0 - p))
+
+
+def _fit_per_subject_shifts(labeled: list[dict]) -> dict[str, float]:
+    try:
+        by_subject: dict[str, list[tuple[int, float]]] = {}
+        for row in labeled:
+            if not isinstance(row, dict):
+                continue
+            y = _label_value(row)
+            if y is None:
+                continue
+            try:
+                logit = _raw_logit(row)
+            except Exception:
+                continue
+            if not math.isfinite(logit):
+                continue
+            p = _sigmoid(float(logit))
+            if not math.isfinite(p):
+                continue
+            subject_key = _normalize_subject(str(row.get("subject_content") or ""))
+            by_subject.setdefault(subject_key, []).append((y, p))
+
+        shifts: dict[str, float] = {}
+        for subject_key, obs in by_subject.items():
+            k_s = len(obs)
+            if k_s < PER_SUBJECT_SHIFT_MIN_OBS:
+                continue
+            sum_y = sum(y for y, _ in obs)
+            y_bar_smoothed = (sum_y + PER_SUBJECT_SHIFT_LABEL_SMOOTH) / (
+                k_s + 2.0 * PER_SUBJECT_SHIFT_LABEL_SMOOTH
+            )
+            p_bar = sum(p for _, p in obs) / k_s
+            raw_shift = _logit_prob(y_bar_smoothed) - _logit_prob(p_bar)
+            delta_s = (k_s / (k_s + PER_SUBJECT_SHIFT_KAPPA)) * raw_shift
+            delta_s = max(min(delta_s, PER_SUBJECT_SHIFT_CLIP), -PER_SUBJECT_SHIFT_CLIP)
+            if math.isfinite(delta_s):
+                shifts[subject_key] = float(delta_s)
+        return shifts
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _per_subject_shifts(labeled: list[dict] | None) -> dict[str, float]:
+    global _PER_SUBJECT_CACHE_KEY, _PER_SUBJECT_CACHE
+
+    key = _labeled_cache_key(labeled)
+    if key is None:
+        return {}
+    if key != _PER_SUBJECT_CACHE_KEY:
+        _PER_SUBJECT_CACHE_KEY = key
+        _PER_SUBJECT_CACHE = _fit_per_subject_shifts(labeled or [])
+    return _PER_SUBJECT_CACHE or {}
+
+
 def _online_calibration_params(labeled: list[dict] | None) -> tuple[float, float] | None:
     global _ONLINE_PLATT_CACHE_KEY, _ONLINE_PLATT_CACHE
 
@@ -436,7 +502,13 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
     if not ENCODER_OK:
         return _subject_only_prob(input)
     try:
-        logit = _calibrate_logit(_raw_logit(input), labeled)
+        logit = _raw_logit(input)
+        shifts = _per_subject_shifts(labeled)
+        subject_key = _normalize_subject(str(input.get("subject_content") or ""))
+        if shifts and subject_key in shifts:
+            logit = logit + shifts[subject_key]
+        else:
+            logit = _calibrate_logit(logit, labeled)
         p = _sigmoid(logit)
         return _clip_prob(p)
     except Exception as exc:  # noqa: BLE001
