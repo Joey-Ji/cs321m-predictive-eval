@@ -33,7 +33,6 @@ import modal
 APP_NAME = "eval-comp-smoke"
 VOLUME_NAME = "eval-comp-data"
 HF_CACHE = "/app/hf_cache"
-ENCODER = "sentence-transformers/all-mpnet-base-v2"
 
 LOCAL_ROOT = Path(__file__).resolve().parent
 
@@ -45,7 +44,8 @@ def _prefetch_encoder() -> None:
     os.environ["HF_HOME"] = HF_CACHE
     from sentence_transformers import SentenceTransformer
 
-    SentenceTransformer(ENCODER, cache_folder=HF_CACHE)
+    SentenceTransformer("sentence-transformers/all-mpnet-base-v2", cache_folder=HF_CACHE)
+    SentenceTransformer("BAAI/bge-large-en-v1.5", cache_folder=HF_CACHE)
 
 
 image = (
