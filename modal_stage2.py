@@ -23,8 +23,10 @@ RUN THE PIPELINE:
 
     modal run modal_stage2.py                  # encode + train + eval
     modal run modal_stage2.py --stage encode   # just encode
+    modal run modal_stage2.py --stage encode --encoder BAAI/bge-large-en-v1.5 --emb-out data/embeddings/bge_large_v1
     modal run modal_stage2.py --stage train    # just train the default linear head
     modal run modal_stage2.py --stage train --head mlp --out data/stage2/kfactor_mpnet_mlp_v1
+    modal run modal_stage2.py --stage train --head mlp --emb data/embeddings/bge_large_v1 --out data/stage2/kfactor_bge_mlp_v1
     modal run modal_stage2.py --stage eval     # just evaluate the default linear head
     modal run modal_stage2.py --stage eval --out data/stage2/kfactor_mpnet_mlp_v1
 
@@ -51,6 +53,7 @@ VOLUME_NAME = "eval-comp-data"
 WORKDIR = "/root/eval_comp"
 DATA_DIR = f"{WORKDIR}/data"
 ENCODER = "sentence-transformers/all-mpnet-base-v2"
+EMB_DIR = "data/embeddings/mpnet_v1"
 GPU = "T4"
 
 LOCAL_ROOT = Path(__file__).resolve().parent
@@ -98,16 +101,21 @@ def _run(cmd: list[str]) -> None:
     image=image,
     gpu=GPU,
     volumes={DATA_DIR: volume},
-    timeout=60 * 60,
+    timeout=2 * 60 * 60,
 )
-def encode_items(batch: int = 128, max_chars: int = 4000) -> None:
+def encode_items(
+    batch: int = 128,
+    max_chars: int = 4000,
+    encoder: str = ENCODER,
+    out: str = EMB_DIR,
+) -> None:
     _run(
         [
             "python",
             "scripts/encode_items.py",
             "--joined", "data/joined.parquet",
-            "--out", "data/embeddings/mpnet_v1",
-            "--encoder", ENCODER,
+            "--out", out,
+            "--encoder", encoder,
             "--batch", str(batch),
             "--max-chars", str(max_chars),
         ]
@@ -123,6 +131,7 @@ def encode_items(batch: int = 128, max_chars: int = 4000) -> None:
 def train_head(
     head: str = "linear",
     hidden: int = 256,
+    emb: str = EMB_DIR,
     out: str = "data/stage2/kfactor_mpnet_linear_v1",
     epochs: int = 200,
     lr: float = 1e-3,
@@ -134,7 +143,7 @@ def train_head(
             "python",
             "scripts/train_kfactor_head.py",
             "--stage1", "data/stage1/kfactor_k4",
-            "--emb", "data/embeddings/mpnet_v1",
+            "--emb", emb,
             "--out", out,
             "--head", head,
             "--hidden", str(hidden),
@@ -154,6 +163,7 @@ def train_head(
 )
 def evaluate(
     stage2: str = "data/stage2/kfactor_mpnet_linear_v1",
+    emb: str = EMB_DIR,
     split: str = "item-cold",
     val_frac: float = 0.1,
     seed: int = 0,
@@ -165,7 +175,7 @@ def evaluate(
             "--joined", "data/joined.parquet",
             "--stage1", "data/stage1/kfactor_k4",
             "--stage2", stage2,
-            "--emb", "data/embeddings/mpnet_v1",
+            "--emb", emb,
             "--split", split,
             "--val-frac", str(val_frac),
             "--seed", str(seed),
@@ -179,6 +189,11 @@ def main(
     stage: str = "all",
     head: str = "linear",
     hidden: int = 256,
+    encoder: str = ENCODER,
+    emb_out: str = EMB_DIR,
+    emb: str = EMB_DIR,
+    batch: int = 128,
+    max_chars: int = 4000,
     epochs: int = 200,
     lr: float = 1e-3,
     out: str = "data/stage2/kfactor_mpnet_linear_v1",
@@ -191,12 +206,13 @@ def main(
         raise SystemExit(f"unknown stage {stage!r}; expected encode|train|eval|all")
     if stage in ("encode", "all"):
         print(">>> encode_items")
-        encode_items.remote()
+        encode_items.remote(batch=batch, max_chars=max_chars, encoder=encoder, out=emb_out)
     if stage in ("train", "all"):
         print(">>> train_head")
         train_head.remote(
             head=head,
             hidden=hidden,
+            emb=emb,
             out=out,
             epochs=epochs,
             lr=lr,
@@ -205,5 +221,5 @@ def main(
         )
     if stage in ("eval", "all"):
         print(">>> evaluate")
-        evaluate.remote(stage2=out, split=split, val_frac=val_frac, seed=seed)
+        evaluate.remote(stage2=out, emb=emb, split=split, val_frac=val_frac, seed=seed)
     print(">>> done")
