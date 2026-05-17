@@ -292,13 +292,30 @@ def _run_seed(
     categories: dict[str, dict[str, Any]] = {}
     reveal_methods: dict[str, str] = {}
 
+    # First pass: select K labeled rows per category, then pool them into a
+    # single round-level labeled list. Per competition spec (PDF §3.4), the
+    # platform passes the FULL K * m labeled list (union across all data
+    # categories) to every predict() call within the round, not the
+    # per-category slice. The earlier per-category passing under-counted the
+    # number of in-distribution labels each predict() actually receives.
+    labeled_pool: list[dict[str, Any]] = []
+    per_category_labeled_counts: dict[tuple[str, str], int] = {}
     for category in sorted(sampled_groups):
         category_rows = sampled_groups[category]
-        labeled, reveal_method = _select_labeled_rows(category_rows, rng, k=k, labeling=labeling)
+        labeled_for_category, reveal_method = _select_labeled_rows(
+            category_rows, rng, k=k, labeling=labeling
+        )
+        labeled_pool.extend(labeled_for_category)
+        per_category_labeled_counts[category] = len(labeled_for_category)
+        reveal_methods[_format_category(category)] = reveal_method
+
+    # Second pass: score every row against the pooled labeled list.
+    for category in sorted(sampled_groups):
+        category_rows = sampled_groups[category]
         category_predictions: list[float] = []
         category_labels: list[int] = []
         for row in category_rows:
-            pred = _checked_predict(model, row, labeled=labeled)
+            pred = _checked_predict(model, row, labeled=labeled_pool)
             label = _coerce_binary_label(row.get("label"))
             if label is None:
                 raise ValueError(f"sampled row has non-binary label: {row.get('label')!r}")
@@ -308,9 +325,9 @@ def _run_seed(
         category_id = _format_category(category)
         categories[category_id] = {
             **_score_predictions(category_predictions, category_labels),
-            "n_labeled": float(len(labeled)),
+            "n_labeled_for_category": float(per_category_labeled_counts[category]),
+            "n_labeled_pool": float(len(labeled_pool)),
         }
-        reveal_methods[category_id] = reveal_method
         all_predictions.extend(category_predictions)
         all_labels.extend(category_labels)
 

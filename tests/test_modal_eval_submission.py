@@ -71,7 +71,10 @@ def test_labeling_selection_uses_top_k() -> list[str]:
     return errs
 
 
-def test_run_seed_passes_same_labeled_list_per_category() -> list[str]:
+def test_run_seed_passes_pooled_labeled_list_to_every_predict() -> list[str]:
+    """Per competition spec, the full K * m labeled list (union of K labels
+    selected per category) must be passed to every predict() call within the
+    round, not the per-category slice. This test pins that invariant."""
     errs: list[str] = []
     rows: list[dict] = []
     for benchmark in ("bench_a", "bench_b"):
@@ -112,16 +115,24 @@ def test_run_seed_passes_same_labeled_list_per_category() -> list[str]:
     )
     if int(result["metrics"]["n"]) != 6:
         errs.append(f"n={result['metrics']['n']} expected 6")
-    for benchmark in ("bench_a", "bench_b"):
-        category_calls = [call for call in calls if call[0] == benchmark]
-        labeled_ids = {call[1] for call in category_calls}
-        labeled_benchmarks = {call[2] for call in category_calls}
-        if len(category_calls) != 3:
-            errs.append(f"{benchmark} call count={len(category_calls)} expected 3")
-        if len(labeled_ids) != 1:
-            errs.append(f"{benchmark} did not reuse one labeled list: {labeled_ids}")
-        if labeled_benchmarks != {(benchmark, benchmark)}:
-            errs.append(f"{benchmark} labeled rows crossed category: {labeled_benchmarks}")
+
+    # All 6 predict() calls should have seen the SAME labeled list object
+    # (single pool), and that pool should span both benchmarks (k=2 per
+    # category * 2 categories = 4 labeled rows total, with both benchmarks
+    # represented).
+    if len(calls) != 6:
+        errs.append(f"call count={len(calls)} expected 6")
+    pool_ids = {call[1] for call in calls}
+    if len(pool_ids) != 1:
+        errs.append(f"labeled list identity not shared across all calls: {pool_ids}")
+    pool_benchmark_tuples = {call[2] for call in calls}
+    if len(pool_benchmark_tuples) != 1:
+        errs.append(f"different labeled pools observed: {pool_benchmark_tuples}")
+    pool_benchmarks = next(iter(pool_benchmark_tuples))
+    if set(pool_benchmarks) != {"bench_a", "bench_b"}:
+        errs.append(f"pool missing categories: {pool_benchmarks}")
+    if len(pool_benchmarks) != 4:
+        errs.append(f"pool size={len(pool_benchmarks)} expected 4 (k=2 * 2 cats)")
     return errs
 
 
@@ -196,7 +207,7 @@ def main() -> int:
     tests = [
         ("category_quota_balances_and_caps", test_category_quota_balances_and_caps),
         ("labeling_selection_uses_top_k", test_labeling_selection_uses_top_k),
-        ("run_seed_passes_same_labeled_list_per_category", test_run_seed_passes_same_labeled_list_per_category),
+        ("run_seed_passes_pooled_labeled_list_to_every_predict", test_run_seed_passes_pooled_labeled_list_to_every_predict),
         ("load_held_out_item_ids_matches_stage2_logic", test_load_held_out_item_ids_matches_stage2_logic),
         ("load_eval_rows_filters_heldout_and_nonbinary", test_load_eval_rows_filters_heldout_and_nonbinary),
         ("parse_seeds", test_parse_seeds),
