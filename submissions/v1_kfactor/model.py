@@ -174,7 +174,14 @@ else:
     try:
         from sentence_transformers import SentenceTransformer  # noqa: E402
 
-        ENCODER = SentenceTransformer(HEAD_META["encoder"], cache_folder=HF_CACHE_DIR)
+        encoder_spec = str(HEAD_META["encoder"])
+        if encoder_spec.startswith("local:"):
+            local_dir = ROOT / encoder_spec[len("local:") :].lstrip("/")
+            if not local_dir.exists():
+                raise FileNotFoundError(f"local encoder dir missing: {local_dir}")
+            ENCODER = SentenceTransformer(str(local_dir))
+        else:
+            ENCODER = SentenceTransformer(encoder_spec, cache_folder=HF_CACHE_DIR)
         ENCODER_OK = True
     except Exception as exc:  # noqa: BLE001
         ENCODER_LOAD_ERROR = repr(exc)

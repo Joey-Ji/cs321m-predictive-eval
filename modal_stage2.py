@@ -27,6 +27,7 @@ RUN THE PIPELINE:
     modal run modal_stage2.py --stage train    # just train the default linear head
     modal run modal_stage2.py --stage train --head mlp --out data/stage2/kfactor_mpnet_mlp_v1
     modal run modal_stage2.py --stage train --head mlp --emb data/embeddings/bge_large_v1 --out data/stage2/kfactor_bge_mlp_v1
+    modal run modal_stage2.py --stage finetune --out data/stage2/kfactor_mpnet_finetuned_v1
     modal run modal_stage2.py --stage eval     # just evaluate the default linear head
     modal run modal_stage2.py --stage eval --out data/stage2/kfactor_mpnet_mlp_v1
 
@@ -158,6 +159,58 @@ def train_head(
 
 @app.function(
     image=image,
+    gpu="A100",
+    volumes={DATA_DIR: volume},
+    timeout=4 * 60 * 60,
+)
+def fine_tune_stage2_bce(
+    encoder_base: str = ENCODER,
+    max_train_rows: int = 1_000_000,
+    val_frac: float = 0.1,
+    seed: int = 0,
+    epochs: int = 2,
+    batch_size: int = 64,
+    lr_encoder: float = 2e-5,
+    lr_head: float = 1e-3,
+    hidden: int = 256,
+    out: str = "data/stage2/kfactor_mpnet_finetuned_v1",
+    stage1: str = "data/stage1/kfactor_k4",
+) -> None:
+    _run(
+        [
+            "python",
+            "scripts/fine_tune_stage2_bce.py",
+            "--encoder-base",
+            encoder_base,
+            "--max-train-rows",
+            str(max_train_rows),
+            "--val-frac",
+            str(val_frac),
+            "--seed",
+            str(seed),
+            "--epochs",
+            str(epochs),
+            "--batch-size",
+            str(batch_size),
+            "--lr-encoder",
+            str(lr_encoder),
+            "--lr-head",
+            str(lr_head),
+            "--hidden",
+            str(hidden),
+            "--out",
+            out,
+            "--stage1",
+            stage1,
+            "--joined",
+            "data/joined.parquet",
+        ]
+    )
+    volume.commit()
+
+
+@app.function(
+    image=image,
     volumes={DATA_DIR: volume},
     timeout=30 * 60,
 )
@@ -190,20 +243,27 @@ def main(
     head: str = "linear",
     hidden: int = 256,
     encoder: str = ENCODER,
+    encoder_base: str = ENCODER,
     emb_out: str = EMB_DIR,
     emb: str = EMB_DIR,
     batch: int = 128,
+    batch_size: int = 64,
     max_chars: int = 4000,
     epochs: int = 200,
+    finetune_epochs: int = 2,
     lr: float = 1e-3,
+    lr_encoder: float = 2e-5,
+    lr_head: float = 1e-3,
+    max_train_rows: int = 1_000_000,
     out: str = "data/stage2/kfactor_mpnet_linear_v1",
     split: str = "item-cold",
     val_frac: float = 0.1,
     seed: int = 0,
+    spawn_finetune: bool = False,
 ) -> None:
-    """Run the requested stage(s). `stage` is one of: encode | train | eval | all."""
-    if stage not in ("encode", "train", "eval", "all"):
-        raise SystemExit(f"unknown stage {stage!r}; expected encode|train|eval|all")
+    """Run the requested stage(s). `stage` is one of: encode | train | finetune | eval | all."""
+    if stage not in ("encode", "train", "finetune", "eval", "all"):
+        raise SystemExit(f"unknown stage {stage!r}; expected encode|train|finetune|eval|all")
     if stage in ("encode", "all"):
         print(">>> encode_items")
         encode_items.remote(batch=batch, max_chars=max_chars, encoder=encoder, out=emb_out)
@@ -219,6 +279,25 @@ def main(
             val_frac=val_frac,
             seed=seed,
         )
+    if stage == "finetune":
+        print(">>> fine_tune_stage2_bce")
+        kwargs = {
+            "encoder_base": encoder_base,
+            "max_train_rows": max_train_rows,
+            "val_frac": val_frac,
+            "seed": seed,
+            "epochs": finetune_epochs,
+            "batch_size": batch_size,
+            "lr_encoder": lr_encoder,
+            "lr_head": lr_head,
+            "hidden": hidden,
+            "out": out,
+        }
+        if spawn_finetune:
+            call = fine_tune_stage2_bce.spawn(**kwargs)
+            print(f">>> spawned fine_tune_stage2_bce function_call_id={call.object_id}")
+        else:
+            fine_tune_stage2_bce.remote(**kwargs)
     if stage in ("eval", "all"):
         print(">>> evaluate")
         evaluate.remote(stage2=out, emb=emb, split=split, val_frac=val_frac, seed=seed)

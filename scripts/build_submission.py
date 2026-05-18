@@ -109,6 +109,18 @@ def gather_state_files(extra_dirs: list[Path], allowed_names: set[str]) -> list[
     return [files_by_name[name] for name in sorted(files_by_name)]
 
 
+def gather_encoder_dir(extra_dirs: list[Path]) -> Path | None:
+    """Return a Stage 2 encoder/ directory from include dirs when present."""
+    encoder_dir: Path | None = None
+    for d in extra_dirs:
+        candidate = d / "encoder"
+        if candidate.is_dir():
+            if encoder_dir is not None:
+                print(f"WARN: shadowed encoder dir {encoder_dir} with {candidate}", file=sys.stderr)
+            encoder_dir = candidate
+    return encoder_dir
+
+
 def main(name: str, includes: list[Path] | None, out_dir: Path) -> None:
     submissions_root = Path(__file__).resolve().parent.parent / "submissions"
     sub_dir = submissions_root / name
@@ -134,6 +146,7 @@ def main(name: str, includes: list[Path] | None, out_dir: Path) -> None:
     }
     state_files = gather_state_files(includes, allowed_state_files)
     include_state_files = {p.name: p for p in state_files}
+    encoder_dir = gather_encoder_dir(includes)
 
     missing_required = sorted(required_state_files - set(local_state_files) - set(include_state_files))
     if missing_required:
@@ -161,6 +174,18 @@ def main(name: str, includes: list[Path] | None, out_dir: Path) -> None:
             z.write(p, p.name)
             written_names.add(p.name)
             print(f"  + {p.name}  (from {p.parent})")
+        if encoder_dir is not None:
+            for p in sorted(encoder_dir.rglob("*")):
+                if not p.is_file():
+                    continue
+                arcname = Path("encoder") / p.relative_to(encoder_dir)
+                arcname_s = str(arcname)
+                if arcname_s in written_names:
+                    print(f"WARN: skipping {p}; {arcname_s} already written", file=sys.stderr)
+                    continue
+                z.write(p, arcname_s)
+                written_names.add(arcname_s)
+                print(f"  + {arcname_s}  (from {encoder_dir})")
 
     size = zip_path.stat().st_size
     print(f"Done. {zip_path} ({size / 1024:.1f} KB)")
