@@ -40,6 +40,17 @@ RUNTIME_STATE_FILES = {
     "subject_name_to_id.json",
     "side_feature_meta.json",
     "calibration.json",
+    # Lever L priors + residual
+    "global.json",
+    "benchmark.parquet",
+    "benchmark_condition.parquet",
+    "subject.parquet",
+    "subject_benchmark.parquet",
+    "subject_category.parquet",
+    "runtime_priors.json",
+    "prior_only.json",
+    "residual.pt",
+    "head.json",
 }
 SUBMISSION_RUNTIME_STATE_FILES = {
     "v1_kfactor": {
@@ -54,6 +65,16 @@ SUBMISSION_RUNTIME_STATE_FILES = {
         "manifest.json",
         "side_feature_meta.json",
         "calibration.json",
+        "global.json",
+        "benchmark.parquet",
+        "benchmark_condition.parquet",
+        "subject.parquet",
+        "subject_benchmark.parquet",
+        "subject_category.parquet",
+        "runtime_priors.json",
+        "prior_only.json",
+        "residual.pt",
+        "head.json",
     },
     "v1_irt": {
         "head.pt",
@@ -109,7 +130,7 @@ def gather_state_files(extra_dirs: list[Path], allowed_names: set[str]) -> list[
     return [files_by_name[name] for name in sorted(files_by_name)]
 
 
-def main(name: str, includes: list[Path] | None, out_dir: Path) -> None:
+def main(name: str, includes: list[Path] | None, out_dir: Path, zip_name: str | None = None) -> None:
     submissions_root = Path(__file__).resolve().parent.parent / "submissions"
     sub_dir = submissions_root / name
     if not sub_dir.exists():
@@ -120,7 +141,7 @@ def main(name: str, includes: list[Path] | None, out_dir: Path) -> None:
         sys.exit(f"required file missing: {model_py}")
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    zip_path = out_dir / f"{name}.zip"
+    zip_path = out_dir / (zip_name or f"{name}.zip")
 
     if not includes:
         includes = [Path(p) for p in SUBMISSION_DEFAULT_INCLUDES.get(name, ["data/head", "data/irt"])]
@@ -176,5 +197,6 @@ if __name__ == "__main__":
         help="Additional dirs to scan for known runtime state files. Defaults are submission-specific.",
     )
     parser.add_argument("--out", default="submissions", type=Path)
+    parser.add_argument("--zip-name", default=None, help="Optional output ZIP filename.")
     args = parser.parse_args()
-    main(args.name, None if args.include is None else [Path(p) for p in args.include], args.out)
+    main(args.name, None if args.include is None else [Path(p) for p in args.include], args.out, args.zip_name)
