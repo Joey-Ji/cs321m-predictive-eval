@@ -9,7 +9,7 @@ mean log-likelihood plus AUC.
 USAGE:
     modal run modal_eval_submission.py
     modal run modal_eval_submission.py --zip submissions/v1_kfactor.zip --seeds 0,1,2
-    modal run modal_eval_submission.py --max-rows 5000 --per-category 1000 --k 5
+    modal run modal_eval_submission.py --max-rows 5000 --per-category 1000 --k 5 --m-categories 5
 """
 
 from __future__ import annotations
@@ -280,6 +280,7 @@ def _run_seed(
     max_rows: int,
     max_per_category: int,
     k: int,
+    m_categories: int,
 ) -> dict[str, Any]:
     rng = random.Random(seed)
     groups = _group_rows_by_category(rows)
@@ -292,15 +293,18 @@ def _run_seed(
     categories: dict[str, dict[str, Any]] = {}
     reveal_methods: dict[str, str] = {}
 
-    # First pass: select K labeled rows per category, then pool them into a
-    # single round-level labeled list. Per competition spec (PDF §3.4), the
-    # platform passes the FULL K * m labeled list (union across all data
-    # categories) to every predict() call within the round, not the
-    # per-category slice. The earlier per-category passing under-counted the
-    # number of in-distribution labels each predict() actually receives.
+    # First pass: select K labeled rows for only m revealed categories, then
+    # pool them into a single round-level labeled list. Per competition spec
+    # (PDF §3.4), the score set can span more categories than the revealed
+    # label pool.
+    all_categories = sorted(sampled_groups)
+    n_reveal = min(m_categories, len(all_categories))
+    reveal_categories = rng.sample(all_categories, n_reveal)
     labeled_pool: list[dict[str, Any]] = []
-    per_category_labeled_counts: dict[tuple[str, str], int] = {}
-    for category in sorted(sampled_groups):
+    per_category_labeled_counts: dict[tuple[str, str], int] = {
+        category: 0 for category in all_categories
+    }
+    for category in reveal_categories:
         category_rows = sampled_groups[category]
         labeled_for_category, reveal_method = _select_labeled_rows(
             category_rows, rng, k=k, labeling=labeling
@@ -310,7 +314,7 @@ def _run_seed(
         reveal_methods[_format_category(category)] = reveal_method
 
     # Second pass: score every row against the pooled labeled list.
-    for category in sorted(sampled_groups):
+    for category in all_categories:
         category_rows = sampled_groups[category]
         category_predictions: list[float] = []
         category_labels: list[int] = []
@@ -376,6 +380,12 @@ def _summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
             "auc_mean": cat_auc_mean,
             "auc_std": cat_auc_std,
             "n_mean": float(statistics.fmean([r["n"] for r in category_results])),
+            "n_labeled_for_category_mean": float(
+                statistics.fmean([r["n_labeled_for_category"] for r in category_results])
+            ),
+            "n_labeled_pool_mean": float(
+                statistics.fmean([r["n_labeled_pool"] for r in category_results])
+            ),
         }
 
     return {
@@ -415,6 +425,7 @@ def eval_submission(
     max_rows: int = 5000,
     max_per_category: int = 1000,
     k: int = 5,
+    m_categories: int = 5,
     val_frac: float = 0.1,
     split_seed: int = 0,
     stage1_path: str = "/data/stage1/kfactor_k4",
@@ -492,6 +503,7 @@ def eval_submission(
             max_rows=max_rows,
             max_per_category=max_per_category,
             k=k,
+            m_categories=m_categories,
         )
         metrics = result["metrics"]
         print(
@@ -509,6 +521,7 @@ def eval_submission(
             "max_rows": int(max_rows),
             "max_per_category": int(max_per_category),
             "k": int(k),
+            "m_categories": int(m_categories),
             "n_held_out_items": int(len(held_out)),
             "n_held_out_rows": int(len(rows)),
             "n_categories": int(len(groups)),
@@ -533,6 +546,7 @@ def main(
     max_rows: int = 5000,
     per_category: int = 1000,
     k: int = 5,
+    m_categories: int = 5,
     val_frac: float = 0.1,
     split_seed: int = 0,
     stage1: str = "/data/stage1/kfactor_k4",
@@ -544,7 +558,8 @@ def main(
     _parse_seeds(seeds)
     print(
         f"[local] uploading {path.name} ({path.stat().st_size / 1024:.1f} KB) "
-        f"and running eval (seeds={seeds}, max_rows={max_rows}, per_category={per_category}, k={k})"
+        f"and running eval (seeds={seeds}, max_rows={max_rows}, "
+        f"per_category={per_category}, k={k}, m_categories={m_categories})"
     )
     eval_submission.remote(
         path.read_bytes(),
@@ -552,6 +567,7 @@ def main(
         max_rows,
         per_category,
         k,
+        m_categories,
         val_frac,
         split_seed,
         stage1,
