@@ -50,6 +50,15 @@ CLIP_LO, CLIP_HI = 0.02, 0.98
 NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE)
 ROOT = Path(__file__).resolve().parent
 DUMMY_ENCODER = os.environ.get("V1_KFACTOR_DUMMY_ENCODER") == "1"
+PRIOR_KEY_SEP = "\x1f"
+PRIOR_COLUMNS = (
+    "prior_global",
+    "prior_benchmark",
+    "prior_benchmark_condition",
+    "prior_subject",
+    "prior_subject_benchmark",
+    "prior_subject_category",
+)
 
 
 def _resolve_cache_dir() -> str | None:
@@ -120,6 +129,16 @@ def _build_head(in_dim: int, out_dim: int, head_type: str, hidden: int):
             nn.Linear(hidden, out_dim),
         )
     raise ValueError(f"unsupported head type: {head_type}")
+
+
+def _build_residual(input_dim: int, hidden: int, layers: int, dropout: float):
+    blocks: list[nn.Module] = []
+    dim = input_dim
+    for _ in range(layers):
+        blocks.extend([nn.Linear(dim, hidden), nn.ReLU(), nn.Dropout(dropout)])
+        dim = hidden
+    blocks.append(nn.Linear(dim, 1))
+    return nn.Sequential(*blocks)
 
 
 class _DummyEncoder:
@@ -199,6 +218,49 @@ FALLBACK_U = SUBJECT_STATE["fallback_u"].detach().cpu().float()
 CALIBRATION_PATH = _resolve_file("calibration.json", "stage2", required=False)
 CALIBRATION = json.loads(CALIBRATION_PATH.read_text()) if CALIBRATION_PATH else None
 
+PRIORS_PATH = _resolve_file("runtime_priors.json", "priors", required=False)
+PRIORS = json.loads(PRIORS_PATH.read_text()) if PRIORS_PATH else None
+if PRIORS is not None:
+    PRIOR_KEY_SEP = str(PRIORS.get("key_sep", PRIOR_KEY_SEP))
+PRIOR_ONLY_PATH = _resolve_file("prior_only.json", "priors", required=False)
+PRIOR_ONLY = PRIOR_ONLY_PATH is not None
+
+RESIDUAL_META_PATH = _resolve_file("head.json", "residual", required=False)
+RESIDUAL_WEIGHTS_PATH = _resolve_file("residual.pt", "residual", required=False)
+RESIDUAL = None
+RESIDUAL_FEATURE_MEAN = None
+RESIDUAL_FEATURE_STD = None
+RESIDUAL_OK = False
+if RESIDUAL_META_PATH is not None and RESIDUAL_WEIGHTS_PATH is not None:
+    try:
+        RESIDUAL_META = json.loads(RESIDUAL_META_PATH.read_text())
+        RESIDUAL = _build_residual(
+            int(RESIDUAL_META["input_dim"]),
+            int(RESIDUAL_META.get("hidden", 256)),
+            int(RESIDUAL_META.get("layers", 2)),
+            float(RESIDUAL_META.get("dropout", 0.1)),
+        )
+        residual_state = _torch_load(RESIDUAL_WEIGHTS_PATH)
+        if isinstance(residual_state, dict) and any(str(k).startswith("net.") for k in residual_state):
+            residual_state = {
+                str(k)[4:] if str(k).startswith("net.") else str(k): v
+                for k, v in residual_state.items()
+            }
+        RESIDUAL.load_state_dict(residual_state)
+        RESIDUAL.eval()
+        RESIDUAL_FEATURE_MEAN = torch.tensor(RESIDUAL_META["feature_mean"], dtype=torch.float32)
+        RESIDUAL_FEATURE_STD = torch.tensor(RESIDUAL_META["feature_std"], dtype=torch.float32)
+        RESIDUAL_FEATURE_STD = torch.clamp(RESIDUAL_FEATURE_STD, min=1e-6)
+        RESIDUAL_OK = PRIORS is not None
+        if not RESIDUAL_OK:
+            print("[v1_kfactor] residual disabled: runtime_priors.json missing", flush=True)
+    except Exception as exc:  # noqa: BLE001
+        RESIDUAL = None
+        RESIDUAL_FEATURE_MEAN = None
+        RESIDUAL_FEATURE_STD = None
+        RESIDUAL_OK = False
+        print(f"[v1_kfactor] residual load failed: {exc!r}", flush=True)
+
 ONLINE_PLATT_MIN_EXAMPLES = 4
 ONLINE_PLATT_L2 = 0.05
 ONLINE_PLATT_MIN_ALPHA = 0.05
@@ -217,7 +279,9 @@ _PER_SUBJECT_CACHE: dict[str, float] | None = None
 
 
 @lru_cache(maxsize=2048)
-def _item_params(item_content: str, benchmark: str, condition: str) -> tuple[tuple[float, ...], float]:
+def _item_context(
+    item_content: str, benchmark: str, condition: str
+) -> tuple[tuple[float, ...], float, tuple[float, ...]]:
     text = item_content[:MAX_CHARS]
     side = encode_side_features({"benchmark": benchmark, "condition": condition}, VOCAB)
     with torch.no_grad():
@@ -230,6 +294,12 @@ def _item_params(item_content: str, benchmark: str, condition: str) -> tuple[tup
         raise ValueError("non-finite K-factor item parameter prediction")
     item_v = tuple(float(x) for x in pred[:K])
     item_z = float(pred[K])
+    emb_tuple = tuple(float(x) for x in emb)
+    return item_v, item_z, emb_tuple
+
+
+def _item_params(item_content: str, benchmark: str, condition: str) -> tuple[tuple[float, ...], float]:
+    item_v, item_z, _ = _item_context(item_content, benchmark, condition)
     return item_v, item_z
 
 
@@ -240,6 +310,23 @@ def _subject_params(subject_content: str) -> tuple[float, torch.Tensor]:
         return FALLBACK_BIAS, FALLBACK_U
     idx = int(subject_idx)
     return float(SUBJECT_BIAS[idx]), SUBJECT_U[idx]
+
+
+def _prior_key(*parts: str) -> str:
+    return PRIOR_KEY_SEP.join(str(part) for part in parts)
+
+
+def _prior_values(subject_key: str, benchmark: str, condition: str) -> tuple[float, ...]:
+    if PRIORS is None:
+        p = 0.654
+        return (p, p, p, p, p, p)
+    global_p = float(PRIORS.get("global", 0.654))
+    bench_p = float(PRIORS.get("benchmark", {}).get(benchmark, global_p))
+    bc_p = float(PRIORS.get("benchmark_condition", {}).get(_prior_key(benchmark, condition), bench_p))
+    subj_p = float(PRIORS.get("subject", {}).get(subject_key, global_p))
+    sb_p = float(PRIORS.get("subject_benchmark", {}).get(_prior_key(subject_key, benchmark), subj_p))
+    sc_p = float(PRIORS.get("subject_category", {}).get(_prior_key(subject_key, benchmark, condition), sb_p))
+    return global_p, bench_p, bc_p, subj_p, sb_p, sc_p
 
 
 def _sigmoid(logit: float) -> float:
@@ -267,15 +354,65 @@ def _clip_prob(p: float) -> float:
     return float(max(min(p, CLIP_HI), CLIP_LO))
 
 
-def _raw_logit(input: dict) -> float:
-    item_v_tuple, item_z = _item_params(
+def _base_logit_parts(input: dict) -> tuple[float, float, torch.Tensor, tuple[float, ...], tuple[float, ...]]:
+    benchmark = str(input.get("benchmark") or "")
+    condition = str(input.get("condition") or "")
+    item_v_tuple, item_z, emb_tuple = _item_context(
         str(input.get("item_content") or ""),
-        str(input.get("benchmark") or ""),
-        str(input.get("condition") or ""),
+        benchmark,
+        condition,
     )
-    subject_bias, subject_u = _subject_params(str(input.get("subject_content") or ""))
+    subject_content = str(input.get("subject_content") or "")
+    subject_bias, subject_u = _subject_params(subject_content)
     item_v = torch.tensor(item_v_tuple, dtype=torch.float32)
-    return subject_bias + float((subject_u * item_v).sum()) + item_z
+    base_logit = subject_bias + float((subject_u * item_v).sum()) + item_z
+    return float(base_logit), float(subject_bias), subject_u, emb_tuple, _prior_values(
+        _normalize_subject(subject_content),
+        benchmark,
+        condition,
+    )
+
+
+def _residual_value(
+    base_logit: float,
+    subject_bias: float,
+    subject_u: torch.Tensor,
+    emb_tuple: tuple[float, ...],
+    priors: tuple[float, ...],
+) -> float:
+    if not RESIDUAL_OK or RESIDUAL is None or RESIDUAL_FEATURE_MEAN is None or RESIDUAL_FEATURE_STD is None:
+        return 0.0
+    with torch.no_grad():
+        feature = torch.cat(
+            [
+                torch.tensor([base_logit, subject_bias], dtype=torch.float32),
+                subject_u.detach().cpu().float().reshape(-1),
+                torch.tensor(emb_tuple, dtype=torch.float32),
+                torch.tensor(priors, dtype=torch.float32),
+            ],
+            dim=0,
+        )
+        if feature.numel() != RESIDUAL_FEATURE_MEAN.numel():
+            raise ValueError(
+                f"residual feature dim {feature.numel()} != expected {RESIDUAL_FEATURE_MEAN.numel()}"
+            )
+        x = ((feature - RESIDUAL_FEATURE_MEAN) / RESIDUAL_FEATURE_STD).reshape(1, -1)
+        residual = RESIDUAL(x).reshape(-1)[0]
+    value = float(residual)
+    if not math.isfinite(value):
+        raise ValueError("non-finite residual prediction")
+    return value
+
+
+def _raw_logit(input: dict) -> float:
+    if PRIOR_ONLY:
+        benchmark = str(input.get("benchmark") or "")
+        condition = str(input.get("condition") or "")
+        subject_key = _normalize_subject(str(input.get("subject_content") or ""))
+        p = _prior_values(subject_key, benchmark, condition)[-1]
+        return _logit_prob(float(p))
+    base_logit, subject_bias, subject_u, emb_tuple, priors = _base_logit_parts(input)
+    return base_logit + _residual_value(base_logit, subject_bias, subject_u, emb_tuple, priors)
 
 
 def _label_value(row: dict) -> int | None:
@@ -503,6 +640,8 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
         return _subject_only_prob(input)
     try:
         logit = _raw_logit(input)
+        if PRIOR_ONLY:
+            return _clip_prob(_sigmoid(logit))
         shifts = _per_subject_shifts(labeled)
         subject_key = _normalize_subject(str(input.get("subject_content") or ""))
         if shifts and subject_key in shifts:
