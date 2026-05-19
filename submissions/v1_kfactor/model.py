@@ -447,7 +447,8 @@ def _base_logit_parts(input: dict) -> tuple[float, float, torch.Tensor, tuple[fl
 
 
 def _kfactor_base_logit(input: dict) -> float:
-    return _base_logit_parts(input)[0]
+    raw = _base_logit_parts(input)[0]
+    return _apply_calibration(raw)
 
 
 def _residual_value(
