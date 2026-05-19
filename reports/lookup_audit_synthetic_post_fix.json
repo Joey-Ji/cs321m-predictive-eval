@@ -1,0 +1,47 @@
+{
+  "confusion_table": {
+    "benchmark_titlecase": {
+      "hit_subject_category": 200
+    },
+    "benchmark_trailing_space": {
+      "hit_subject_category": 200
+    },
+    "condition_pipe_spaces": {
+      "hit_subject_category": 8,
+      "not_applicable": 192
+    },
+    "condition_trailing_space": {
+      "hit_subject_category": 200
+    },
+    "control_original": {
+      "hit_subject_category": 200
+    },
+    "subject_leading_whitespace": {
+      "hit_subject_category": 200
+    },
+    "subject_lowercase_prefix": {
+      "hit_subject_category": 200
+    },
+    "subject_no_prefix": {
+      "hit_subject_category": 200
+    },
+    "subject_trailing_newline": {
+      "hit_subject_category": 200
+    },
+    "subject_unicode_nfd": {
+      "hit_subject_category": 200
+    },
+    "subject_uppercase_prefix": {
+      "hit_subject_category": 200
+    }
+  },
+  "min_count": 20,
+  "miss_examples": {},
+  "missing_display_keys": [],
+  "n_cells": 200,
+  "n_requested": 200,
+  "seed": 0,
+  "subject_category_path": "/private/tmp/v1_kfactor_priors_only_state/subject_category.parquet",
+  "subjects_path": "data/subjects.parquet",
+  "zip": "submissions/v1_kfactor_lookup_audit_fixed.zip"
+}

@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 
-NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE)
+NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE | re.IGNORECASE)
 CATEGORY_KEYS = ("benchmark", "condition")
 SIZE_B_RE = re.compile(r"(?:(\d+(?:\.\d+)?)\s*x\s*)?(\d+(?:\.\d+)?)\s*b\b", re.IGNORECASE)
 SIZE_M_RE = re.compile(r"\b(\d+(?:\.\d+)?)\s*m\b", re.IGNORECASE)

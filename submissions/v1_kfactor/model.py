@@ -6,6 +6,7 @@ Predicts cold-start item K-factor parameters from text + side features
 
 from __future__ import annotations
 
+import atexit
 import hashlib
 import json
 import math
@@ -47,7 +48,8 @@ except ImportError:
 
 
 CLIP_LO, CLIP_HI = 0.02, 0.98
-NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE)
+NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE | re.IGNORECASE)
+PIPE_SEP = re.compile(r"\s*\|\s*")
 ROOT = Path(__file__).resolve().parent
 DUMMY_ENCODER = os.environ.get("V1_KFACTOR_DUMMY_ENCODER") == "1"
 PRIOR_KEY_SEP = "\x1f"
@@ -59,6 +61,18 @@ PRIOR_COLUMNS = (
     "prior_subject_benchmark",
     "prior_subject_category",
 )
+LOOKUP_AUDIT_OUTCOMES = (
+    "hit_subject_category",
+    "hit_subject_benchmark",
+    "hit_subject",
+    "hit_benchmark_condition_only",
+    "hit_benchmark_only",
+    "fell_to_global",
+    "prior_none",
+)
+LOOKUP_AUDIT_SAMPLE_CAP = 500
+_LOOKUP_AUDIT_COUNTERS = {outcome: 0 for outcome in LOOKUP_AUDIT_OUTCOMES}
+_LOOKUP_AUDIT_SAMPLES: list[dict[str, str]] = []
 
 
 def _resolve_cache_dir() -> str | None:
@@ -116,6 +130,14 @@ def _normalize_subject(subject_content: str) -> str:
         return ""
     m = NAME_LINE.search(subject_content)
     return m.group(1).strip().lower() if m else subject_content.strip().lower()
+
+
+def _normalize_benchmark_key(benchmark: str) -> str:
+    return str(benchmark).strip().lower()
+
+
+def _normalize_condition_key(condition: str) -> str:
+    return PIPE_SEP.sub("|", str(condition).strip())
 
 
 def _build_head(in_dim: int, out_dim: int, head_type: str, hidden: int):
@@ -316,17 +338,96 @@ def _prior_key(*parts: str) -> str:
     return PRIOR_KEY_SEP.join(str(part) for part in parts)
 
 
-def _prior_values(subject_key: str, benchmark: str, condition: str) -> tuple[float, ...]:
+def _record_lookup_audit(
+    outcome: str,
+    raw_subject_content: str | None,
+    subject_key: str,
+    benchmark: str,
+    condition: str,
+) -> None:
+    _LOOKUP_AUDIT_COUNTERS[outcome] = _LOOKUP_AUDIT_COUNTERS.get(outcome, 0) + 1
+    if outcome in ("hit_subject_category", "hit_subject_benchmark"):
+        return
+    if len(_LOOKUP_AUDIT_SAMPLES) >= LOOKUP_AUDIT_SAMPLE_CAP:
+        return
+    _LOOKUP_AUDIT_SAMPLES.append(
+        {
+            "raw_subject_content": "" if raw_subject_content is None else str(raw_subject_content),
+            "normalized_subject_key": str(subject_key),
+            "benchmark": str(benchmark),
+            "condition": str(condition),
+            "outcome": outcome,
+        }
+    )
+
+
+def _lookup_audit_payload() -> dict[str, object]:
+    return {
+        "counters": dict(_LOOKUP_AUDIT_COUNTERS),
+        "samples": list(_LOOKUP_AUDIT_SAMPLES),
+        "sample_cap": LOOKUP_AUDIT_SAMPLE_CAP,
+    }
+
+
+def dump_lookup_audit(path: str | os.PathLike[str]) -> None:
+    payload = _lookup_audit_payload()
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    print(
+        "[v1_kfactor] lookup_audit_json="
+        + json.dumps(payload, sort_keys=True, separators=(",", ":")),
+        flush=True,
+    )
+
+
+def _prior_values(
+    subject_key: str,
+    benchmark: str,
+    condition: str,
+    raw_subject_content: str | None = None,
+) -> tuple[float, ...]:
+    benchmark_key = _normalize_benchmark_key(benchmark)
+    condition_key = _normalize_condition_key(condition)
     if PRIORS is None:
         p = 0.654
+        _record_lookup_audit("prior_none", raw_subject_content, subject_key, benchmark, condition)
         return (p, p, p, p, p, p)
+    benchmark_table = PRIORS.get("benchmark", {})
+    benchmark_condition_table = PRIORS.get("benchmark_condition", {})
+    subject_table = PRIORS.get("subject", {})
+    subject_benchmark_table = PRIORS.get("subject_benchmark", {})
+    subject_category_table = PRIORS.get("subject_category", {})
+    bc_key = _prior_key(benchmark_key, condition_key)
+    sb_key = _prior_key(subject_key, benchmark_key)
+    sc_key = _prior_key(subject_key, benchmark_key, condition_key)
+
     global_p = float(PRIORS.get("global", 0.654))
-    bench_p = float(PRIORS.get("benchmark", {}).get(benchmark, global_p))
-    bc_p = float(PRIORS.get("benchmark_condition", {}).get(_prior_key(benchmark, condition), bench_p))
-    subj_p = float(PRIORS.get("subject", {}).get(subject_key, global_p))
-    sb_p = float(PRIORS.get("subject_benchmark", {}).get(_prior_key(subject_key, benchmark), subj_p))
-    sc_p = float(PRIORS.get("subject_category", {}).get(_prior_key(subject_key, benchmark, condition), sb_p))
+    bench_p = float(benchmark_table.get(benchmark_key, global_p))
+    bc_p = float(benchmark_condition_table.get(bc_key, bench_p))
+    subj_p = float(subject_table.get(subject_key, global_p))
+    sb_p = float(subject_benchmark_table.get(sb_key, subj_p))
+    sc_p = float(subject_category_table.get(sc_key, sb_p))
+
+    if sc_key in subject_category_table:
+        outcome = "hit_subject_category"
+    elif sb_key in subject_benchmark_table:
+        outcome = "hit_subject_benchmark"
+    elif subject_key in subject_table:
+        outcome = "hit_subject"
+    elif bc_key in benchmark_condition_table:
+        outcome = "hit_benchmark_condition_only"
+    elif benchmark_key in benchmark_table:
+        outcome = "hit_benchmark_only"
+    else:
+        outcome = "fell_to_global"
+    _record_lookup_audit(outcome, raw_subject_content, subject_key, benchmark, condition)
     return global_p, bench_p, bc_p, subj_p, sb_p, sc_p
+
+
+_LOOKUP_AUDIT_PATH = os.environ.get("V1_KFACTOR_LOOKUP_AUDIT")
+if _LOOKUP_AUDIT_PATH:
+    atexit.register(dump_lookup_audit, _LOOKUP_AUDIT_PATH)
 
 
 def _sigmoid(logit: float) -> float:
@@ -370,6 +471,7 @@ def _base_logit_parts(input: dict) -> tuple[float, float, torch.Tensor, tuple[fl
         _normalize_subject(subject_content),
         benchmark,
         condition,
+        raw_subject_content=subject_content,
     )
 
 
@@ -408,8 +510,9 @@ def _raw_logit(input: dict) -> float:
     if PRIOR_ONLY:
         benchmark = str(input.get("benchmark") or "")
         condition = str(input.get("condition") or "")
-        subject_key = _normalize_subject(str(input.get("subject_content") or ""))
-        p = _prior_values(subject_key, benchmark, condition)[-1]
+        subject_content = str(input.get("subject_content") or "")
+        subject_key = _normalize_subject(subject_content)
+        p = _prior_values(subject_key, benchmark, condition, raw_subject_content=subject_content)[-1]
         return _logit_prob(float(p))
     base_logit, subject_bias, subject_u, emb_tuple, priors = _base_logit_parts(input)
     return base_logit + _residual_value(base_logit, subject_bias, subject_u, emb_tuple, priors)
