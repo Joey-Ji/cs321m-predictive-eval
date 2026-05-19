@@ -111,6 +111,7 @@ def test_run_seed_passes_pooled_labeled_list_to_every_predict() -> list[str]:
         seed=7,
         max_rows=6,
         max_per_category=3,
+        m_categories=2,
         k=2,
     )
     if int(result["metrics"]["n"]) != 6:
