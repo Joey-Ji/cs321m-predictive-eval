@@ -1,0 +1,13 @@
+{
+  "counters": {
+    "fell_to_global": 0,
+    "hit_benchmark_condition_only": 0,
+    "hit_benchmark_only": 0,
+    "hit_subject": 0,
+    "hit_subject_benchmark": 0,
+    "hit_subject_category": 15000,
+    "prior_none": 0
+  },
+  "sample_cap": 500,
+  "samples": []
+}

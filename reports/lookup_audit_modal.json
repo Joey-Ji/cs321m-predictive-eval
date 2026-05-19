@@ -1,0 +1,3125 @@
+{
+  "k": 5,
+  "m_categories": 5,
+  "max_per_category": 1000,
+  "max_rows": 5000,
+  "n_held_out_items": 7133,
+  "n_held_out_rows": 452869,
+  "results": [
+    {
+      "categories": {
+        "afrimedqa::source=afrimedqa-v1|prompt=instruct": {
+          "auc_roc": 0.5203065134099617,
+          "mean_log_likelihood": -0.7023140445749936,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6081081081081081
+        },
+        "afrimedqa::source=afrimedqa-v2|prompt=base": {
+          "auc_roc": 0.6146572104018913,
+          "mean_log_likelihood": -0.640359477060314,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6351351351351351
+        },
+        "afrimedqa::source=unknown|prompt=base": {
+          "auc_roc": 0.5966614906832298,
+          "mean_log_likelihood": -0.6472947352329907,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6216216216216216
+        },
+        "agentdojo::metric=security|attack=captcha_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5421865208478839,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.125
+        },
+        "agentdojo::metric=security|attack=direct": {
+          "auc_roc": 0.6354166666666666,
+          "mean_log_likelihood": -0.1208015232937409,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.02702702702702703
+        },
+        "agentdojo::metric=security|attack=dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.4037911160994935,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=felony_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.45023148768388893,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=ignore_previous": {
+          "auc_roc": 0.8990610328638498,
+          "mean_log_likelihood": -0.14070498267749618,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.04054054054054054
+        },
+        "agentdojo::metric=security|attack=important_instructions": {
+          "auc_roc": 0.775,
+          "mean_log_likelihood": -0.5159509436432289,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.2702702702702703
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6846190433482684,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.42592592592592593
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_names": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6904542669610486,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.46296296296296297
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6985177276386969,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5
+        },
+        "agentdojo::metric=security|attack=important_instructions_wrong_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5087678442245211,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.2037037037037037
+        },
+        "agentdojo::metric=security|attack=important_instructions_wrong_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5521079329264637,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.24074074074074073
+        },
+        "agentdojo::metric=security|attack=injecagent": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.21463710336682595,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.05555555555555555
+        },
+        "agentdojo::metric=security|attack=offensive_email_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5313274926165995,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.125
+        },
+        "agentdojo::metric=security|attack=swearwords_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.38877820310126954,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=tool_knowledge": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6368330972095134,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.3333333333333333
+        },
+        "agentdojo::metric=utility|attack=captcha_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5641549637221105,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=direct": {
+          "auc_roc": 0.6828087167070218,
+          "mean_log_likelihood": -0.515458428145329,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8082191780821918
+        },
+        "agentdojo::metric=utility|attack=dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5218294395908827,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=felony_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.4537418404447701,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "agentdojo::metric=utility|attack=ignore_previous": {
+          "auc_roc": 0.8229166666666666,
+          "mean_log_likelihood": -0.5371085651040756,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6575342465753424
+        },
+        "agentdojo::metric=utility|attack=important_instructions": {
+          "auc_roc": 0.6675170068027211,
+          "mean_log_likelihood": -0.6479170673904002,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6712328767123288
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6699784700208468,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8297872340425532
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_names": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.698287017498805,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8085106382978723
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6696541593505982,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7872340425531915
+        },
+        "agentdojo::metric=utility|attack=important_instructions_wrong_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5164332480769949,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.851063829787234
+        },
+        "agentdojo::metric=utility|attack=important_instructions_wrong_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.510213054497617,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8723404255319149
+        },
+        "agentdojo::metric=utility|attack=injecagent": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.41208560039641406,
+          "n": 47,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9574468085106383
+        },
+        "agentdojo::metric=utility|attack=none": {
+          "auc_roc": 0.6991304347826087,
+          "mean_log_likelihood": -0.5869202712006449,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.684931506849315
+        },
+        "agentdojo::metric=utility|attack=offensive_email_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5550117599968857,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=swearwords_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.39207898217035725,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "agentdojo::metric=utility|attack=tool_knowledge": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5899265437752641,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8723404255319149
+        },
+        "ai2d_test::none": {
+          "auc_roc": 0.6827731092436975,
+          "mean_log_likelihood": -0.49270608160123996,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7671232876712328
+        },
+        "androidworld::none": {
+          "auc_roc": 0.6684210526315789,
+          "mean_log_likelihood": -0.5047360672453044,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7916666666666666
+        },
+        "bfcl::none": {
+          "auc_roc": 0.5838345864661654,
+          "mean_log_likelihood": -0.7227608160836019,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4794520547945205
+        },
+        "cybench::mode=subtask_fractional": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519466,
+          "n": 5,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "cybench::mode=subtask_guided": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.1166413066529872,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "cybench::mode=unguided": {
+          "auc_roc": 0.9565217391304348,
+          "mean_log_likelihood": -0.16749793634311128,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.041666666666666664
+        },
+        "hle::none": {
+          "auc_roc": 0.6127450980392157,
+          "mean_log_likelihood": -0.6059216574813763,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.3013698630136986
+        },
+        "livecodebench::source=leaderboard;aggregate=pass@1": {
+          "auc_roc": 0.6094527363184079,
+          "mean_log_likelihood": -0.3088758424166386,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9178082191780822
+        },
+        "livecodebench::source=submissions": {
+          "auc_roc": 0.8558558558558559,
+          "mean_log_likelihood": -0.5134594044810114,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5068493150684932
+        },
+        "matharena::judge=1;criterion=Correctness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.17239187639997575,
+          "n": 12,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "matharena::judge=1;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9258241758241759,
+          "mean_log_likelihood": -0.3416134199501306,
+          "n": 27,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5185185185185185
+        },
+        "matharena::judge=1;criterion=Proving the strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9869565217391304,
+          "mean_log_likelihood": -0.24878203173074773,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.17857142857142858
+        },
+        "matharena::judge=1;criterion=Showing a tie occurs for $\\lambda = \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 1.0,
+          "mean_log_likelihood": -0.1921229925436441,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.14285714285714285
+        },
+        "matharena::judge=1;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9266666666666666,
+          "mean_log_likelihood": -0.2884241034410916,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8928571428571429
+        },
+        "matharena::judge=1;criterion=Strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.875,
+          "mean_log_likelihood": -0.4138545369100908,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7142857142857143
+        },
+        "matharena::judge=2;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9055944055944056,
+          "mean_log_likelihood": -0.37056877971843455,
+          "n": 24,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4583333333333333
+        },
+        "matharena::judge=2;criterion=Proving the strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9347826086956522,
+          "mean_log_likelihood": -0.2751154313084071,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.041666666666666664
+        },
+        "matharena::judge=2;criterion=Showing a tie occurs for $\\lambda = \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.20901321892345284,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "matharena::judge=2;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.85,
+          "mean_log_likelihood": -0.3774145547313847,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "matharena::judge=2;criterion=Strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.8529411764705882,
+          "mean_log_likelihood": -0.45360382070575617,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7083333333333334
+        },
+        "matharena::none": {
+          "auc_roc": 0.6415816326530612,
+          "mean_log_likelihood": -0.6172980866266154,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6712328767123288
+        },
+        "mathvista_mini::none": {
+          "auc_roc": 0.6771978021978022,
+          "mean_log_likelihood": -0.5557527066033269,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.2876712328767123
+        },
+        "mmbench_v11::skill=attribute_reasoning": {
+          "auc_roc": 0.5603448275862069,
+          "mean_log_likelihood": -0.5091245317699764,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7945205479452054
+        },
+        "mmbench_v11::skill=coarse_perception": {
+          "auc_roc": 0.5674528301886792,
+          "mean_log_likelihood": -0.6164120785279685,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.726027397260274
+        },
+        "mmbench_v11::skill=finegrained_perception (cross-instance)": {
+          "auc_roc": 0.63507326007326,
+          "mean_log_likelihood": -0.5759694473577178,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7123287671232876
+        },
+        "mmbench_v11::skill=finegrained_perception (instance-level)": {
+          "auc_roc": 0.6626984126984127,
+          "mean_log_likelihood": -0.3758043875773078,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.863013698630137
+        },
+        "mmbench_v11::skill=logic_reasoning": {
+          "auc_roc": 0.7956932773109243,
+          "mean_log_likelihood": -0.45825402128652093,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7671232876712328
+        },
+        "mmbench_v11::skill=relation_reasoning": {
+          "auc_roc": 0.6634920634920635,
+          "mean_log_likelihood": -0.39513993855689383,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.863013698630137
+        },
+        "mmlupro::none": {
+          "auc_roc": 0.8404654654654654,
+          "mean_log_likelihood": -0.5314954010388038,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4931506849315068
+        },
+        "mtbench::none": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "rewardbench::subset=alpacaeval-easy": {
+          "auc_roc": 0.9112394957983193,
+          "mean_log_likelihood": -0.3380317116739731,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7671232876712328
+        },
+        "rewardbench::subset=alpacaeval-hard": {
+          "auc_roc": 0.8932291666666666,
+          "mean_log_likelihood": -0.25253634124641205,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8767123287671232
+        },
+        "rewardbench::subset=alpacaeval-length": {
+          "auc_roc": 0.732620320855615,
+          "mean_log_likelihood": -0.5651696606013973,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6986301369863014
+        },
+        "rewardbench::subset=donotanswer": {
+          "auc_roc": 0.7188940092165899,
+          "mean_log_likelihood": -0.6188978397559636,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4246575342465753
+        },
+        "rewardbench::subset=hep-cpp": {
+          "auc_roc": 0.6398026315789473,
+          "mean_log_likelihood": -0.5129242797654898,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7808219178082192
+        },
+        "rewardbench::subset=hep-go": {
+          "auc_roc": 0.7134920634920635,
+          "mean_log_likelihood": -0.37277910689493,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.863013698630137
+        },
+        "rewardbench::subset=hep-java": {
+          "auc_roc": 0.7838983050847458,
+          "mean_log_likelihood": -0.42618645881828726,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8082191780821918
+        },
+        "rewardbench::subset=hep-js": {
+          "auc_roc": 0.7442528735632183,
+          "mean_log_likelihood": -0.45121972597314897,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7945205479452054
+        },
+        "rewardbench::subset=hep-python": {
+          "auc_roc": 0.859375,
+          "mean_log_likelihood": -0.30240497613938827,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8767123287671232
+        },
+        "rewardbench::subset=hep-rust": {
+          "auc_roc": 0.6957478005865103,
+          "mean_log_likelihood": -0.3966456988450429,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8493150684931506
+        },
+        "rewardbench::subset=llmbar-adver-GPTInst": {
+          "auc_roc": 0.6448445171849427,
+          "mean_log_likelihood": -0.611722317494269,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.3561643835616438
+        },
+        "rewardbench::subset=llmbar-adver-GPTOut": {
+          "auc_roc": 0.7326546003016591,
+          "mean_log_likelihood": -0.6312020888068923,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5342465753424658
+        },
+        "rewardbench::subset=llmbar-adver-manual": {
+          "auc_roc": 0.6374807987711214,
+          "mean_log_likelihood": -0.6776980718000686,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5753424657534246
+        },
+        "rewardbench::subset=llmbar-adver-neighbor": {
+          "auc_roc": 0.6669394435351882,
+          "mean_log_likelihood": -0.6638992431533131,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6438356164383562
+        },
+        "rewardbench::subset=llmbar-natural": {
+          "auc_roc": 0.5555555555555556,
+          "mean_log_likelihood": -0.6006947996351976,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7397260273972602
+        },
+        "rewardbench::subset=math-prm": {
+          "auc_roc": 0.764030612244898,
+          "mean_log_likelihood": -0.5234529701985688,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6712328767123288
+        },
+        "rewardbench::subset=mt-bench-easy": {
+          "auc_roc": 0.9120294599018003,
+          "mean_log_likelihood": -0.44079841605767106,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6438356164383562
+        },
+        "rewardbench::subset=mt-bench-hard": {
+          "auc_roc": 0.7527322404371585,
+          "mean_log_likelihood": -0.5005802252462616,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8356164383561644
+        },
+        "rewardbench::subset=mt-bench-med": {
+          "auc_roc": 0.9580896686159844,
+          "mean_log_likelihood": -0.36199243872060877,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7397260273972602
+        },
+        "rewardbench::subset=refusals-dangerous": {
+          "auc_roc": 0.8231981981981982,
+          "mean_log_likelihood": -0.5484293036044954,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4931506849315068
+        },
+        "rewardbench::subset=refusals-offensive": {
+          "auc_roc": 0.8278508771929824,
+          "mean_log_likelihood": -0.401423078408516,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7808219178082192
+        },
+        "rewardbench::subset=xstest-should-refuse": {
+          "auc_roc": 0.8551829268292683,
+          "mean_log_likelihood": -0.49190493545886044,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5616438356164384
+        },
+        "rewardbench::subset=xstest-should-respond": {
+          "auc_roc": 0.9328358208955224,
+          "mean_log_likelihood": -0.24564195677089337,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9178082191780822
+        },
+        "swebench::none": {
+          "auc_roc": 0.7633384146341463,
+          "mean_log_likelihood": -0.5509159413717232,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5616438356164384
+        },
+        "ultrafeedback::aspect=helpfulness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=honesty": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=instruction_following": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=truthfulness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        }
+      },
+      "metrics": {
+        "auc_roc": 0.8451005025781062,
+        "mean_log_likelihood": -0.4583370002578922,
+        "n": 5000,
+        "p_pos": 0.6414
+      },
+      "reveal_methods": {
+        "agentdojo::metric=utility|attack=injecagent": "random",
+        "matharena::judge=2;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": "random",
+        "rewardbench::subset=mt-bench-easy": "random",
+        "rewardbench::subset=mt-bench-hard": "random",
+        "swebench::none": "random"
+      },
+      "seed": 0
+    },
+    {
+      "categories": {
+        "afrimedqa::source=afrimedqa-v1|prompt=instruct": {
+          "auc_roc": 0.5588516746411484,
+          "mean_log_likelihood": -0.5613755566690177,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7432432432432432
+        },
+        "afrimedqa::source=afrimedqa-v2|prompt=base": {
+          "auc_roc": 0.739558707643814,
+          "mean_log_likelihood": -0.5973025906994816,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6351351351351351
+        },
+        "afrimedqa::source=unknown|prompt=base": {
+          "auc_roc": 0.6266025641025641,
+          "mean_log_likelihood": -0.6312126400479879,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6486486486486487
+        },
+        "agentdojo::metric=security|attack=captcha_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5421865208478839,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.125
+        },
+        "agentdojo::metric=security|attack=direct": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.028604091279706253,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.4037911160994935,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=felony_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.45023148768388893,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=ignore_previous": {
+          "auc_roc": 0.4166666666666667,
+          "mean_log_likelihood": -0.13930916672443497,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.02702702702702703
+        },
+        "agentdojo::metric=security|attack=important_instructions": {
+          "auc_roc": 0.823953823953824,
+          "mean_log_likelihood": -0.32728959910484806,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.14864864864864866
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6846190433482684,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.42592592592592593
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_names": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6904542669610486,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.46296296296296297
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6985177276386969,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5
+        },
+        "agentdojo::metric=security|attack=important_instructions_wrong_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5087678442245211,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.2037037037037037
+        },
+        "agentdojo::metric=security|attack=important_instructions_wrong_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5521079329264637,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.24074074074074073
+        },
+        "agentdojo::metric=security|attack=injecagent": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.21463710336682595,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.05555555555555555
+        },
+        "agentdojo::metric=security|attack=offensive_email_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5313274926165995,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.125
+        },
+        "agentdojo::metric=security|attack=swearwords_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.38877820310126954,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=tool_knowledge": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6368330972095134,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.3333333333333333
+        },
+        "agentdojo::metric=utility|attack=captcha_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5641549637221105,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=direct": {
+          "auc_roc": 0.631578947368421,
+          "mean_log_likelihood": -0.5487498315151874,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7808219178082192
+        },
+        "agentdojo::metric=utility|attack=dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5218294395908827,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=felony_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.4537418404447701,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "agentdojo::metric=utility|attack=ignore_previous": {
+          "auc_roc": 0.7199453551912568,
+          "mean_log_likelihood": -0.5340955430592658,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8356164383561644
+        },
+        "agentdojo::metric=utility|attack=important_instructions": {
+          "auc_roc": 0.6543040293040293,
+          "mean_log_likelihood": -0.7083799219808419,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7123287671232876
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6699784700208468,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8297872340425532
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_names": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.698287017498805,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8085106382978723
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6696541593505982,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7872340425531915
+        },
+        "agentdojo::metric=utility|attack=important_instructions_wrong_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5164332480769949,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.851063829787234
+        },
+        "agentdojo::metric=utility|attack=important_instructions_wrong_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.510213054497617,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8723404255319149
+        },
+        "agentdojo::metric=utility|attack=injecagent": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.41208560039641406,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9574468085106383
+        },
+        "agentdojo::metric=utility|attack=none": {
+          "auc_roc": 0.6836734693877551,
+          "mean_log_likelihood": -0.6114123752285714,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6712328767123288
+        },
+        "agentdojo::metric=utility|attack=offensive_email_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5550117599968857,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=swearwords_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.39207898217035725,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "agentdojo::metric=utility|attack=tool_knowledge": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5899265437752641,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8723404255319149
+        },
+        "ai2d_test::none": {
+          "auc_roc": 0.7508183306055647,
+          "mean_log_likelihood": -0.5719904713846355,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6438356164383562
+        },
+        "androidworld::none": {
+          "auc_roc": 0.6684210526315789,
+          "mean_log_likelihood": -0.5047360672453044,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7916666666666666
+        },
+        "bfcl::none": {
+          "auc_roc": 0.6566310975609756,
+          "mean_log_likelihood": -0.6564479386733258,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5616438356164384
+        },
+        "cybench::mode=subtask_fractional": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519466,
+          "n": 5,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "cybench::mode=subtask_guided": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.1166413066529872,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "cybench::mode=unguided": {
+          "auc_roc": 0.9565217391304348,
+          "mean_log_likelihood": -0.16749793634311128,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.041666666666666664
+        },
+        "hle::none": {
+          "auc_roc": 0.6582181259600615,
+          "mean_log_likelihood": -0.6721767103284624,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4246575342465753
+        },
+        "livecodebench::source=leaderboard;aggregate=pass@1": {
+          "auc_roc": 0.5584415584415584,
+          "mean_log_likelihood": -0.3322743847757592,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9041095890410958
+        },
+        "livecodebench::source=submissions": {
+          "auc_roc": 0.7556306306306306,
+          "mean_log_likelihood": -0.5796596873278089,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5068493150684932
+        },
+        "matharena::judge=1;criterion=Correctness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.17239187639997575,
+          "n": 12,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "matharena::judge=1;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9258241758241759,
+          "mean_log_likelihood": -0.3416134199501306,
+          "n": 27,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5185185185185185
+        },
+        "matharena::judge=1;criterion=Proving the strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9869565217391304,
+          "mean_log_likelihood": -0.24878203173074773,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.17857142857142858
+        },
+        "matharena::judge=1;criterion=Showing a tie occurs for $\\lambda = \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 1.0,
+          "mean_log_likelihood": -0.1921229925436441,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.14285714285714285
+        },
+        "matharena::judge=1;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9266666666666666,
+          "mean_log_likelihood": -0.2884241034410916,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8928571428571429
+        },
+        "matharena::judge=1;criterion=Strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.875,
+          "mean_log_likelihood": -0.4138545369100908,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7142857142857143
+        },
+        "matharena::judge=2;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9055944055944056,
+          "mean_log_likelihood": -0.37056877971843455,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4583333333333333
+        },
+        "matharena::judge=2;criterion=Proving the strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9347826086956522,
+          "mean_log_likelihood": -0.2751154313084071,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.041666666666666664
+        },
+        "matharena::judge=2;criterion=Showing a tie occurs for $\\lambda = \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.20901321892345284,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "matharena::judge=2;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.85,
+          "mean_log_likelihood": -0.3774145547313847,
+          "n": 24,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "matharena::judge=2;criterion=Strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.8529411764705882,
+          "mean_log_likelihood": -0.45360382070575617,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7083333333333334
+        },
+        "matharena::none": {
+          "auc_roc": 0.8158914728682171,
+          "mean_log_likelihood": -0.5532337292505513,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.589041095890411
+        },
+        "mathvista_mini::none": {
+          "auc_roc": 0.7706896551724138,
+          "mean_log_likelihood": -0.4402171660651006,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.2054794520547945
+        },
+        "mmbench_v11::skill=attribute_reasoning": {
+          "auc_roc": 0.6634920634920635,
+          "mean_log_likelihood": -0.3813211406011288,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.863013698630137
+        },
+        "mmbench_v11::skill=coarse_perception": {
+          "auc_roc": 0.6241379310344828,
+          "mean_log_likelihood": -0.47176947469046837,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7945205479452054
+        },
+        "mmbench_v11::skill=finegrained_perception (cross-instance)": {
+          "auc_roc": 0.7153996101364523,
+          "mean_log_likelihood": -0.5100059370089874,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7397260273972602
+        },
+        "mmbench_v11::skill=finegrained_perception (instance-level)": {
+          "auc_roc": 0.7388059701492538,
+          "mean_log_likelihood": -0.2669263298374282,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9178082191780822
+        },
+        "mmbench_v11::skill=logic_reasoning": {
+          "auc_roc": 0.7446393762183235,
+          "mean_log_likelihood": -0.5159105150298842,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7397260273972602
+        },
+        "mmbench_v11::skill=relation_reasoning": {
+          "auc_roc": 0.8027859237536656,
+          "mean_log_likelihood": -0.3764775044052968,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8493150684931506
+        },
+        "mmlupro::none": {
+          "auc_roc": 0.750768049155146,
+          "mean_log_likelihood": -0.5972119989290918,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5753424657534246
+        },
+        "mtbench::none": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "rewardbench::subset=alpacaeval-easy": {
+          "auc_roc": 0.9295652173913044,
+          "mean_log_likelihood": -0.3553105887146902,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.684931506849315
+        },
+        "rewardbench::subset=alpacaeval-hard": {
+          "auc_roc": 0.787568306010929,
+          "mean_log_likelihood": -0.38739073161313103,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8356164383561644
+        },
+        "rewardbench::subset=alpacaeval-length": {
+          "auc_roc": 0.545959595959596,
+          "mean_log_likelihood": -0.6343635609375844,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7534246575342466
+        },
+        "rewardbench::subset=donotanswer": {
+          "auc_roc": 0.7954204204204204,
+          "mean_log_likelihood": -0.5497617026574374,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4931506849315068
+        },
+        "rewardbench::subset=hep-cpp": {
+          "auc_roc": 0.7778846153846154,
+          "mean_log_likelihood": -0.3007397388957695,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8904109589041096
+        },
+        "rewardbench::subset=hep-go": {
+          "auc_roc": 0.7186147186147186,
+          "mean_log_likelihood": -0.32021189868411293,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9041095890410958
+        },
+        "rewardbench::subset=hep-java": {
+          "auc_roc": 0.6375,
+          "mean_log_likelihood": -0.3500442907201757,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8904109589041096
+        },
+        "rewardbench::subset=hep-js": {
+          "auc_roc": 0.8058608058608059,
+          "mean_log_likelihood": -0.5224942813862781,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7123287671232876
+        },
+        "rewardbench::subset=hep-python": {
+          "auc_roc": 0.7064102564102565,
+          "mean_log_likelihood": -0.44152187497049705,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.821917808219178
+        },
+        "rewardbench::subset=hep-rust": {
+          "auc_roc": 0.8111380145278451,
+          "mean_log_likelihood": -0.3982095199931286,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8082191780821918
+        },
+        "rewardbench::subset=llmbar-adver-GPTInst": {
+          "auc_roc": 0.6705426356589147,
+          "mean_log_likelihood": -0.6438060014697837,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.410958904109589
+        },
+        "rewardbench::subset=llmbar-adver-GPTOut": {
+          "auc_roc": 0.5617378048780488,
+          "mean_log_likelihood": -0.6982578583795535,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5616438356164384
+        },
+        "rewardbench::subset=llmbar-adver-manual": {
+          "auc_roc": 0.7319548872180451,
+          "mean_log_likelihood": -0.615681665912247,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4794520547945205
+        },
+        "rewardbench::subset=llmbar-adver-neighbor": {
+          "auc_roc": 0.56493993993994,
+          "mean_log_likelihood": -0.7104455397361684,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4931506849315068
+        },
+        "rewardbench::subset=llmbar-natural": {
+          "auc_roc": 0.6225490196078431,
+          "mean_log_likelihood": -0.593472285376934,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6986301369863014
+        },
+        "rewardbench::subset=math-prm": {
+          "auc_roc": 0.807315233785822,
+          "mean_log_likelihood": -0.5339032870175229,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5342465753424658
+        },
+        "rewardbench::subset=mt-bench-easy": {
+          "auc_roc": 0.946265243902439,
+          "mean_log_likelihood": -0.43115283258011,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5616438356164384
+        },
+        "rewardbench::subset=mt-bench-hard": {
+          "auc_roc": 0.8071428571428572,
+          "mean_log_likelihood": -0.4557002502074463,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.863013698630137
+        },
+        "rewardbench::subset=mt-bench-med": {
+          "auc_roc": 0.8597701149425288,
+          "mean_log_likelihood": -0.3670028462576103,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7945205479452054
+        },
+        "rewardbench::subset=refusals-dangerous": {
+          "auc_roc": 0.9126409017713365,
+          "mean_log_likelihood": -0.4131591202478168,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.3698630136986301
+        },
+        "rewardbench::subset=refusals-offensive": {
+          "auc_roc": 0.8869565217391304,
+          "mean_log_likelihood": -0.3987003100505254,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.684931506849315
+        },
+        "rewardbench::subset=xstest-should-refuse": {
+          "auc_roc": 0.8251937984496124,
+          "mean_log_likelihood": -0.48387227458678594,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.589041095890411
+        },
+        "rewardbench::subset=xstest-should-respond": {
+          "auc_roc": 0.7341269841269841,
+          "mean_log_likelihood": -0.3559151586555611,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.863013698630137
+        },
+        "swebench::none": {
+          "auc_roc": 0.6635338345864662,
+          "mean_log_likelihood": -0.6362703029506545,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5205479452054794
+        },
+        "ultrafeedback::aspect=helpfulness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=honesty": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=instruction_following": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=truthfulness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        }
+      },
+      "metrics": {
+        "auc_roc": 0.8531474393390949,
+        "mean_log_likelihood": -0.44933141237199964,
+        "n": 5000,
+        "p_pos": 0.638
+      },
+      "reveal_methods": {
+        "matharena::judge=2;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": "random",
+        "rewardbench::subset=alpacaeval-length": "random",
+        "rewardbench::subset=llmbar-natural": "random",
+        "rewardbench::subset=mt-bench-med": "random",
+        "ultrafeedback::aspect=honesty": "random"
+      },
+      "seed": 1
+    },
+    {
+      "categories": {
+        "afrimedqa::source=afrimedqa-v1|prompt=instruct": {
+          "auc_roc": 0.5689484126984127,
+          "mean_log_likelihood": -0.5504805781090805,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7567567567567568
+        },
+        "afrimedqa::source=afrimedqa-v2|prompt=base": {
+          "auc_roc": 0.6185185185185185,
+          "mean_log_likelihood": -0.5896310147835637,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7297297297297297
+        },
+        "afrimedqa::source=unknown|prompt=base": {
+          "auc_roc": 0.644927536231884,
+          "mean_log_likelihood": -0.5978636186009779,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6891891891891891
+        },
+        "agentdojo::metric=security|attack=captcha_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5421865208478839,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.125
+        },
+        "agentdojo::metric=security|attack=direct": {
+          "auc_roc": 0.3819444444444444,
+          "mean_log_likelihood": -0.12866094788726973,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.02702702702702703
+        },
+        "agentdojo::metric=security|attack=dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.4037911160994935,
+          "n": 8,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=felony_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.45023148768388893,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=ignore_previous": {
+          "auc_roc": 0.6950959488272921,
+          "mean_log_likelihood": -0.29872886608639593,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0945945945945946
+        },
+        "agentdojo::metric=security|attack=important_instructions": {
+          "auc_roc": 0.6622023809523809,
+          "mean_log_likelihood": -0.5195669806239614,
+          "n": 74,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.24324324324324326
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6846190433482684,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.42592592592592593
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_names": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6904542669610486,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.46296296296296297
+        },
+        "agentdojo::metric=security|attack=important_instructions_no_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6985177276386969,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5
+        },
+        "agentdojo::metric=security|attack=important_instructions_wrong_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5087678442245211,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.2037037037037037
+        },
+        "agentdojo::metric=security|attack=important_instructions_wrong_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5521079329264637,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.24074074074074073
+        },
+        "agentdojo::metric=security|attack=injecagent": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.21463710336682595,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.05555555555555555
+        },
+        "agentdojo::metric=security|attack=offensive_email_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5313274926165995,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.125
+        },
+        "agentdojo::metric=security|attack=swearwords_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.38877820310126954,
+          "n": 8,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "agentdojo::metric=security|attack=tool_knowledge": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6368330972095134,
+          "n": 54,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.3333333333333333
+        },
+        "agentdojo::metric=utility|attack=captcha_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5641549637221105,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=direct": {
+          "auc_roc": 0.7085858585858585,
+          "mean_log_likelihood": -0.5353983865285592,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7534246575342466
+        },
+        "agentdojo::metric=utility|attack=dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5218294395908827,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=felony_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.4537418404447701,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "agentdojo::metric=utility|attack=ignore_previous": {
+          "auc_roc": 0.7495126705653021,
+          "mean_log_likelihood": -0.5372087568800832,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7397260273972602
+        },
+        "agentdojo::metric=utility|attack=important_instructions": {
+          "auc_roc": 0.6821969696969697,
+          "mean_log_likelihood": -0.6247379599531608,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4520547945205479
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6699784700208468,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8297872340425532
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_names": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.698287017498805,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8085106382978723
+        },
+        "agentdojo::metric=utility|attack=important_instructions_no_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.6696541593505982,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7872340425531915
+        },
+        "agentdojo::metric=utility|attack=important_instructions_wrong_model_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5164332480769949,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.851063829787234
+        },
+        "agentdojo::metric=utility|attack=important_instructions_wrong_user_name": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.510213054497617,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8723404255319149
+        },
+        "agentdojo::metric=utility|attack=injecagent": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.41208560039641406,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9574468085106383
+        },
+        "agentdojo::metric=utility|attack=none": {
+          "auc_roc": 0.7403846153846154,
+          "mean_log_likelihood": -0.5504677552929255,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7123287671232876
+        },
+        "agentdojo::metric=utility|attack=offensive_email_dos": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5550117599968857,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "agentdojo::metric=utility|attack=swearwords_dos": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.39207898217035725,
+          "n": 6,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "agentdojo::metric=utility|attack=tool_knowledge": {
+          "auc_roc": 0.5,
+          "mean_log_likelihood": -0.5899265437752641,
+          "n": 47,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8723404255319149
+        },
+        "ai2d_test::none": {
+          "auc_roc": 0.8204099821746881,
+          "mean_log_likelihood": -0.5149481329867914,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6986301369863014
+        },
+        "androidworld::none": {
+          "auc_roc": 0.6684210526315789,
+          "mean_log_likelihood": -0.5047360672453044,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7916666666666666
+        },
+        "bfcl::none": {
+          "auc_roc": 0.7079545454545455,
+          "mean_log_likelihood": -0.6288166435315936,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.547945205479452
+        },
+        "cybench::mode=subtask_fractional": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519466,
+          "n": 5,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "cybench::mode=subtask_guided": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.1166413066529872,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "cybench::mode=unguided": {
+          "auc_roc": 0.9565217391304348,
+          "mean_log_likelihood": -0.16749793634311128,
+          "n": 24,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.041666666666666664
+        },
+        "hle::none": {
+          "auc_roc": 0.6943396226415094,
+          "mean_log_likelihood": -0.5490757082015748,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.273972602739726
+        },
+        "livecodebench::source=leaderboard;aggregate=pass@1": {
+          "auc_roc": 0.6302083333333334,
+          "mean_log_likelihood": -0.3759362052713103,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8767123287671232
+        },
+        "livecodebench::source=submissions": {
+          "auc_roc": 0.6730182926829268,
+          "mean_log_likelihood": -0.6199101761156646,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4383561643835616
+        },
+        "matharena::judge=1;criterion=Correctness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.17239187639997575,
+          "n": 12,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "matharena::judge=1;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9258241758241759,
+          "mean_log_likelihood": -0.3416134199501306,
+          "n": 27,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5185185185185185
+        },
+        "matharena::judge=1;criterion=Proving the strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9869565217391304,
+          "mean_log_likelihood": -0.24878203173074773,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.17857142857142858
+        },
+        "matharena::judge=1;criterion=Showing a tie occurs for $\\lambda = \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 1.0,
+          "mean_log_likelihood": -0.1921229925436441,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.14285714285714285
+        },
+        "matharena::judge=1;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9266666666666666,
+          "mean_log_likelihood": -0.2884241034410916,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8928571428571429
+        },
+        "matharena::judge=1;criterion=Strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.875,
+          "mean_log_likelihood": -0.4138545369100908,
+          "n": 28,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7142857142857143
+        },
+        "matharena::judge=2;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9055944055944056,
+          "mean_log_likelihood": -0.37056877971843455,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4583333333333333
+        },
+        "matharena::judge=2;criterion=Proving the strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.9347826086956522,
+          "mean_log_likelihood": -0.2751154313084071,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.041666666666666664
+        },
+        "matharena::judge=2;criterion=Showing a tie occurs for $\\lambda = \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.20901321892345284,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.0
+        },
+        "matharena::judge=2;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.85,
+          "mean_log_likelihood": -0.3774145547313847,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8333333333333334
+        },
+        "matharena::judge=2;criterion=Strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+          "auc_roc": 0.8529411764705882,
+          "mean_log_likelihood": -0.45360382070575617,
+          "n": 24,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7083333333333334
+        },
+        "matharena::none": {
+          "auc_roc": 0.5979166666666667,
+          "mean_log_likelihood": -0.6325077255521738,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6575342465753424
+        },
+        "mathvista_mini::none": {
+          "auc_roc": 0.8040966386554622,
+          "mean_log_likelihood": -0.45910410540581625,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.2328767123287671
+        },
+        "mmbench_v11::skill=attribute_reasoning": {
+          "auc_roc": 0.5876623376623377,
+          "mean_log_likelihood": -0.3131061978600822,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.9041095890410958
+        },
+        "mmbench_v11::skill=coarse_perception": {
+          "auc_roc": 0.6030701754385965,
+          "mean_log_likelihood": -0.5210657158866387,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7808219178082192
+        },
+        "mmbench_v11::skill=finegrained_perception (cross-instance)": {
+          "auc_roc": 0.7421307506053268,
+          "mean_log_likelihood": -0.44496664528803226,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8082191780821918
+        },
+        "mmbench_v11::skill=finegrained_perception (instance-level)": {
+          "auc_roc": 0.842375366568915,
+          "mean_log_likelihood": -0.35359530979428555,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8493150684931506
+        },
+        "mmbench_v11::skill=logic_reasoning": {
+          "auc_roc": 0.63003663003663,
+          "mean_log_likelihood": -0.5925720592278508,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7123287671232876
+        },
+        "mmbench_v11::skill=relation_reasoning": {
+          "auc_roc": 0.8220338983050848,
+          "mean_log_likelihood": -0.40540104279459066,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8082191780821918
+        },
+        "mmlupro::none": {
+          "auc_roc": 0.6774436090225564,
+          "mean_log_likelihood": -0.6414612687775864,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4794520547945205
+        },
+        "mtbench::none": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "rewardbench::subset=alpacaeval-easy": {
+          "auc_roc": 0.9086206896551724,
+          "mean_log_likelihood": -0.3026037307735967,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7945205479452054
+        },
+        "rewardbench::subset=alpacaeval-hard": {
+          "auc_roc": 0.7942528735632184,
+          "mean_log_likelihood": -0.42203319078080753,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7945205479452054
+        },
+        "rewardbench::subset=alpacaeval-length": {
+          "auc_roc": 0.6844919786096256,
+          "mean_log_likelihood": -0.6125085757676649,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6986301369863014
+        },
+        "rewardbench::subset=donotanswer": {
+          "auc_roc": 0.8217054263565892,
+          "mean_log_likelihood": -0.55839706944073,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.589041095890411
+        },
+        "rewardbench::subset=hep-cpp": {
+          "auc_roc": 0.7391025641025641,
+          "mean_log_likelihood": -0.40431040041276184,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.821917808219178
+        },
+        "rewardbench::subset=hep-go": {
+          "auc_roc": 0.7008196721311475,
+          "mean_log_likelihood": -0.4056001792222564,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8356164383561644
+        },
+        "rewardbench::subset=hep-java": {
+          "auc_roc": 0.7714285714285715,
+          "mean_log_likelihood": -0.3358775642724873,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.863013698630137
+        },
+        "rewardbench::subset=hep-js": {
+          "auc_roc": 0.7787735849056604,
+          "mean_log_likelihood": -0.5305203672103703,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.726027397260274
+        },
+        "rewardbench::subset=hep-python": {
+          "auc_roc": 0.799863387978142,
+          "mean_log_likelihood": -0.3652654997892355,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8356164383561644
+        },
+        "rewardbench::subset=hep-rust": {
+          "auc_roc": 0.7817982456140351,
+          "mean_log_likelihood": -0.43666897911760827,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7808219178082192
+        },
+        "rewardbench::subset=llmbar-adver-GPTInst": {
+          "auc_roc": 0.5928030303030303,
+          "mean_log_likelihood": -0.6991508730214198,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4520547945205479
+        },
+        "rewardbench::subset=llmbar-adver-GPTOut": {
+          "auc_roc": 0.6120426829268293,
+          "mean_log_likelihood": -0.6691513002905077,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5616438356164384
+        },
+        "rewardbench::subset=llmbar-adver-manual": {
+          "auc_roc": 0.7330316742081447,
+          "mean_log_likelihood": -0.5965908058114404,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5342465753424658
+        },
+        "rewardbench::subset=llmbar-adver-neighbor": {
+          "auc_roc": 0.6751937984496124,
+          "mean_log_likelihood": -0.6294413808130509,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.589041095890411
+        },
+        "rewardbench::subset=llmbar-natural": {
+          "auc_roc": 0.6641414141414141,
+          "mean_log_likelihood": -0.5218730942782136,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7534246575342466
+        },
+        "rewardbench::subset=math-prm": {
+          "auc_roc": 0.7725563909774437,
+          "mean_log_likelihood": -0.6052760480829871,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.5205479452054794
+        },
+        "rewardbench::subset=mt-bench-easy": {
+          "auc_roc": 0.8575,
+          "mean_log_likelihood": -0.461264503744432,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.6575342465753424
+        },
+        "rewardbench::subset=mt-bench-hard": {
+          "auc_roc": 0.8064516129032258,
+          "mean_log_likelihood": -0.45523420875334425,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.8493150684931506
+        },
+        "rewardbench::subset=mt-bench-med": {
+          "auc_roc": 0.9474358974358974,
+          "mean_log_likelihood": -0.2884037446679294,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.821917808219178
+        },
+        "rewardbench::subset=refusals-dangerous": {
+          "auc_roc": 0.8128787878787879,
+          "mean_log_likelihood": -0.5205299948291539,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.547945205479452
+        },
+        "rewardbench::subset=refusals-offensive": {
+          "auc_roc": 0.8646464646464647,
+          "mean_log_likelihood": -0.37187089560410436,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.7534246575342466
+        },
+        "rewardbench::subset=xstest-should-refuse": {
+          "auc_roc": 0.8537593984962406,
+          "mean_log_likelihood": -0.5491819478467218,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4794520547945205
+        },
+        "rewardbench::subset=xstest-should-respond": {
+          "auc_roc": 0.8023809523809524,
+          "mean_log_likelihood": -0.33134278090069397,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.863013698630137
+        },
+        "swebench::none": {
+          "auc_roc": 0.6895645645645646,
+          "mean_log_likelihood": -0.6325989662080106,
+          "n": 73,
+          "n_labeled_for_category": 5.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 0.4931506849315068
+        },
+        "ultrafeedback::aspect=helpfulness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=honesty": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=instruction_following": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        },
+        "ultrafeedback::aspect=truthfulness": {
+          "auc_roc": null,
+          "mean_log_likelihood": -0.020202707317519483,
+          "n": 73,
+          "n_labeled_for_category": 0.0,
+          "n_labeled_pool": 25.0,
+          "p_pos": 1.0
+        }
+      },
+      "metrics": {
+        "auc_roc": 0.8484373542939871,
+        "mean_log_likelihood": -0.45642179892064133,
+        "n": 5000,
+        "p_pos": 0.6402
+      },
+      "reveal_methods": {
+        "agentdojo::metric=security|attack=dos": "random",
+        "ai2d_test::none": "random",
+        "cybench::mode=unguided": "random",
+        "rewardbench::subset=hep-java": "random",
+        "swebench::none": "random"
+      },
+      "seed": 2
+    }
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "skipped_nonbinary": 0,
+  "split": "item-cold",
+  "summary": {
+    "auc_roc_mean": 0.8488950987370627,
+    "auc_roc_std": 0.004042950072683638,
+    "mean_log_likelihood_mean": -0.45469673718351106,
+    "mean_log_likelihood_std": 0.004744157648130689,
+    "n_max": 5000,
+    "n_min": 5000,
+    "p_pos_mean": 0.6398666666666667,
+    "p_pos_std": 0.0017243356208503213,
+    "per_category": {
+      "afrimedqa::source=afrimedqa-v1|prompt=instruct": {
+        "auc_mean": 0.5493688669165077,
+        "auc_std": 0.025670047202018,
+        "mll_mean": -0.6047233931176973,
+        "mll_std": 0.08469136070668597,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 74.0
+      },
+      "afrimedqa::source=afrimedqa-v2|prompt=base": {
+        "auc_mean": 0.6575781455214079,
+        "auc_std": 0.07102349505284959,
+        "mll_mean": -0.6090976941811198,
+        "mll_std": 0.027343876295211615,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 74.0
+      },
+      "afrimedqa::source=unknown|prompt=base": {
+        "auc_mean": 0.622730530339226,
+        "auc_std": 0.024364877843414557,
+        "mll_mean": -0.6254569979606522,
+        "mll_std": 0.02521317879106176,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 74.0
+      },
+      "agentdojo::metric=security|attack=captcha_dos": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5421865208478839,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 8.0
+      },
+      "agentdojo::metric=security|attack=direct": {
+        "auc_mean": 0.5086805555555556,
+        "auc_std": 0.17923192717575684,
+        "mll_mean": -0.0926888541535723,
+        "mll_std": 0.055637983996412656,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 74.0
+      },
+      "agentdojo::metric=security|attack=dos": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.4037911160994934,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 8.0
+      },
+      "agentdojo::metric=security|attack=felony_dos": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.45023148768388893,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 8.0
+      },
+      "agentdojo::metric=security|attack=ignore_previous": {
+        "auc_mean": 0.6702745494526029,
+        "auc_std": 0.2421531695743086,
+        "mll_mean": -0.19291433849610903,
+        "mll_std": 0.09164072654890071,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 74.0
+      },
+      "agentdojo::metric=security|attack=important_instructions": {
+        "auc_mean": 0.753718734968735,
+        "auc_std": 0.08294908986396704,
+        "mll_mean": -0.45426917445734616,
+        "mll_std": 0.10998240017560564,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 74.0
+      },
+      "agentdojo::metric=security|attack=important_instructions_no_model_name": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.6846190433482683,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 54.0
+      },
+      "agentdojo::metric=security|attack=important_instructions_no_names": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.6904542669610486,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 54.0
+      },
+      "agentdojo::metric=security|attack=important_instructions_no_user_name": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.698517727638697,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 54.0
+      },
+      "agentdojo::metric=security|attack=important_instructions_wrong_model_name": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5087678442245211,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 54.0
+      },
+      "agentdojo::metric=security|attack=important_instructions_wrong_user_name": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5521079329264637,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 54.0
+      },
+      "agentdojo::metric=security|attack=injecagent": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.21463710336682595,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 54.0
+      },
+      "agentdojo::metric=security|attack=offensive_email_dos": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5313274926165995,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 8.0
+      },
+      "agentdojo::metric=security|attack=swearwords_dos": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.3887782031012696,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 8.0
+      },
+      "agentdojo::metric=security|attack=tool_knowledge": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.6368330972095134,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 54.0
+      },
+      "agentdojo::metric=utility|attack=captcha_dos": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5641549637221105,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 6.0
+      },
+      "agentdojo::metric=utility|attack=direct": {
+        "auc_mean": 0.674324507553767,
+        "auc_std": 0.03919824546494019,
+        "mll_mean": -0.5332022153963586,
+        "mll_std": 0.016754007291244915,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "agentdojo::metric=utility|attack=dos": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5218294395908827,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 6.0
+      },
+      "agentdojo::metric=utility|attack=felony_dos": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.4537418404447701,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 6.0
+      },
+      "agentdojo::metric=utility|attack=ignore_previous": {
+        "auc_mean": 0.7641248974744085,
+        "auc_std": 0.05301802173010491,
+        "mll_mean": -0.5361376216811414,
+        "mll_std": 0.0017692013512984688,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "agentdojo::metric=utility|attack=important_instructions": {
+        "auc_mean": 0.6680060019345734,
+        "auc_std": 0.013952898197875001,
+        "mll_mean": -0.6603449831081343,
+        "mll_std": 0.04318372690928072,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "agentdojo::metric=utility|attack=important_instructions_no_model_name": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.6699784700208468,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 47.0
+      },
+      "agentdojo::metric=utility|attack=important_instructions_no_names": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.6982870174988051,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 47.0
+      },
+      "agentdojo::metric=utility|attack=important_instructions_no_user_name": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.6696541593505984,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 47.0
+      },
+      "agentdojo::metric=utility|attack=important_instructions_wrong_model_name": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5164332480769949,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 47.0
+      },
+      "agentdojo::metric=utility|attack=important_instructions_wrong_user_name": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.510213054497617,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 47.0
+      },
+      "agentdojo::metric=utility|attack=injecagent": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.412085600396414,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 47.0
+      },
+      "agentdojo::metric=utility|attack=none": {
+        "auc_mean": 0.7077295065183264,
+        "auc_std": 0.02931717152295419,
+        "mll_mean": -0.5829334672407139,
+        "mll_std": 0.030667289236844426,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "agentdojo::metric=utility|attack=offensive_email_dos": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5550117599968857,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 6.0
+      },
+      "agentdojo::metric=utility|attack=swearwords_dos": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.39207898217035725,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 6.0
+      },
+      "agentdojo::metric=utility|attack=tool_knowledge": {
+        "auc_mean": 0.5,
+        "auc_std": 0.0,
+        "mll_mean": -0.5899265437752641,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 47.0
+      },
+      "ai2d_test::none": {
+        "auc_mean": 0.7513338073413167,
+        "auc_std": 0.06881988437039283,
+        "mll_mean": -0.5265482286575557,
+        "mll_std": 0.04089529655729999,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "androidworld::none": {
+        "auc_mean": 0.6684210526315789,
+        "auc_std": 0.0,
+        "mll_mean": -0.5047360672453044,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 24.0
+      },
+      "bfcl::none": {
+        "auc_mean": 0.6494734098272289,
+        "auc_std": 0.06236878566309964,
+        "mll_mean": -0.6693417994295071,
+        "mll_std": 0.04828111041618885,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "cybench::mode=subtask_fractional": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.020202707317519466,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 5.0
+      },
+      "cybench::mode=subtask_guided": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.1166413066529872,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 24.0
+      },
+      "cybench::mode=unguided": {
+        "auc_mean": 0.9565217391304349,
+        "auc_std": 0.0,
+        "mll_mean": -0.16749793634311128,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 24.0
+      },
+      "hle::none": {
+        "auc_mean": 0.6551009488802623,
+        "auc_std": 0.04088647950091443,
+        "mll_mean": -0.6090580253371378,
+        "mll_std": 0.06161040320965271,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "livecodebench::source=leaderboard;aggregate=pass@1": {
+        "auc_mean": 0.5993675426977666,
+        "auc_std": 0.03693102817910766,
+        "mll_mean": -0.33902881082123604,
+        "mll_std": 0.03403659457044606,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "livecodebench::source=submissions": {
+        "auc_mean": 0.7615015930564711,
+        "auc_std": 0.09156006103431742,
+        "mll_mean": -0.5710097559748283,
+        "mll_std": 0.05374995516009042,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "matharena::judge=1;criterion=Correctness": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.17239187639997575,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 12.0
+      },
+      "matharena::judge=1;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 0.9258241758241758,
+        "auc_std": 0.0,
+        "mll_mean": -0.3416134199501306,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 27.0
+      },
+      "matharena::judge=1;criterion=Proving the strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 0.9869565217391304,
+        "auc_std": 0.0,
+        "mll_mean": -0.24878203173074773,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 28.0
+      },
+      "matharena::judge=1;criterion=Showing a tie occurs for $\\lambda = \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 1.0,
+        "auc_std": 0.0,
+        "mll_mean": -0.1921229925436441,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 28.0
+      },
+      "matharena::judge=1;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 0.9266666666666666,
+        "auc_std": 0.0,
+        "mll_mean": -0.2884241034410916,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 28.0
+      },
+      "matharena::judge=1;criterion=Strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 0.875,
+        "auc_std": 0.0,
+        "mll_mean": -0.4138545369100908,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 28.0
+      },
+      "matharena::judge=2;criterion=Proving the strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 0.9055944055944055,
+        "auc_std": 0.0,
+        "mll_mean": -0.37056877971843455,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 24.0
+      },
+      "matharena::judge=2;criterion=Proving the strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 0.9347826086956522,
+        "auc_std": 0.0,
+        "mll_mean": -0.2751154313084071,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 24.0
+      },
+      "matharena::judge=2;criterion=Showing a tie occurs for $\\lambda = \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.20901321892345284,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 24.0
+      },
+      "matharena::judge=2;criterion=Strategy for $\\lambda < \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 0.85,
+        "auc_std": 0.0,
+        "mll_mean": -0.3774145547313847,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 24.0
+      },
+      "matharena::judge=2;criterion=Strategy for $\\lambda > \\frac{\\sqrt{2}}{2}$": {
+        "auc_mean": 0.8529411764705882,
+        "auc_std": 0.0,
+        "mll_mean": -0.45360382070575617,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 24.0
+      },
+      "matharena::none": {
+        "auc_mean": 0.6851299240626484,
+        "auc_std": 0.11532820252727258,
+        "mll_mean": -0.6010131804764468,
+        "mll_std": 0.04207125204515866,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mathvista_mini::none": {
+        "auc_mean": 0.7506613653418928,
+        "auc_std": 0.06577748831270847,
+        "mll_mean": -0.4850246593580812,
+        "mll_std": 0.061975976150111925,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mmbench_v11::skill=attribute_reasoning": {
+        "auc_mean": 0.6038330762468693,
+        "auc_std": 0.05344116071467343,
+        "mll_mean": -0.40118395674372914,
+        "mll_std": 0.09950726308184119,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mmbench_v11::skill=coarse_perception": {
+        "auc_mean": 0.5982203122205861,
+        "auc_std": 0.028652068763001876,
+        "mll_mean": -0.5364157563683586,
+        "mll_std": 0.07353290772379283,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mmbench_v11::skill=finegrained_perception (cross-instance)": {
+        "auc_mean": 0.6975345402716796,
+        "auc_std": 0.05571980896154254,
+        "mll_mean": -0.5103140098849125,
+        "mll_std": 0.06550194439251375,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mmbench_v11::skill=finegrained_perception (instance-level)": {
+        "auc_mean": 0.7479599164721938,
+        "auc_std": 0.09018757113931002,
+        "mll_mean": -0.3321086757363405,
+        "mll_std": 0.05753142138568428,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mmbench_v11::skill=logic_reasoning": {
+        "auc_mean": 0.7234564278552926,
+        "auc_std": 0.08483554191819084,
+        "mll_mean": -0.5222455318480853,
+        "mll_std": 0.06738273634743029,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mmbench_v11::skill=relation_reasoning": {
+        "auc_mean": 0.7627706285169379,
+        "auc_std": 0.08651471687598414,
+        "mll_mean": -0.3923394952522605,
+        "mll_std": 0.01466371815966497,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mmlupro::none": {
+        "auc_mean": 0.756225707881056,
+        "auc_std": 0.08164784717675956,
+        "mll_mean": -0.5900562229151607,
+        "mll_std": 0.055331065999644546,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "mtbench::none": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.020202707317519483,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=alpacaeval-easy": {
+        "auc_mean": 0.9164751342815988,
+        "auc_std": 0.011411715176435902,
+        "mll_mean": -0.33198201038742,
+        "mll_std": 0.026869171605169443,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=alpacaeval-hard": {
+        "auc_mean": 0.8250167820802714,
+        "auc_std": 0.059168132631189266,
+        "mll_mean": -0.3539867545467836,
+        "mll_std": 0.08954978929851358,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=alpacaeval-length": {
+        "auc_mean": 0.6543572984749456,
+        "auc_std": 0.09691042650195818,
+        "mll_mean": -0.6040139324355489,
+        "mll_std": 0.03537044224968705,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=donotanswer": {
+        "auc_mean": 0.7786732853311998,
+        "auc_std": 0.0534125151425786,
+        "mll_mean": -0.5756855372847104,
+        "mll_std": 0.037671205230531295,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=hep-cpp": {
+        "auc_mean": 0.7189299370220423,
+        "auc_std": 0.07121699042661482,
+        "mll_mean": -0.4059914730246737,
+        "mll_std": 0.10610225892915001,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=hep-go": {
+        "auc_mean": 0.7109754847459765,
+        "auc_std": 0.009160556548433979,
+        "mll_mean": -0.3661970616004331,
+        "mll_std": 0.04307298577425622,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=hep-java": {
+        "auc_mean": 0.7309422921711057,
+        "auc_std": 0.081163230831496,
+        "mll_mean": -0.37070277127031676,
+        "mll_std": 0.048569576099668846,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=hep-js": {
+        "auc_mean": 0.7762957547765615,
+        "auc_std": 0.030878618202690597,
+        "mll_mean": -0.5014114581899324,
+        "mll_std": 0.04365217062878889,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=hep-python": {
+        "auc_mean": 0.7885495481294661,
+        "auc_std": 0.07710742781639206,
+        "mll_mean": -0.3697307836330403,
+        "mll_std": 0.06966585932112333,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=hep-rust": {
+        "auc_mean": 0.7628946869094634,
+        "auc_std": 0.05997277521617321,
+        "mll_mean": -0.41050806598525996,
+        "mll_std": 0.02266950409877788,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=llmbar-adver-GPTInst": {
+        "auc_mean": 0.6360633943822959,
+        "auc_std": 0.039606724788582764,
+        "mll_mean": -0.6515597306618242,
+        "mll_std": 0.04422700891625667,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=llmbar-adver-GPTOut": {
+        "auc_mean": 0.6354783627021791,
+        "auc_std": 0.08783542027205547,
+        "mll_mean": -0.6662037491589845,
+        "mll_std": 0.033624917866073134,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=llmbar-adver-manual": {
+        "auc_mean": 0.7008224533991038,
+        "auc_std": 0.05485812406392932,
+        "mll_mean": -0.6299901811745854,
+        "mll_std": 0.04240456762893528,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=llmbar-adver-neighbor": {
+        "auc_mean": 0.6356910606415802,
+        "auc_std": 0.06141110977801057,
+        "mll_mean": -0.6679287212341775,
+        "mll_std": 0.04065213353458272,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=llmbar-natural": {
+        "auc_mean": 0.6140819964349377,
+        "auc_std": 0.05478585613335715,
+        "mll_mean": -0.5720133930967818,
+        "mll_std": 0.04357267896588621,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=math-prm": {
+        "auc_mean": 0.7813007456693879,
+        "auc_std": 0.022928964645599504,
+        "mll_mean": -0.5542107684330263,
+        "mll_std": 0.044531442483942224,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=mt-bench-easy": {
+        "auc_mean": 0.9052649012680799,
+        "auc_std": 0.04476758393521649,
+        "mll_mean": -0.444405250794071,
+        "mll_std": 0.015376447173805834,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=mt-bench-hard": {
+        "auc_mean": 0.7887755701610805,
+        "auc_std": 0.031216352571052,
+        "mll_mean": -0.470504894735684,
+        "mll_std": 0.02604704258931504,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=mt-bench-med": {
+        "auc_mean": 0.9217652269981369,
+        "auc_std": 0.053952953108981606,
+        "mll_mean": -0.3391330098820495,
+        "mll_std": 0.04400420216064725,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=refusals-dangerous": {
+        "auc_mean": 0.8495726292827742,
+        "auc_std": 0.054861897555167995,
+        "mll_mean": -0.494039472893822,
+        "mll_std": 0.07142000028452872,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=refusals-offensive": {
+        "auc_mean": 0.8598179545261925,
+        "auc_std": 0.029847197302093138,
+        "mll_mean": -0.3906647613543819,
+        "mll_std": 0.01633280163543324,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=xstest-should-refuse": {
+        "auc_mean": 0.8447120412583738,
+        "auc_std": 0.016918272961063654,
+        "mll_mean": -0.5083197192974561,
+        "mll_std": 0.035614915438349146,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "rewardbench::subset=xstest-should-respond": {
+        "auc_mean": 0.8231145858011529,
+        "auc_std": 0.10096391988516912,
+        "mll_mean": -0.31096663210904946,
+        "mll_std": 0.057891582662409555,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "swebench::none": {
+        "auc_mean": 0.7054789379283924,
+        "auc_std": 0.05177054190653146,
+        "mll_mean": -0.606595070176796,
+        "mll_std": 0.04825446836033318,
+        "n_labeled_for_category_mean": 3.3333333333333335,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "ultrafeedback::aspect=helpfulness": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.020202707317519483,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "ultrafeedback::aspect=honesty": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.020202707317519483,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 1.6666666666666667,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "ultrafeedback::aspect=instruction_following": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.020202707317519483,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      },
+      "ultrafeedback::aspect=truthfulness": {
+        "auc_mean": null,
+        "auc_std": null,
+        "mll_mean": -0.020202707317519483,
+        "mll_std": 0.0,
+        "n_labeled_for_category_mean": 0.0,
+        "n_labeled_pool_mean": 25.0,
+        "n_mean": 73.0
+      }
+    },
+    "seeds": [
+      0,
+      1,
+      2
+    ]
+  },
+  "zip": "/Users/joey/VScode/StanfordCS/CS 321M/eval_comp/.claude/worktrees/spicy-zooming-bubble/submissions/v1_kfactor_lookup_audit.zip"
+}
