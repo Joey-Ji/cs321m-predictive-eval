@@ -1,0 +1,87 @@
+{
+  "PRIOR_ONLY": true,
+  "T_high": 0,
+  "T_low": 0,
+  "max_abs_diff": 0.0,
+  "rows": [
+    {
+      "abs_diff": 0.0,
+      "benchmark": "rewardbench",
+      "cell_n": 100,
+      "condition": "subset=alpacaeval-easy",
+      "expected_p": 0.970886175826119,
+      "final_p": 0.970886175826119,
+      "gate": 0.0,
+      "kfactor_logit": -15.904716074466705,
+      "label": "dense",
+      "prior_logit": 3.5069961188650436,
+      "subject_key": "0-hero/matter-0.1-7b-boost-dpo-preview"
+    },
+    {
+      "abs_diff": 0.0,
+      "benchmark": "rewardbench",
+      "cell_n": 95,
+      "condition": "subset=alpacaeval-hard",
+      "expected_p": 0.8994304846174249,
+      "final_p": 0.8994304846174249,
+      "gate": 0.0,
+      "kfactor_logit": 9.071077287197113,
+      "label": "dense",
+      "prior_logit": 2.190912584418443,
+      "subject_key": "0-hero/matter-0.1-7b-boost-dpo-preview"
+    },
+    {
+      "abs_diff": 0.0,
+      "benchmark": "cybench",
+      "cell_n": 12,
+      "condition": "mode=subtask_fractional",
+      "expected_p": 0.15216424753055946,
+      "final_p": 0.15216424753055946,
+      "gate": 0.0,
+      "kfactor_logit": -61.98531091213226,
+      "label": "mid",
+      "prior_logit": -1.7177264156029137,
+      "subject_key": "claude 3 opus"
+    },
+    {
+      "abs_diff": 0.0,
+      "benchmark": "matharena",
+      "cell_n": 4,
+      "condition": "judge=1;criterion=Additional construction",
+      "expected_p": 0.236189236382675,
+      "final_p": 0.236189236382675,
+      "gate": 0.0,
+      "kfactor_logit": -26.57657516002655,
+      "label": "sparse",
+      "prior_logit": -1.1736867340900117,
+      "subject_key": "claude-3.7-sonnet (think)"
+    },
+    {
+      "abs_diff": 0.0,
+      "benchmark": "matharena",
+      "cell_n": 3,
+      "condition": "judge=1;criterion=Adjacent zero coefficients",
+      "expected_p": 0.2657128909305093,
+      "final_p": 0.2657128909305093,
+      "gate": 0.0,
+      "kfactor_logit": 38.94849503040314,
+      "label": "sparse",
+      "prior_logit": -1.0164837404511715,
+      "subject_key": "claude-3.7-sonnet (think)"
+    },
+    {
+      "abs_diff": 0.0,
+      "benchmark": "rewardbench",
+      "cell_n": 0,
+      "condition": "subset=alpacaeval-easy",
+      "expected_p": 0.6528606054687016,
+      "final_p": 0.6528606054687016,
+      "gate": 0.0,
+      "kfactor_logit": 5.881343364715576,
+      "label": "unknown",
+      "prior_logit": 0.631637225971917,
+      "subject_key": "lever-n-unknown-subject"
+    }
+  ],
+  "zip": "submissions/v1_kfactor_lever_n_null.zip"
+}

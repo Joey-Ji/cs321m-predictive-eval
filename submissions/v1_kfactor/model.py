@@ -224,6 +224,10 @@ if PRIORS is not None:
     PRIOR_KEY_SEP = str(PRIORS.get("key_sep", PRIOR_KEY_SEP))
 PRIOR_ONLY_PATH = _resolve_file("prior_only.json", "priors", required=False)
 PRIOR_ONLY = PRIOR_ONLY_PATH is not None
+GATE_CONFIG_PATH = _resolve_file("gate_config.json", "priors", required=False)
+GATE_CONFIG = json.loads(GATE_CONFIG_PATH.read_text()) if GATE_CONFIG_PATH else {}
+RELIABILITY_GATE_T_LOW = int(GATE_CONFIG.get("t_low", 0))
+RELIABILITY_GATE_T_HIGH = int(GATE_CONFIG.get("t_high", 0))
 
 RESIDUAL_META_PATH = _resolve_file("head.json", "residual", required=False)
 RESIDUAL_WEIGHTS_PATH = _resolve_file("residual.pt", "residual", required=False)
@@ -316,17 +320,86 @@ def _prior_key(*parts: str) -> str:
     return PRIOR_KEY_SEP.join(str(part) for part in parts)
 
 
+def _prior_p(value, default: float) -> float:
+    if isinstance(value, dict):
+        return float(value.get("p", default))
+    if value is None:
+        return float(default)
+    return float(value)
+
+
 def _prior_values(subject_key: str, benchmark: str, condition: str) -> tuple[float, ...]:
     if PRIORS is None:
         p = 0.654
         return (p, p, p, p, p, p)
-    global_p = float(PRIORS.get("global", 0.654))
-    bench_p = float(PRIORS.get("benchmark", {}).get(benchmark, global_p))
-    bc_p = float(PRIORS.get("benchmark_condition", {}).get(_prior_key(benchmark, condition), bench_p))
-    subj_p = float(PRIORS.get("subject", {}).get(subject_key, global_p))
-    sb_p = float(PRIORS.get("subject_benchmark", {}).get(_prior_key(subject_key, benchmark), subj_p))
-    sc_p = float(PRIORS.get("subject_category", {}).get(_prior_key(subject_key, benchmark, condition), sb_p))
+    global_p = _prior_p(PRIORS.get("global", 0.654), 0.654)
+    bench_p = _prior_p(PRIORS.get("benchmark", {}).get(benchmark), global_p)
+    bc_p = _prior_p(PRIORS.get("benchmark_condition", {}).get(_prior_key(benchmark, condition)), bench_p)
+    subj_p = _prior_p(PRIORS.get("subject", {}).get(subject_key), global_p)
+    sb_p = _prior_p(PRIORS.get("subject_benchmark", {}).get(_prior_key(subject_key, benchmark)), subj_p)
+    sc_p = _prior_p(PRIORS.get("subject_category", {}).get(_prior_key(subject_key, benchmark, condition)), sb_p)
     return global_p, bench_p, bc_p, subj_p, sb_p, sc_p
+
+
+def _entry_count(value) -> int | None:
+    if isinstance(value, dict) and "n" in value:
+        try:
+            n = int(value["n"])
+        except (TypeError, ValueError):
+            return None
+        return max(n, 0)
+    return None
+
+
+def _count_from_map(level: str, key: str) -> int | None:
+    if PRIORS is None:
+        return None
+    counts = PRIORS.get("counts", {})
+    if isinstance(counts, dict):
+        level_counts = counts.get(level, {})
+        if isinstance(level_counts, dict) and key in level_counts:
+            try:
+                return max(int(level_counts[key]), 0)
+            except (TypeError, ValueError):
+                return None
+    legacy_counts = PRIORS.get(f"{level}_counts", {})
+    if isinstance(legacy_counts, dict) and key in legacy_counts:
+        try:
+            return max(int(legacy_counts[key]), 0)
+        except (TypeError, ValueError):
+            return None
+    level_values = PRIORS.get(level, {})
+    if isinstance(level_values, dict):
+        return _entry_count(level_values.get(key))
+    return None
+
+
+def _cell_count(subject_key: str, benchmark: str, condition: str) -> int:
+    if PRIORS is None:
+        return 0
+    keys = (
+        ("subject_category", _prior_key(subject_key, benchmark, condition)),
+        ("subject_benchmark", _prior_key(subject_key, benchmark)),
+        ("subject", subject_key),
+    )
+    for level, key in keys:
+        count = _count_from_map(level, key)
+        if count is not None:
+            return int(count)
+    return 0
+
+
+def _reliability_gate(n: int) -> float:
+    t_low = RELIABILITY_GATE_T_LOW
+    t_high = RELIABILITY_GATE_T_HIGH
+    if t_high <= t_low:
+        return 0.0
+    n = max(int(n), 0)
+    if n <= t_low:
+        return 1.0
+    if n >= t_high:
+        return 0.0
+    return float((t_high - n) / (t_high - t_low))
 
 
 def _sigmoid(logit: float) -> float:
@@ -371,6 +444,10 @@ def _base_logit_parts(input: dict) -> tuple[float, float, torch.Tensor, tuple[fl
         benchmark,
         condition,
     )
+
+
+def _kfactor_base_logit(input: dict) -> float:
+    return _base_logit_parts(input)[0]
 
 
 def _residual_value(
@@ -641,7 +718,18 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
     try:
         logit = _raw_logit(input)
         if PRIOR_ONLY:
-            return _clip_prob(_sigmoid(logit))
+            benchmark = str(input.get("benchmark") or "")
+            condition = str(input.get("condition") or "")
+            subject_key = _normalize_subject(str(input.get("subject_content") or ""))
+            prior_logit = logit
+            cell_n = _cell_count(subject_key, benchmark, condition)
+            gate = _reliability_gate(cell_n)
+            final_logit = prior_logit
+            if gate > 0.0:
+                kfactor_logit = _kfactor_base_logit(input)
+                if math.isfinite(kfactor_logit):
+                    final_logit = (1.0 - gate) * prior_logit + gate * kfactor_logit
+            return _clip_prob(_sigmoid(final_logit))
         shifts = _per_subject_shifts(labeled)
         subject_key = _normalize_subject(str(input.get("subject_content") or ""))
         if shifts and subject_key in shifts:

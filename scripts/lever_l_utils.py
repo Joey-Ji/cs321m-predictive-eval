@@ -837,6 +837,30 @@ def write_prior_artifacts(df, kappas: Mapping[str, float], out_dir: Path) -> Non
     ]
     sc_df.to_parquet(out_dir / "subject_category.parquet", index=False)
 
+    counts = {
+        "global": int(len(df)),
+        "benchmark": {
+            str(r.benchmark): int(r.n)
+            for r in bench_df[["benchmark", "n"]].itertuples(index=False)
+        },
+        "benchmark_condition": {
+            join_key(str(r.benchmark), str(r.condition)): int(r.n)
+            for r in bc_df[["benchmark", "condition", "n"]].itertuples(index=False)
+        },
+        "subject": {
+            str(r.subject_key): int(r.n)
+            for r in subj_df[["subject_key", "n"]].itertuples(index=False)
+        },
+        "subject_benchmark": {
+            join_key(str(r.subject_key), str(r.benchmark)): int(r.n)
+            for r in sb_df[["subject_key", "benchmark", "n"]].itertuples(index=False)
+        },
+        "subject_category": {
+            join_key(str(r.subject_key), str(r.benchmark), str(r.condition)): int(r.n)
+            for r in sc_df[["subject_key", "benchmark", "condition", "n"]].itertuples(index=False)
+        },
+    }
+
     runtime = {
         "global": priors.global_p,
         "kappas": priors.kappas,
@@ -848,6 +872,8 @@ def write_prior_artifacts(df, kappas: Mapping[str, float], out_dir: Path) -> Non
         "subject": priors.subject,
         "subject_benchmark": priors.subject_benchmark,
         "subject_category": priors.subject_category,
+        "counts": counts,
+        "subject_category_counts": counts["subject_category"],
         "key_sep": KEY_SEP,
         "prior_columns": PRIOR_COLUMNS,
         "subject_metadata_contract": {
@@ -858,3 +884,4 @@ def write_prior_artifacts(df, kappas: Mapping[str, float], out_dir: Path) -> Non
         },
     }
     (out_dir / "runtime_priors.json").write_text(json.dumps(runtime, separators=(",", ":")) + "\n")
+    (out_dir / "prior_only.json").write_text('{"enabled":true}\n')

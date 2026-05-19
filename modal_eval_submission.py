@@ -18,6 +18,7 @@ import importlib.util
 import json
 import math
 import random
+import re
 import statistics
 from collections.abc import Mapping
 from pathlib import Path
@@ -34,6 +35,12 @@ WORKDIR = "/root/eval_comp"
 LOCAL_ROOT = Path(__file__).resolve().parent
 INPUT_KEYS = ("subject_content", "item_content", "benchmark", "condition")
 CATEGORY_KEYS = ("benchmark", "condition")
+NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE)
+COUNT_BUCKETS = (
+    ("count<5", 0, 5),
+    ("5<=count<20", 5, 20),
+    ("count>=20", 20, None),
+)
 
 
 def _prefetch_encoder() -> None:
@@ -86,6 +93,13 @@ def _coerce_binary_label(value: Any) -> int | None:
     return None
 
 
+def _normalize_subject(subject_content: str) -> str:
+    if not subject_content:
+        return ""
+    match = NAME_LINE.search(subject_content)
+    return match.group(1).strip().lower() if match else subject_content.strip().lower()
+
+
 def _input_from_row(row: Mapping[str, Any]) -> dict[str, str]:
     return {key: _clean_str(row.get(key)) for key in INPUT_KEYS}
 
@@ -104,6 +118,14 @@ def _category_key(row: Mapping[str, Any]) -> tuple[str, str]:
 def _format_category(category: tuple[str, str]) -> str:
     benchmark, condition = category
     return f"{benchmark}::{condition}"
+
+
+def _count_bucket(n: int) -> str:
+    n = int(n)
+    for name, low, high in COUNT_BUCKETS:
+        if n >= low and (high is None or n < high):
+            return name
+    return "count>=20"
 
 
 def _group_rows_by_category(rows: list[dict[str, Any]]) -> dict[tuple[str, str], list[dict[str, Any]]]:
@@ -235,18 +257,39 @@ def _load_eval_rows(joined_path: Path, held_out_item_ids: set[str]) -> tuple[lis
     columns = ["item_id", "subject_content", "item_content", "benchmark", "condition", "label"]
     table = pq.read_table(joined_path, columns=columns)
     rows: list[dict[str, Any]] = []
+    train_cell_counts: dict[tuple[str, str, str], int] = {}
     skipped_nonbinary = 0
     for row in table.to_pylist():
         item_id = _clean_str(row.get("item_id"))
-        if item_id not in held_out_item_ids:
-            continue
         label = _coerce_binary_label(row.get("label"))
         if label is None:
             skipped_nonbinary += 1
             continue
-        clean_row = {key: _clean_str(row.get(key)) for key in ("item_id", *INPUT_KEYS)}
+        subject_content = _clean_str(row.get("subject_content"))
+        benchmark = _clean_str(row.get("benchmark"))
+        condition = _clean_str(row.get("condition"))
+        subject_key = _normalize_subject(subject_content)
+        cell = (subject_key, benchmark, condition)
+        if item_id not in held_out_item_ids:
+            train_cell_counts[cell] = train_cell_counts.get(cell, 0) + 1
+            continue
+        clean_row = {
+            "item_id": item_id,
+            "subject_content": subject_content,
+            "item_content": _clean_str(row.get("item_content")),
+            "benchmark": benchmark,
+            "condition": condition,
+            "subject_key": subject_key,
+        }
         clean_row["label"] = label
         rows.append(clean_row)
+    for row in rows:
+        cell = (
+            _clean_str(row.get("subject_key")),
+            _clean_str(row.get("benchmark")),
+            _clean_str(row.get("condition")),
+        )
+        row["n_train_cell"] = int(train_cell_counts.get(cell, 0))
     return rows, skipped_nonbinary
 
 
@@ -290,6 +333,8 @@ def _run_seed(
 
     all_predictions: list[float] = []
     all_labels: list[int] = []
+    bucket_predictions: dict[str, list[float]] = {name: [] for name, _, _ in COUNT_BUCKETS}
+    bucket_labels: dict[str, list[int]] = {name: [] for name, _, _ in COUNT_BUCKETS}
     categories: dict[str, dict[str, Any]] = {}
     reveal_methods: dict[str, str] = {}
 
@@ -325,6 +370,9 @@ def _run_seed(
                 raise ValueError(f"sampled row has non-binary label: {row.get('label')!r}")
             category_predictions.append(pred)
             category_labels.append(label)
+            bucket = _count_bucket(int(row.get("n_train_cell", 0)))
+            bucket_predictions[bucket].append(pred)
+            bucket_labels[bucket].append(label)
 
         category_id = _format_category(category)
         categories[category_id] = {
@@ -335,10 +383,23 @@ def _run_seed(
         all_predictions.extend(category_predictions)
         all_labels.extend(category_labels)
 
+    buckets: dict[str, dict[str, Any]] = {}
+    for bucket_name, _, _ in COUNT_BUCKETS:
+        if bucket_predictions[bucket_name]:
+            buckets[bucket_name] = _score_predictions(bucket_predictions[bucket_name], bucket_labels[bucket_name])
+        else:
+            buckets[bucket_name] = {
+                "mean_log_likelihood": float("nan"),
+                "auc_roc": float("nan"),
+                "n": 0,
+                "p_pos": float("nan"),
+            }
+
     return {
         "seed": seed,
         "metrics": _score_predictions(all_predictions, all_labels),
         "categories": categories,
+        "count_buckets": buckets,
         "reveal_methods": reveal_methods,
     }
 
@@ -388,6 +449,28 @@ def _summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
             ),
         }
 
+    per_count_bucket: dict[str, dict[str, float]] = {}
+    for bucket_name, _, _ in COUNT_BUCKETS:
+        bucket_results = [result["count_buckets"][bucket_name] for result in results]
+        nonempty = [r for r in bucket_results if int(r["n"]) > 0]
+        if nonempty:
+            bucket_mll_mean, bucket_mll_std = _mean_std([r["mean_log_likelihood"] for r in nonempty])
+            bucket_auc_mean, bucket_auc_std = _mean_std([r["auc_roc"] for r in nonempty])
+            bucket_p_pos_mean, bucket_p_pos_std = _mean_std([r["p_pos"] for r in nonempty])
+        else:
+            bucket_mll_mean = bucket_mll_std = float("nan")
+            bucket_auc_mean = bucket_auc_std = float("nan")
+            bucket_p_pos_mean = bucket_p_pos_std = float("nan")
+        per_count_bucket[bucket_name] = {
+            "mll_mean": bucket_mll_mean,
+            "mll_std": bucket_mll_std,
+            "auc_mean": bucket_auc_mean,
+            "auc_std": bucket_auc_std,
+            "n_mean": float(statistics.fmean([r["n"] for r in bucket_results])),
+            "p_pos_mean": bucket_p_pos_mean,
+            "p_pos_std": bucket_p_pos_std,
+        }
+
     return {
         "seeds": [int(r["seed"]) for r in results],
         "mean_log_likelihood_mean": mll_mean,
@@ -399,6 +482,7 @@ def _summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
         "p_pos_mean": p_pos_mean,
         "p_pos_std": p_pos_std,
         "per_category": per_category,
+        "per_count_bucket": per_count_bucket,
     }
 
 
@@ -534,6 +618,7 @@ def eval_submission(
         f"split=item-cold seeds={','.join(str(s) for s in seeds)} "
         f"mll={summary['mean_log_likelihood_mean']:.6f}+/-{summary['mean_log_likelihood_std']:.6f} "
         f"auc={summary['auc_roc_mean']:.6f}+/-{summary['auc_roc_std']:.6f} "
+        f"per_count_bucket={json.dumps(printable['per_count_bucket'], sort_keys=True)} "
         f"per_category={json.dumps(printable['per_category'], sort_keys=True)}"
     )
     return printable
@@ -551,6 +636,7 @@ def main(
     split_seed: int = 0,
     stage1: str = "/data/stage1/kfactor_k4",
     stage2: str = "/data/stage2/kfactor_mpnet_linear_v1",
+    out: str = "",
 ) -> None:
     path = (LOCAL_ROOT / zip).resolve() if not Path(zip).is_absolute() else Path(zip)
     if not path.exists():
@@ -561,7 +647,7 @@ def main(
         f"and running eval (seeds={seeds}, max_rows={max_rows}, "
         f"per_category={per_category}, k={k}, m_categories={m_categories})"
     )
-    eval_submission.remote(
+    result = eval_submission.remote(
         path.read_bytes(),
         seeds,
         max_rows,
@@ -573,3 +659,8 @@ def main(
         stage1,
         stage2,
     )
+    if out:
+        out_path = (LOCAL_ROOT / out).resolve() if not Path(out).is_absolute() else Path(out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        print(f"[local] wrote summary to {out_path}")

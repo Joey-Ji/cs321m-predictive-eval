@@ -52,6 +52,7 @@ RUNTIME_STATE_FILES = {
     "subject_category.parquet",
     "runtime_priors.json",
     "prior_only.json",
+    "gate_config.json",
     "residual.pt",
     "head.json",
 }
@@ -79,6 +80,7 @@ SUBMISSION_RUNTIME_STATE_FILES = {
         "subject_category.parquet",
         "runtime_priors.json",
         "prior_only.json",
+        "gate_config.json",
         "residual.pt",
         "head.json",
     },
