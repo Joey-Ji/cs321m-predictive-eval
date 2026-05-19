@@ -640,8 +640,6 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
         return _subject_only_prob(input)
     try:
         logit = _raw_logit(input)
-        if PRIOR_ONLY:
-            return _clip_prob(_sigmoid(logit))
         shifts = _per_subject_shifts(labeled)
         subject_key = _normalize_subject(str(input.get("subject_content") or ""))
         if shifts and subject_key in shifts:

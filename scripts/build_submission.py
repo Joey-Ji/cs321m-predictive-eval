@@ -109,6 +109,7 @@ SUBMISSION_DEFAULT_INCLUDES = {
         "data/stage2/kfactor_mpnet_linear_v1",
         "data/stage1/kfactor_k4",
         "data/calibration/kfactor_mpnet_linear_v1",
+        "data/stage2/priors_v1",
     ],
     "v1_irt": ["data/head", "data/irt"],
 }
