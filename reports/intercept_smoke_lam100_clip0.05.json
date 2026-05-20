@@ -1,0 +1,22 @@
+{
+  "checks": {
+    "bounded_delta": 0.05,
+    "cold_pred": 0.6528606054687016,
+    "empty_pred": 0.5000000096666147,
+    "mixed_delta": -1.84125994345543e-09,
+    "mixed_pred": 0.5000000092062997,
+    "negative_pred": 0.4894227366613275,
+    "positive_pred": 0.506172535458373
+  },
+  "contains_labeling_py": false,
+  "online_intercept_clip": 0.05,
+  "online_intercept_lam": 100.0,
+  "prior_only": true,
+  "prior_row": {
+    "benchmark": "swebench",
+    "condition": "none",
+    "prior_p": 0.5000000096666147,
+    "subject": "20241028_solver"
+  },
+  "zip": "submissions/v1_kfactor_intercept_lam100_clip0.05.zip"
+}

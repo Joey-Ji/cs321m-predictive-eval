@@ -18,6 +18,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
+import math
 import sys
 import zipfile
 from pathlib import Path
@@ -40,6 +42,7 @@ RUNTIME_STATE_FILES = {
     "subject_name_to_id.json",
     "side_feature_meta.json",
     "calibration.json",
+    "intercept_config.json",
     # Lever L priors + residual
     "global.json",
     "benchmark.parquet",
@@ -68,6 +71,7 @@ SUBMISSION_RUNTIME_STATE_FILES = {
         "manifest.json",
         "side_feature_meta.json",
         "calibration.json",
+        "intercept_config.json",
         "global.json",
         "benchmark.parquet",
         "benchmark_condition.parquet",
@@ -118,6 +122,10 @@ SUBMISSION_DEFAULT_INCLUDES = {
     ],
     "v1_irt": ["data/head", "data/irt"],
 }
+SUBMISSION_EXCLUDED_FILES = {
+    # Online-intercept experiments rely on unbiased platform random reveal.
+    "v1_kfactor": {"labeling.py"},
+}
 
 
 def gather_state_files(extra_dirs: list[Path], allowed_names: set[str]) -> list[Path]:
@@ -136,7 +144,13 @@ def gather_state_files(extra_dirs: list[Path], allowed_names: set[str]) -> list[
     return [files_by_name[name] for name in sorted(files_by_name)]
 
 
-def main(name: str, includes: list[Path] | None, out_dir: Path, zip_name: str | None = None) -> None:
+def main(
+    name: str,
+    includes: list[Path] | None,
+    out_dir: Path,
+    zip_name: str | None = None,
+    intercept_config: dict[str, float] | None = None,
+) -> None:
     submissions_root = Path(__file__).resolve().parent.parent / "submissions"
     sub_dir = submissions_root / name
     if not sub_dir.exists():
@@ -154,10 +168,12 @@ def main(name: str, includes: list[Path] | None, out_dir: Path, zip_name: str | 
 
     allowed_state_files = SUBMISSION_RUNTIME_STATE_FILES.get(name, RUNTIME_STATE_FILES)
     required_state_files = SUBMISSION_REQUIRED_STATE_FILES.get(name, set())
+    excluded_files = set(SUBMISSION_EXCLUDED_FILES.get(name, set()))
+    dynamic_files = {"intercept_config.json"} if intercept_config is not None else set()
     local_state_files = {
         p.name: p
         for p in sorted(sub_dir.iterdir())
-        if p.is_file() and p.name in allowed_state_files
+        if p.is_file() and p.name in allowed_state_files and p.name not in excluded_files
     }
     state_files = gather_state_files(includes, allowed_state_files)
     include_state_files = {p.name: p for p in state_files}
@@ -177,10 +193,21 @@ def main(name: str, includes: list[Path] | None, out_dir: Path, zip_name: str | 
     written_names: set[str] = set()
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
         for p in sorted(sub_dir.iterdir()):
+            if p.name in excluded_files:
+                print(f"  - {p.name}  (excluded)")
+                continue
+            if p.name in dynamic_files:
+                print(f"  - {p.name}  (overridden)")
+                continue
             if p.is_file() and (p.name in REQUIRED or p.name in OPTIONAL or p.name in allowed_state_files):
                 z.write(p, p.name)
                 written_names.add(p.name)
                 print(f"  + {p.name}")
+        if intercept_config is not None:
+            payload = json.dumps(intercept_config, indent=2, sort_keys=True) + "\n"
+            z.writestr("intercept_config.json", payload)
+            written_names.add("intercept_config.json")
+            print("  + intercept_config.json  (generated)")
         for p in state_files:
             if p.name in written_names:
                 print(f"WARN: skipping {p}; {p.name} already provided by submission dir", file=sys.stderr)
@@ -204,5 +231,25 @@ if __name__ == "__main__":
     )
     parser.add_argument("--out", default="submissions", type=Path)
     parser.add_argument("--zip-name", default=None, help="Optional output ZIP filename.")
+    parser.add_argument("--intercept-lam", default=None, type=float, help="Override intercept_config.json lam.")
+    parser.add_argument("--intercept-clip", default=None, type=float, help="Override intercept_config.json clip.")
     args = parser.parse_args()
-    main(args.name, None if args.include is None else [Path(p) for p in args.include], args.out, args.zip_name)
+    intercept_config = None
+    if args.intercept_lam is not None or args.intercept_clip is not None:
+        if args.intercept_lam is None or args.intercept_clip is None:
+            sys.exit("--intercept-lam and --intercept-clip must be supplied together")
+        if (
+            not math.isfinite(args.intercept_lam)
+            or not math.isfinite(args.intercept_clip)
+            or args.intercept_lam < 0.0
+            or args.intercept_clip < 0.0
+        ):
+            sys.exit("--intercept-lam and --intercept-clip must be finite non-negative values")
+        intercept_config = {"lam": float(args.intercept_lam), "clip": float(args.intercept_clip)}
+    main(
+        args.name,
+        None if args.include is None else [Path(p) for p in args.include],
+        args.out,
+        args.zip_name,
+        intercept_config=intercept_config,
+    )

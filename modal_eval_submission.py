@@ -529,6 +529,7 @@ def eval_submission(
         }
     )
     printable = _finite_or_none(summary)
+    printable["results"] = _finite_or_none(results)
     print(
         "modal_eval_submission "
         f"split=item-cold seeds={','.join(str(s) for s in seeds)} "
@@ -551,6 +552,7 @@ def main(
     split_seed: int = 0,
     stage1: str = "/data/stage1/kfactor_k4",
     stage2: str = "/data/stage2/kfactor_mpnet_linear_v1",
+    out: str = "",
 ) -> None:
     path = (LOCAL_ROOT / zip).resolve() if not Path(zip).is_absolute() else Path(zip)
     if not path.exists():
@@ -561,7 +563,7 @@ def main(
         f"and running eval (seeds={seeds}, max_rows={max_rows}, "
         f"per_category={per_category}, k={k}, m_categories={m_categories})"
     )
-    eval_submission.remote(
+    result = eval_submission.remote(
         path.read_bytes(),
         seeds,
         max_rows,
@@ -573,3 +575,10 @@ def main(
         stage1,
         stage2,
     )
+    if out:
+        out_path = Path(out)
+        if not out_path.is_absolute():
+            out_path = LOCAL_ROOT / out_path
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        print(f"[local] wrote {out_path}")
