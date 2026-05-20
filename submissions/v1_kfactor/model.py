@@ -319,6 +319,115 @@ class _DummyEncoder:
         return None
 
 
+ONLINE_INTERCEPT_DEFAULT_LAM = 50.0
+ONLINE_INTERCEPT_DEFAULT_CLIP = 0.15
+ONLINE_INTERCEPT_LAM = ONLINE_INTERCEPT_DEFAULT_LAM
+ONLINE_INTERCEPT_CLIP = ONLINE_INTERCEPT_DEFAULT_CLIP
+_ONLINE_INTERCEPT_CACHE_KEY: str | None = None
+_ONLINE_INTERCEPT_CACHE: float = 0.0
+
+
+def _finite_nonnegative_config_value(config: dict, key: str, default: float) -> float:
+    try:
+        value = float(config.get(key, default))
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(value) or value < 0.0:
+        return default
+    return value
+
+
+def _load_online_intercept_config(path: Path | None) -> tuple[float, float]:
+    config: dict = {}
+    if path is not None:
+        try:
+            loaded = json.loads(path.read_text())
+            if isinstance(loaded, dict):
+                config = loaded
+        except Exception as exc:  # noqa: BLE001
+            print(f"[v1_kfactor] intercept_config.json ignored: {exc!r}", flush=True)
+    return (
+        _finite_nonnegative_config_value(config, "lam", ONLINE_INTERCEPT_DEFAULT_LAM),
+        _finite_nonnegative_config_value(config, "clip", ONLINE_INTERCEPT_DEFAULT_CLIP),
+    )
+
+
+def _label_value(row: dict) -> int | None:
+    label = row.get("label")
+    if isinstance(label, bool):
+        return int(label)
+    if isinstance(label, Real):
+        value = float(label)
+        if math.isfinite(value) and value in (0.0, 1.0):
+            return int(value)
+    return None
+
+
+def _labeled_cache_key(labeled: list[dict] | None) -> str | None:
+    if not labeled:
+        return None
+    payload = []
+    for row in labeled:
+        if not isinstance(row, dict):
+            continue
+        payload.append(
+            (
+                str(row.get("benchmark") or ""),
+                str(row.get("condition") or ""),
+                str(row.get("subject_content") or ""),
+                str(row.get("item_content") or ""),
+                str(row.get("label")),
+            )
+        )
+    if not payload:
+        return None
+    encoded = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8", errors="surrogatepass"
+    )
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _fit_online_intercept_delta(labeled: list[dict]) -> float:
+    g = 0.0
+    h = float(ONLINE_INTERCEPT_LAM)
+    for row in labeled:
+        if not isinstance(row, dict):
+            continue
+        y = _label_value(row)
+        if y is None:
+            continue
+        try:
+            logit = _raw_logit(row)
+        except Exception:  # noqa: BLE001
+            continue
+        if not math.isfinite(logit):
+            continue
+        p = _sigmoid(float(logit))
+        if not math.isfinite(p):
+            continue
+        g += float(y) - p
+        h += p * (1.0 - p)
+    if not math.isfinite(h) or h <= 0.0:
+        return 0.0
+    delta = g / h
+    if not math.isfinite(delta):
+        return 0.0
+    clip = float(ONLINE_INTERCEPT_CLIP)
+    return float(max(-clip, min(clip, delta)))
+
+
+def _online_intercept_delta(labeled: list[dict] | None) -> float:
+    global _ONLINE_INTERCEPT_CACHE_KEY, _ONLINE_INTERCEPT_CACHE
+
+    key = _labeled_cache_key(labeled)
+    if key is None:
+        return 0.0
+    if key != _ONLINE_INTERCEPT_CACHE_KEY:
+        _ONLINE_INTERCEPT_CACHE_KEY = key
+        _ONLINE_INTERCEPT_CACHE = _fit_online_intercept_delta(labeled or [])
+    return float(_ONLINE_INTERCEPT_CACHE)
+
+
 HEAD_META = json.loads(_resolve_file("head_meta.json", "stage2").read_text())
 TARGET_SCALER = json.loads(_resolve_file("target_scaler.json", "stage2").read_text())
 VOCAB = json.loads(_resolve_file("side_feature_meta.json", "stage2").read_text())
@@ -385,6 +494,10 @@ if PRIORS is not None:
     PRIOR_KEY_SEP = str(PRIORS.get("key_sep", PRIOR_KEY_SEP))
 PRIOR_ONLY_PATH = _resolve_file("prior_only.json", "priors", required=False)
 PRIOR_ONLY = PRIOR_ONLY_PATH is not None
+ONLINE_INTERCEPT_CONFIG_PATH = _resolve_file("intercept_config.json", "priors", required=False)
+ONLINE_INTERCEPT_LAM, ONLINE_INTERCEPT_CLIP = _load_online_intercept_config(
+    ONLINE_INTERCEPT_CONFIG_PATH
+)
 
 RESIDUAL_META_PATH = _resolve_file("head.json", "residual", required=False)
 RESIDUAL_WEIGHTS_PATH = _resolve_file("residual.pt", "residual", required=False)
@@ -657,41 +770,6 @@ def _raw_logit(input: dict) -> float:
     return base_logit + _residual_value(base_logit, subject_bias, subject_u, emb_tuple, priors)
 
 
-def _label_value(row: dict) -> int | None:
-    label = row.get("label")
-    if isinstance(label, bool):
-        return int(label)
-    if isinstance(label, Real):
-        value = float(label)
-        if math.isfinite(value) and value in (0.0, 1.0):
-            return int(value)
-    return None
-
-
-def _labeled_cache_key(labeled: list[dict] | None) -> str | None:
-    if not labeled:
-        return None
-    payload = []
-    for row in labeled:
-        if not isinstance(row, dict):
-            continue
-        payload.append(
-            (
-                str(row.get("benchmark") or ""),
-                str(row.get("condition") or ""),
-                str(row.get("subject_content") or ""),
-                str(row.get("item_content") or ""),
-                str(row.get("label")),
-            )
-        )
-    if not payload:
-        return None
-    encoded = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode(
-        "utf-8", errors="surrogatepass"
-    )
-    return hashlib.sha256(encoded).hexdigest()
-
-
 def _fit_online_platt(labeled: list[dict]) -> tuple[float, float] | None:
     logits: list[float] = []
     labels: list[int] = []
@@ -883,7 +961,8 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
     try:
         logit = _raw_logit(input)
         if PRIOR_ONLY:
-            return _clip_prob(_sigmoid(logit))
+            delta = _online_intercept_delta(labeled)
+            return _clip_prob(_sigmoid(logit + delta))
         shifts = _per_subject_shifts(labeled)
         subject_key = _normalize_subject(str(input.get("subject_content") or ""))
         if shifts and subject_key in shifts:
