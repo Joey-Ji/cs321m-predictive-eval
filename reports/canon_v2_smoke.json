@@ -1,0 +1,32 @@
+{
+  "audit_counters": {
+    "fell_to_global": 0,
+    "hit_benchmark_condition_only": 1,
+    "hit_benchmark_only": 0,
+    "hit_subject": 0,
+    "hit_subject_benchmark": 0,
+    "hit_subject_category": 21,
+    "prior_none": 0
+  },
+  "results": {
+    "benchmark_separator_swap": 0.04400003850318985,
+    "benchmark_spaced": 0.04400003850318985,
+    "benchmark_upper": 0.04400003850318985,
+    "cold_subject": 0.6528606054687016,
+    "condition_lower": 0.4103959500932689,
+    "condition_none_dash": 0.04400003850318985,
+    "condition_none_empty": 0.04400003850318985,
+    "condition_none_null": 0.04400003850318985,
+    "condition_upper": 0.4103959500932689,
+    "subject_control": 0.9762472481251695,
+    "subject_display_name_prefix": 0.9762472481251695,
+    "subject_fullwidth_colon": 0.9762472481251695,
+    "subject_markdown_dash": 0.9762472481251695,
+    "subject_model_prefix": 0.9762472481251695,
+    "subject_quoted_line": 0.9762472481251695,
+    "subject_space_before_colon": 0.9762472481251695,
+    "subject_subject_prefix": 0.9762472481251695,
+    "subject_trailing_period": 0.9762472481251695
+  },
+  "zip": "submissions/v1_kfactor_canon_v2.zip"
+}

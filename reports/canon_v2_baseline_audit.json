@@ -1,0 +1,1258 @@
+{
+  "confusion_table": {
+    "benchmark_hyphen_to_space": {
+      "hit_subject_category": 200
+    },
+    "benchmark_hyphen_to_underscore": {
+      "hit_subject_category": 200
+    },
+    "benchmark_insert_separator": {
+      "hit_subject": 126,
+      "hit_subject_category": 74
+    },
+    "benchmark_lower": {
+      "hit_subject_category": 200
+    },
+    "benchmark_original": {
+      "hit_subject_category": 200
+    },
+    "benchmark_stripped": {
+      "hit_subject_category": 200
+    },
+    "benchmark_surrounding_space": {
+      "hit_subject_category": 200
+    },
+    "benchmark_title": {
+      "hit_subject_category": 200
+    },
+    "benchmark_underscore_to_hyphen": {
+      "hit_subject": 68,
+      "hit_subject_category": 132
+    },
+    "benchmark_underscore_to_space": {
+      "hit_subject": 68,
+      "hit_subject_category": 132
+    },
+    "benchmark_unicode_nfd": {
+      "hit_subject_category": 200
+    },
+    "benchmark_upper": {
+      "hit_subject_category": 200
+    },
+    "condition_empty_to_none": {
+      "hit_subject_category": 200
+    },
+    "condition_empty_to_null": {
+      "hit_subject_category": 200
+    },
+    "condition_lower": {
+      "hit_subject_benchmark": 8,
+      "hit_subject_category": 192
+    },
+    "condition_none_to_empty": {
+      "hit_subject_benchmark": 28,
+      "hit_subject_category": 172
+    },
+    "condition_original": {
+      "hit_subject_category": 200
+    },
+    "condition_pipe_both_spaces": {
+      "hit_subject_category": 200
+    },
+    "condition_pipe_left_space": {
+      "hit_subject_category": 200
+    },
+    "condition_pipe_no_spaces": {
+      "hit_subject_category": 200
+    },
+    "condition_pipe_right_space": {
+      "hit_subject_category": 200
+    },
+    "condition_stripped": {
+      "hit_subject_category": 200
+    },
+    "condition_unicode_nfd": {
+      "hit_subject_category": 200
+    },
+    "condition_upper": {
+      "hit_subject_benchmark": 200
+    },
+    "subject_display_name_prefix": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_double_quoted_line": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_fullwidth_colon": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_lowercase_prefix": {
+      "hit_subject_category": 200
+    },
+    "subject_markdown_dash": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_markdown_quote": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_markdown_star": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_model_prefix": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_name_prefix": {
+      "hit_subject_category": 200
+    },
+    "subject_no_prefix": {
+      "hit_subject_category": 200
+    },
+    "subject_no_space_after_colon": {
+      "hit_subject_category": 200
+    },
+    "subject_single_quoted_line": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_space_before_colon": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_subject_prefix": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_trailing_comma": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_trailing_newline": {
+      "hit_subject_category": 200
+    },
+    "subject_trailing_period": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_trailing_semicolon": {
+      "hit_benchmark_condition_only": 200
+    },
+    "subject_trailing_space": {
+      "hit_subject_category": 200
+    },
+    "subject_unicode_nfd": {
+      "hit_subject_category": 200
+    },
+    "subject_uppercase_prefix": {
+      "hit_subject_category": 200
+    }
+  },
+  "field_confusion_table": {
+    "benchmark": {
+      "hit_subject": 262,
+      "hit_subject_category": 2138
+    },
+    "condition": {
+      "hit_subject_benchmark": 236,
+      "hit_subject_category": 2164
+    },
+    "subject": {
+      "hit_benchmark_condition_only": 2600,
+      "hit_subject_category": 1600
+    }
+  },
+  "include_condition_synonyms": false,
+  "min_count": 20,
+  "miss_examples": {
+    "benchmark_insert_separator": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "benchmark",
+        "normalized_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "reward bench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "benchmark",
+        "normalized_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "reward bench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "benchmark",
+        "normalized_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "reward bench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "benchmark",
+        "normalized_subject_key": "qwen2.5-coder-ins-32b",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "live code bench",
+        "variant_condition": "source=submissions"
+      },
+      {
+        "benchmark": "matharena",
+        "condition": "none",
+        "expected_subject_key": "qed-nano",
+        "field": "benchmark",
+        "normalized_subject_key": "qed-nano",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: QED-Nano",
+        "variant_benchmark": "math arena",
+        "variant_condition": "none"
+      }
+    ],
+    "benchmark_underscore_to_hyphen": [
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "benchmark",
+        "normalized_subject_key": "internvl2-1b",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: InternVL2-1B",
+        "variant_benchmark": "mathvista-mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "mmbench_v11",
+        "condition": "skill=attribute_reasoning",
+        "expected_subject_key": "nvlm",
+        "field": "benchmark",
+        "normalized_subject_key": "nvlm",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: NVLM",
+        "variant_benchmark": "mmbench-v11",
+        "variant_condition": "skill=attribute_reasoning"
+      },
+      {
+        "benchmark": "mmbench_v11",
+        "condition": "skill=attribute_reasoning",
+        "expected_subject_key": "llava-v1.5-7b-xtuner",
+        "field": "benchmark",
+        "normalized_subject_key": "llava-v1.5-7b-xtuner",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: llava-v1.5-7b-xtuner",
+        "variant_benchmark": "mmbench-v11",
+        "variant_condition": "skill=attribute_reasoning"
+      },
+      {
+        "benchmark": "mmbench_v11",
+        "condition": "skill=coarse_perception",
+        "expected_subject_key": "minicpm-v-2_6",
+        "field": "benchmark",
+        "normalized_subject_key": "minicpm-v-2_6",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: MiniCPM-V-2_6",
+        "variant_benchmark": "mmbench-v11",
+        "variant_condition": "skill=coarse_perception"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "h2ovl-mississippi-1b",
+        "field": "benchmark",
+        "normalized_subject_key": "h2ovl-mississippi-1b",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: h2ovl-mississippi-1b",
+        "variant_benchmark": "mathvista-mini",
+        "variant_condition": "none"
+      }
+    ],
+    "benchmark_underscore_to_space": [
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "benchmark",
+        "normalized_subject_key": "internvl2-1b",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: InternVL2-1B",
+        "variant_benchmark": "mathvista mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "mmbench_v11",
+        "condition": "skill=attribute_reasoning",
+        "expected_subject_key": "nvlm",
+        "field": "benchmark",
+        "normalized_subject_key": "nvlm",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: NVLM",
+        "variant_benchmark": "mmbench v11",
+        "variant_condition": "skill=attribute_reasoning"
+      },
+      {
+        "benchmark": "mmbench_v11",
+        "condition": "skill=attribute_reasoning",
+        "expected_subject_key": "llava-v1.5-7b-xtuner",
+        "field": "benchmark",
+        "normalized_subject_key": "llava-v1.5-7b-xtuner",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: llava-v1.5-7b-xtuner",
+        "variant_benchmark": "mmbench v11",
+        "variant_condition": "skill=attribute_reasoning"
+      },
+      {
+        "benchmark": "mmbench_v11",
+        "condition": "skill=coarse_perception",
+        "expected_subject_key": "minicpm-v-2_6",
+        "field": "benchmark",
+        "normalized_subject_key": "minicpm-v-2_6",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: MiniCPM-V-2_6",
+        "variant_benchmark": "mmbench v11",
+        "variant_condition": "skill=coarse_perception"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "h2ovl-mississippi-1b",
+        "field": "benchmark",
+        "normalized_subject_key": "h2ovl-mississippi-1b",
+        "outcome": "hit_subject",
+        "raw_subject_content": "Name: h2ovl-mississippi-1b",
+        "variant_benchmark": "mathvista mini",
+        "variant_condition": "none"
+      }
+    ],
+    "condition_lower": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=llmbar-adver-GPTOut",
+        "expected_subject_key": "contextualai/archangel_sft-kto_pythia2-8b",
+        "field": "condition",
+        "normalized_subject_key": "contextualai/archangel_sft-kto_pythia2-8b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: ContextualAI/archangel_sft-kto_pythia2-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=llmbar-adver-gptout"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=llmbar-adver-GPTOut",
+        "expected_subject_key": "contextualai/archangel_sft-kto_pythia6-9b",
+        "field": "condition",
+        "normalized_subject_key": "contextualai/archangel_sft-kto_pythia6-9b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: ContextualAI/archangel_sft-kto_pythia6-9b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=llmbar-adver-gptout"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=llmbar-adver-GPTInst",
+        "expected_subject_key": "qwen/qwen1.5-0.5b-chat",
+        "field": "condition",
+        "normalized_subject_key": "qwen/qwen1.5-0.5b-chat",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: Qwen/Qwen1.5-0.5B-Chat",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=llmbar-adver-gptinst"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=llmbar-adver-GPTInst",
+        "expected_subject_key": "ray2333/grm-llama3-8b-distill",
+        "field": "condition",
+        "normalized_subject_key": "ray2333/grm-llama3-8b-distill",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: Ray2333/GRM-llama3-8B-distill",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=llmbar-adver-gptinst"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=llmbar-adver-GPTInst",
+        "expected_subject_key": "contextualai/archangel_sft-dpo_pythia12-0b",
+        "field": "condition",
+        "normalized_subject_key": "contextualai/archangel_sft-dpo_pythia12-0b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: ContextualAI/archangel_sft-dpo_pythia12-0b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=llmbar-adver-gptinst"
+      }
+    ],
+    "condition_none_to_empty": [
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "condition",
+        "normalized_subject_key": "internvl2-1b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": ""
+      },
+      {
+        "benchmark": "matharena",
+        "condition": "none",
+        "expected_subject_key": "qed-nano",
+        "field": "condition",
+        "normalized_subject_key": "qed-nano",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: QED-Nano",
+        "variant_benchmark": "matharena",
+        "variant_condition": ""
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "h2ovl-mississippi-1b",
+        "field": "condition",
+        "normalized_subject_key": "h2ovl-mississippi-1b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: h2ovl-mississippi-1b",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": ""
+      },
+      {
+        "benchmark": "ai2d_test",
+        "condition": "none",
+        "expected_subject_key": "janus-1.3b",
+        "field": "condition",
+        "normalized_subject_key": "janus-1.3b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: Janus-1.3B",
+        "variant_benchmark": "ai2d_test",
+        "variant_condition": ""
+      },
+      {
+        "benchmark": "ai2d_test",
+        "condition": "none",
+        "expected_subject_key": "claude3-5v_sonnet",
+        "field": "condition",
+        "normalized_subject_key": "claude3-5v_sonnet",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: Claude3-5V_Sonnet",
+        "variant_benchmark": "ai2d_test",
+        "variant_condition": ""
+      }
+    ],
+    "condition_upper": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "condition",
+        "normalized_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "SUBSET=HEP-JAVA"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "condition",
+        "normalized_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "SUBSET=MT-BENCH-MED"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "condition",
+        "normalized_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "SUBSET=HEP-CPP"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "condition",
+        "normalized_subject_key": "internvl2-1b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "NONE"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "condition",
+        "normalized_subject_key": "qwen2.5-coder-ins-32b",
+        "outcome": "hit_subject_benchmark",
+        "raw_subject_content": "Name: Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "SOURCE=SUBMISSIONS"
+      }
+    ],
+    "subject_display_name_prefix": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "display_name: ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "display_name: NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "display_name: openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "display_name: openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "display_name: allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "display_name: allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "display_name: internvl2-1b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "display_name: InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "display_name: qwen2.5-coder-ins-32b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "display_name: Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_double_quoted_line": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "\"name: ncsoft/llama-3-offsetbias-8b\"",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "\"Name: NCSOFT/Llama-3-OffsetBias-8B\"",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "\"name: openai/gpt-4o-mini-2024-07-18\"",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "\"Name: openai/gpt-4o-mini-2024-07-18\"",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "\"name: allenai/llama-3-tulu-2-dpo-8b\"",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "\"Name: allenai/llama-3-tulu-2-dpo-8b\"",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "\"name: internvl2-1b\"",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "\"Name: InternVL2-1B\"",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "\"name: qwen2.5-coder-ins-32b\"",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "\"Name: Qwen2.5-Coder-Ins-32B\"",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_fullwidth_colon": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "name\uff1ancsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name\uff1aNCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "name\uff1aopenai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name\uff1aopenai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "name\uff1aallenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name\uff1aallenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "name\uff1ainternvl2-1b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name\uff1aInternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "name\uff1aqwen2.5-coder-ins-32b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name\uff1aQwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_markdown_dash": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "- name: ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "- Name: NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "- name: openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "- Name: openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "- name: allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "- Name: allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "- name: internvl2-1b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "- Name: InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "- name: qwen2.5-coder-ins-32b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "- Name: Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_markdown_quote": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "> name: ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "> Name: NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "> name: openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "> Name: openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "> name: allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "> Name: allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "> name: internvl2-1b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "> Name: InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "> name: qwen2.5-coder-ins-32b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "> Name: Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_markdown_star": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "* name: ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "* Name: NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "* name: openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "* Name: openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "* name: allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "* Name: allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "* name: internvl2-1b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "* Name: InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "* name: qwen2.5-coder-ins-32b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "* Name: Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_model_prefix": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "model: ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Model: NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "model: openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Model: openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "model: allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Model: allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "model: internvl2-1b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Model: InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "model: qwen2.5-coder-ins-32b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Model: Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_single_quoted_line": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "'name: ncsoft/llama-3-offsetbias-8b'",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "'Name: NCSOFT/Llama-3-OffsetBias-8B'",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "'name: openai/gpt-4o-mini-2024-07-18'",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "'Name: openai/gpt-4o-mini-2024-07-18'",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "'name: allenai/llama-3-tulu-2-dpo-8b'",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "'Name: allenai/llama-3-tulu-2-dpo-8b'",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "'name: internvl2-1b'",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "'Name: InternVL2-1B'",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "'name: qwen2.5-coder-ins-32b'",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "'Name: Qwen2.5-Coder-Ins-32B'",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_space_before_colon": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "name : ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name : NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "name : openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name : openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "name : allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name : allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "name : internvl2-1b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name : InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "name : qwen2.5-coder-ins-32b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name : Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_subject_prefix": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "subject: ncsoft/llama-3-offsetbias-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Subject: NCSOFT/Llama-3-OffsetBias-8B",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "subject: openai/gpt-4o-mini-2024-07-18",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Subject: openai/gpt-4o-mini-2024-07-18",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "subject: allenai/llama-3-tulu-2-dpo-8b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Subject: allenai/llama-3-tulu-2-dpo-8b",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "subject: internvl2-1b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Subject: InternVL2-1B",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "subject: qwen2.5-coder-ins-32b",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Subject: Qwen2.5-Coder-Ins-32B",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_trailing_comma": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "ncsoft/llama-3-offsetbias-8b,",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: NCSOFT/Llama-3-OffsetBias-8B,",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "openai/gpt-4o-mini-2024-07-18,",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: openai/gpt-4o-mini-2024-07-18,",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "allenai/llama-3-tulu-2-dpo-8b,",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: allenai/llama-3-tulu-2-dpo-8b,",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "internvl2-1b,",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: InternVL2-1B,",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "qwen2.5-coder-ins-32b,",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: Qwen2.5-Coder-Ins-32B,",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_trailing_period": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "ncsoft/llama-3-offsetbias-8b.",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: NCSOFT/Llama-3-OffsetBias-8B.",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "openai/gpt-4o-mini-2024-07-18.",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: openai/gpt-4o-mini-2024-07-18.",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "allenai/llama-3-tulu-2-dpo-8b.",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: allenai/llama-3-tulu-2-dpo-8b.",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "internvl2-1b.",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: InternVL2-1B.",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "qwen2.5-coder-ins-32b.",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: Qwen2.5-Coder-Ins-32B.",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ],
+    "subject_trailing_semicolon": [
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-java",
+        "expected_subject_key": "ncsoft/llama-3-offsetbias-8b",
+        "field": "subject",
+        "normalized_subject_key": "ncsoft/llama-3-offsetbias-8b;",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: NCSOFT/Llama-3-OffsetBias-8B;",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-java"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=mt-bench-med",
+        "expected_subject_key": "openai/gpt-4o-mini-2024-07-18",
+        "field": "subject",
+        "normalized_subject_key": "openai/gpt-4o-mini-2024-07-18;",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: openai/gpt-4o-mini-2024-07-18;",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=mt-bench-med"
+      },
+      {
+        "benchmark": "rewardbench",
+        "condition": "subset=hep-cpp",
+        "expected_subject_key": "allenai/llama-3-tulu-2-dpo-8b",
+        "field": "subject",
+        "normalized_subject_key": "allenai/llama-3-tulu-2-dpo-8b;",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: allenai/llama-3-tulu-2-dpo-8b;",
+        "variant_benchmark": "rewardbench",
+        "variant_condition": "subset=hep-cpp"
+      },
+      {
+        "benchmark": "mathvista_mini",
+        "condition": "none",
+        "expected_subject_key": "internvl2-1b",
+        "field": "subject",
+        "normalized_subject_key": "internvl2-1b;",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: InternVL2-1B;",
+        "variant_benchmark": "mathvista_mini",
+        "variant_condition": "none"
+      },
+      {
+        "benchmark": "livecodebench",
+        "condition": "source=submissions",
+        "expected_subject_key": "qwen2.5-coder-ins-32b",
+        "field": "subject",
+        "normalized_subject_key": "qwen2.5-coder-ins-32b;",
+        "outcome": "hit_benchmark_condition_only",
+        "raw_subject_content": "Name: Qwen2.5-Coder-Ins-32B;",
+        "variant_benchmark": "livecodebench",
+        "variant_condition": "source=submissions"
+      }
+    ]
+  },
+  "missing_display_keys": [],
+  "n_cells": 200,
+  "n_requested": 200,
+  "path_counts": {
+    "hit_benchmark_condition_only": 2600,
+    "hit_subject": 262,
+    "hit_subject_benchmark": 236,
+    "hit_subject_category": 5902
+  },
+  "seed": 0,
+  "subject_category_path": "/Users/joey/VScode/StanfordCS/CS 321M/eval_comp/data/stage2/priors_v1_locked/subject_category.parquet",
+  "subjects_path": "/Users/joey/VScode/StanfordCS/CS 321M/eval_comp/data/subjects.parquet",
+  "zip": "/Users/joey/VScode/StanfordCS/CS 321M/eval_comp/submissions/v1_kfactor_lookup_audit_fixed.zip"
+}
