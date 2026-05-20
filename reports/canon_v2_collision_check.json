@@ -1,0 +1,36 @@
+{
+  "checks": {
+    "benchmark_nfkc_strip_lower_whitespace": {
+      "collisions": {},
+      "n_collision_buckets": 0
+    },
+    "benchmark_separator_compact": {
+      "collisions": {},
+      "n_collision_buckets": 0
+    },
+    "condition_empty_alias_signature": {
+      "collisions": {},
+      "n_collision_buckets": 0
+    },
+    "condition_lowercase_alias": {
+      "collisions": {},
+      "n_collision_buckets": 0
+    },
+    "condition_nfkc_pipe_whitespace": {
+      "collisions": {},
+      "n_collision_buckets": 0
+    },
+    "subject_nfkc_unwrap_trailing_punct_lower": {
+      "collisions": {},
+      "n_collision_buckets": 0
+    }
+  },
+  "decision": "all shipped rules collision-free on locked runtime_priors.json; no whitelist merges used",
+  "key_counts": {
+    "benchmark": 16,
+    "condition": 215,
+    "subject": 909
+  },
+  "runtime_priors": "/Users/joey/VScode/StanfordCS/CS 321M/eval_comp/data/stage2/priors_v1_locked/runtime_priors.json",
+  "whitelists": []
+}

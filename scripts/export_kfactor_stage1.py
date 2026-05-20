@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -23,9 +22,11 @@ import torch
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from lever_l_utils import normalize_subject as _normalize_subject  # noqa: E402
 
 K = 4
-NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE)
 SUBJECT_BIAS_CANDIDATES = ("subject_bias", "bias")
 ITEM_Z_CANDIDATES = ("z", "item_z", "offset")
 SUBJECT_NAME_CANDIDATES = (
@@ -37,14 +38,6 @@ SUBJECT_NAME_CANDIDATES = (
     "display_name",
     "name",
 )
-
-
-def _normalize_subject(subject_content: str) -> str:
-    """Mirror submissions/v1_kfactor/model.py subject lookup normalization."""
-    if not subject_content:
-        return ""
-    m = NAME_LINE.search(subject_content)
-    return m.group(1).strip().lower() if m else subject_content.strip().lower()
 
 
 def _normalize_display_name(display_name: str) -> str:

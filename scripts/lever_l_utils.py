@@ -7,6 +7,7 @@ import json
 import math
 import random
 import re
+import unicodedata
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,7 +15,12 @@ from typing import Any
 
 import numpy as np
 
-NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE | re.IGNORECASE)
+NAME_LINE = re.compile(
+    r"^\s*(?:[-*]\s*|>\s*)?(?:Name|Subject|Model|display_name)\s*[:：]\s*(.+?)\s*$",
+    re.MULTILINE | re.IGNORECASE,
+)
+WRAPPING_QUOTES = (('"', '"'), ("'", "'"), ("`", "`"))
+SUBJECT_TRAILING_PUNCT = ".,;"
 CATEGORY_KEYS = ("benchmark", "condition")
 SIZE_B_RE = re.compile(r"(?:(\d+(?:\.\d+)?)\s*x\s*)?(\d+(?:\.\d+)?)\s*b\b", re.IGNORECASE)
 SIZE_M_RE = re.compile(r"\b(\d+(?:\.\d+)?)\s*m\b", re.IGNORECASE)
@@ -249,11 +255,33 @@ def clean_str(value: Any) -> str:
     return str(value)
 
 
+def _clean_subject_text(value: Any) -> str:
+    return unicodedata.normalize("NFKC", str(value)).strip()
+
+
+def _strip_wrapping_quotes(text: str) -> str:
+    out = text.strip()
+    for left, right in WRAPPING_QUOTES:
+        if len(out) >= 2 and out.startswith(left) and out.endswith(right):
+            return out[1:-1].strip()
+    return out
+
+
+def _subject_key_text(value: Any, *, strip_trailing_punct: bool = False) -> str:
+    text = _strip_wrapping_quotes(_clean_subject_text(value))
+    if strip_trailing_punct:
+        text = text.rstrip(SUBJECT_TRAILING_PUNCT).strip()
+    return text.lower()
+
+
 def normalize_subject(subject_content: str) -> str:
     if not subject_content:
         return ""
-    match = NAME_LINE.search(subject_content)
-    return match.group(1).strip().lower() if match else subject_content.strip().lower()
+    text = _strip_wrapping_quotes(_clean_subject_text(subject_content))
+    match = NAME_LINE.search(text)
+    if match:
+        return _subject_key_text(match.group(1), strip_trailing_punct=True)
+    return _subject_key_text(text)
 
 
 def _metadata_text(display_name: str) -> str:

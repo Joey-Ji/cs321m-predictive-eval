@@ -19,6 +19,7 @@ import unicodedata
 import zipfile
 from collections import Counter
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -26,7 +27,15 @@ from typing import Any
 import pandas as pd
 
 
-Transformation = Callable[[str, str, str, str], tuple[str, str, str] | None]
+SubjectMutator = Callable[[str], str]
+FieldMutator = Callable[[str], str]
+
+
+@dataclass(frozen=True)
+class Transformation:
+    field: str
+    mutator: str
+    fn: Callable[[str, str, str, str], tuple[str, str, str] | None]
 
 
 def _load_model_from_zip(zip_path: Path, tmpdir: Path) -> ModuleType:
@@ -77,60 +86,132 @@ def _sample_cells(subject_category_path: Path, n: int, min_count: int, seed: int
     return records
 
 
-def _pipe_spaced(condition: str) -> str | None:
-    if "|" not in condition:
-        return None
-    return re.sub(r"\s*\|\s*", " | ", condition)
-
-
-def _transformations() -> dict[str, Transformation]:
+def _subject_mutators() -> dict[str, SubjectMutator]:
     return {
-        "control_original": lambda display, benchmark, condition, raw: (raw, benchmark, condition),
-        "subject_lowercase_prefix": lambda display, benchmark, condition, raw: (
-            f"name: {display}",
-            benchmark,
-            condition,
-        ),
-        "subject_uppercase_prefix": lambda display, benchmark, condition, raw: (
-            f"NAME: {display}",
-            benchmark,
-            condition,
-        ),
-        "subject_no_prefix": lambda display, benchmark, condition, raw: (display, benchmark, condition),
-        "subject_leading_whitespace": lambda display, benchmark, condition, raw: (
-            f"  Name: {display}",
-            benchmark,
-            condition,
-        ),
-        "subject_trailing_newline": lambda display, benchmark, condition, raw: (
-            f"Name: {display}\n",
-            benchmark,
-            condition,
-        ),
-        "subject_unicode_nfd": lambda display, benchmark, condition, raw: (
-            unicodedata.normalize("NFD", raw),
-            benchmark,
-            condition,
-        ),
-        "benchmark_titlecase": lambda display, benchmark, condition, raw: (
-            raw,
-            benchmark.title(),
-            condition,
-        ),
-        "benchmark_trailing_space": lambda display, benchmark, condition, raw: (
-            raw,
-            f"{benchmark} ",
-            condition,
-        ),
-        "condition_trailing_space": lambda display, benchmark, condition, raw: (
-            raw,
-            benchmark,
-            f"{condition} ",
-        ),
-        "condition_pipe_spaces": lambda display, benchmark, condition, raw: (
-            (raw, benchmark, spaced) if (spaced := _pipe_spaced(condition)) is not None else None
-        ),
+        "subject_name_prefix": lambda name: f"Name: {name}",
+        "subject_lowercase_prefix": lambda name: f"name: {name}",
+        "subject_uppercase_prefix": lambda name: f"NAME: {name}",
+        "subject_space_before_colon": lambda name: f"Name : {name}",
+        "subject_no_space_after_colon": lambda name: f"Name:{name}",
+        "subject_trailing_newline": lambda name: f"Name: {name}\n",
+        "subject_trailing_space": lambda name: f"Name: {name} ",
+        "subject_fullwidth_colon": lambda name: f"Name\uff1a{name}",
+        "subject_subject_prefix": lambda name: f"Subject: {name}",
+        "subject_model_prefix": lambda name: f"Model: {name}",
+        "subject_display_name_prefix": lambda name: f"display_name: {name}",
+        "subject_markdown_dash": lambda name: f"- Name: {name}",
+        "subject_markdown_star": lambda name: f"* Name: {name}",
+        "subject_markdown_quote": lambda name: f"> Name: {name}",
+        "subject_double_quoted_line": lambda name: f'"Name: {name}"',
+        "subject_single_quoted_line": lambda name: f"'Name: {name}'",
+        "subject_no_prefix": lambda name: name,
+        "subject_unicode_nfd": lambda name: unicodedata.normalize("NFD", f"Name: {name}"),
+        "subject_trailing_period": lambda name: f"Name: {name}.",
+        "subject_trailing_comma": lambda name: f"Name: {name},",
+        "subject_trailing_semicolon": lambda name: f"Name: {name};",
     }
+
+
+def _benchmark_mutators() -> dict[str, FieldMutator]:
+    return {
+        "benchmark_original": lambda b: b,
+        "benchmark_stripped": lambda b: b.strip(),
+        "benchmark_lower": lambda b: b.lower(),
+        "benchmark_upper": lambda b: b.upper(),
+        "benchmark_title": lambda b: b.title(),
+        "benchmark_surrounding_space": lambda b: f" {b} ",
+        "benchmark_hyphen_to_underscore": lambda b: b.replace("-", "_"),
+        "benchmark_underscore_to_hyphen": lambda b: b.replace("_", "-"),
+        "benchmark_hyphen_to_space": lambda b: b.replace("-", " "),
+        "benchmark_underscore_to_space": lambda b: b.replace("_", " "),
+        "benchmark_insert_separator": lambda b: _insert_benchmark_separator(b),
+        "benchmark_unicode_nfd": lambda b: unicodedata.normalize("NFD", b),
+    }
+
+
+def _condition_mutators(include_synonyms: bool) -> dict[str, FieldMutator]:
+    mutators: dict[str, FieldMutator] = {
+        "condition_original": lambda c: c,
+        "condition_stripped": lambda c: c.strip(),
+        "condition_lower": lambda c: c.lower(),
+        "condition_upper": lambda c: c.upper() if c else c,
+        "condition_pipe_both_spaces": lambda c: c.replace("|", " | "),
+        "condition_pipe_no_spaces": lambda c: c.replace("|", "|"),
+        "condition_pipe_left_space": lambda c: c.replace("|", " |"),
+        "condition_pipe_right_space": lambda c: c.replace("|", "| "),
+        "condition_unicode_nfd": lambda c: unicodedata.normalize("NFD", c),
+        "condition_none_to_empty": lambda c: "" if c.lower() == "none" else c,
+        "condition_empty_to_none": lambda c: "None" if c == "" else c,
+        "condition_empty_to_null": lambda c: "null" if c == "" else c,
+    }
+    if include_synonyms:
+        mutators.update(
+            {
+                "condition_zero_to_digit": lambda c: c.replace("zero-shot", "0-shot"),
+                "condition_digit_to_zero": lambda c: c.replace("0-shot", "zero-shot"),
+                "condition_cot_to_chain": lambda c: c.replace("cot", "chain-of-thought"),
+                "condition_chain_to_cot": lambda c: c.replace("chain-of-thought", "cot"),
+            }
+        )
+    return mutators
+
+
+def _insert_benchmark_separator(benchmark: str) -> str:
+    """Create plausible spaced variants for separator-free benchmark ids."""
+    known = {
+        "afrimedqa": "afri medqa",
+        "agentdojo": "agent dojo",
+        "androidworld": "android world",
+        "livecodebench": "live code bench",
+        "matharena": "math arena",
+        "mmlupro": "mmlu pro",
+        "rewardbench": "reward bench",
+        "swebench": "swe bench",
+        "ultrafeedback": "ultra feedback",
+    }
+    lowered = benchmark.lower()
+    return known.get(lowered, benchmark)
+
+
+def _transformations(include_condition_synonyms: bool) -> list[Transformation]:
+    transformations: list[Transformation] = []
+    for name, mutator in _subject_mutators().items():
+        transformations.append(
+            Transformation(
+                field="subject",
+                mutator=name,
+                fn=lambda display, benchmark, condition, raw, mutator=mutator: (
+                    mutator(display),
+                    benchmark,
+                    condition,
+                ),
+            )
+        )
+    for name, mutator in _benchmark_mutators().items():
+        transformations.append(
+            Transformation(
+                field="benchmark",
+                mutator=name,
+                fn=lambda display, benchmark, condition, raw, mutator=mutator: (
+                    raw,
+                    mutator(benchmark),
+                    condition,
+                ),
+            )
+        )
+    for name, mutator in _condition_mutators(include_condition_synonyms).items():
+        transformations.append(
+            Transformation(
+                field="condition",
+                mutator=name,
+                fn=lambda display, benchmark, condition, raw, mutator=mutator: (
+                    raw,
+                    benchmark,
+                    mutator(condition),
+                ),
+            )
+        )
+    return transformations
 
 
 def _reset_audit(model: ModuleType) -> None:
@@ -169,11 +250,14 @@ def run_audit(
     n: int,
     min_count: int,
     seed: int,
+    include_condition_synonyms: bool,
 ) -> dict[str, Any]:
     cells = _sample_cells(subject_category_path, n=n, min_count=min_count, seed=seed)
     display_by_key = _display_name_map(subjects_path)
-    transformations = _transformations()
-    table: dict[str, Counter[str]] = {name: Counter() for name in transformations}
+    transformations = _transformations(include_condition_synonyms)
+    table: dict[str, Counter[str]] = {t.mutator: Counter() for t in transformations}
+    field_table: dict[str, Counter[str]] = {field: Counter() for field in ("subject", "benchmark", "condition")}
+    path_counts: Counter[str] = Counter()
     examples: dict[str, list[dict[str, Any]]] = {}
     missing_display_keys: list[str] = []
 
@@ -192,10 +276,12 @@ def run_audit(
                     missing_display_keys.append(subject_key)
             raw_subject = f"Name: {display}"
 
-            for name, transform in transformations.items():
-                variant = transform(display, benchmark, condition, raw_subject)
+            for transformation in transformations:
+                variant = transformation.fn(display, benchmark, condition, raw_subject)
                 if variant is None:
-                    table[name]["not_applicable"] += 1
+                    table[transformation.mutator]["not_applicable"] += 1
+                    field_table[transformation.field]["not_applicable"] += 1
+                    path_counts["not_applicable"] += 1
                     continue
                 raw_variant, benchmark_variant, condition_variant = variant
                 outcome, normalized_subject_key = _lookup_outcome(
@@ -204,12 +290,15 @@ def run_audit(
                     benchmark_variant,
                     condition_variant,
                 )
-                table[name][outcome] += 1
+                table[transformation.mutator][outcome] += 1
+                field_table[transformation.field][outcome] += 1
+                path_counts[outcome] += 1
                 if outcome != "hit_subject_category":
                     _examples_append(
                         examples,
-                        name,
+                        transformation.mutator,
                         {
+                            "field": transformation.field,
                             "expected_subject_key": subject_key,
                             "normalized_subject_key": normalized_subject_key,
                             "benchmark": benchmark,
@@ -229,7 +318,13 @@ def run_audit(
         "n_cells": int(len(cells)),
         "min_count": int(min_count),
         "seed": int(seed),
+        "include_condition_synonyms": bool(include_condition_synonyms),
         "missing_display_keys": missing_display_keys,
+        "path_counts": dict(sorted(path_counts.items())),
+        "field_confusion_table": {
+            name: dict(sorted(counter.items()))
+            for name, counter in field_table.items()
+        },
         "confusion_table": {
             name: dict(sorted(counter.items()))
             for name, counter in table.items()
@@ -254,7 +349,7 @@ def main(argv: Iterable[str] | None = None) -> None:
     parser.add_argument("--zip", default="submissions/v1_kfactor_lookup_audit.zip", type=Path)
     parser.add_argument(
         "--subject-category",
-        default="data/stage2/priors_v1/subject_category.parquet",
+        default="data/stage2/priors_v1_locked/subject_category.parquet",
         type=Path,
     )
     parser.add_argument("--subjects", default="data/subjects.parquet", type=Path)
@@ -262,6 +357,11 @@ def main(argv: Iterable[str] | None = None) -> None:
     parser.add_argument("--n", default=200, type=int)
     parser.add_argument("--min-count", default=20, type=int)
     parser.add_argument("--seed", default=0, type=int)
+    parser.add_argument(
+        "--include-condition-synonyms",
+        action="store_true",
+        help="Include aggressive condition synonym mutators; intended only when the runtime ships those aliases.",
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     payload = run_audit(
@@ -272,8 +372,12 @@ def main(argv: Iterable[str] | None = None) -> None:
         n=args.n,
         min_count=args.min_count,
         seed=args.seed,
+        include_condition_synonyms=args.include_condition_synonyms,
     )
     print(_format_table(payload["confusion_table"]))
+    print("field_confusion")
+    print(_format_table(payload["field_confusion_table"]))
+    print("path_counts\t" + "\t".join(f"{k}={v}" for k, v in payload["path_counts"].items()))
     print(f"wrote {args.out}")
 
 

@@ -12,6 +12,7 @@ import json
 import math
 import os
 import re
+import unicodedata
 from functools import lru_cache
 from numbers import Real
 from pathlib import Path
@@ -48,8 +49,16 @@ except ImportError:
 
 
 CLIP_LO, CLIP_HI = 0.02, 0.98
-NAME_LINE = re.compile(r"^\s*Name:\s*(.+?)\s*$", re.MULTILINE | re.IGNORECASE)
+NAME_LINE = re.compile(
+    r"^\s*(?:[-*]\s*|>\s*)?(?:Name|Subject|Model|display_name)\s*[:：]\s*(.+?)\s*$",
+    re.MULTILINE | re.IGNORECASE,
+)
 PIPE_SEP = re.compile(r"\s*\|\s*")
+WHITESPACE = re.compile(r"\s+")
+BENCHMARK_ALIAS_SEP = re.compile(r"[-_\s]+")
+WRAPPING_QUOTES = (('"', '"'), ("'", "'"), ("`", "`"))
+SUBJECT_TRAILING_PUNCT = ".,;"
+CONDITION_EMPTY_ALIASES = {"", "none", "null", "n/a", "na", "-"}
 ROOT = Path(__file__).resolve().parent
 DUMMY_ENCODER = os.environ.get("V1_KFACTOR_DUMMY_ENCODER") == "1"
 PRIOR_KEY_SEP = "\x1f"
@@ -125,19 +134,149 @@ def _torch_load(path: Path):
         return torch.load(path, map_location="cpu")
 
 
+def _clean_text(value: object) -> str:
+    return unicodedata.normalize("NFKC", str(value)).strip()
+
+
+def _strip_wrapping_quotes(text: str) -> str:
+    out = text.strip()
+    for left, right in WRAPPING_QUOTES:
+        if len(out) >= 2 and out.startswith(left) and out.endswith(right):
+            return out[1:-1].strip()
+    return out
+
+
+def _subject_key_text(value: object, *, strip_trailing_punct: bool = False) -> str:
+    text = _strip_wrapping_quotes(_clean_text(value))
+    if strip_trailing_punct:
+        text = text.rstrip(SUBJECT_TRAILING_PUNCT).strip()
+    return text.lower()
+
+
 def _normalize_subject(subject_content: str) -> str:
     if not subject_content:
         return ""
-    m = NAME_LINE.search(subject_content)
-    return m.group(1).strip().lower() if m else subject_content.strip().lower()
+    text = _strip_wrapping_quotes(_clean_text(subject_content))
+    m = NAME_LINE.search(text)
+    if m:
+        return _subject_key_text(m.group(1), strip_trailing_punct=True)
+    return _subject_key_text(text)
+
+
+def _normalize_benchmark_basic(benchmark: object) -> str:
+    return WHITESPACE.sub(" ", _clean_text(benchmark).lower())
+
+
+def _benchmark_signature(benchmark: object) -> str:
+    return BENCHMARK_ALIAS_SEP.sub("", _normalize_benchmark_basic(benchmark))
+
+
+def _split_prior_key(key: str, expected_parts: int) -> list[str]:
+    sep = str(globals().get("PRIOR_KEY_SEP", "\x1f"))
+    parts = str(key).split(sep)
+    if len(parts) == expected_parts:
+        return parts
+    return []
+
+
+@lru_cache(maxsize=1)
+def _prior_benchmark_keys() -> set[str]:
+    priors = globals().get("PRIORS")
+    if not isinstance(priors, dict):
+        return set()
+    keys = {str(k) for k in priors.get("benchmark", {})}
+    for key in priors.get("benchmark_condition", {}):
+        parts = _split_prior_key(str(key), 2)
+        if parts:
+            keys.add(parts[0])
+    for key in priors.get("subject_benchmark", {}):
+        parts = _split_prior_key(str(key), 2)
+        if parts:
+            keys.add(parts[1])
+    for key in priors.get("subject_category", {}):
+        parts = _split_prior_key(str(key), 3)
+        if parts:
+            keys.add(parts[1])
+    return keys
+
+
+@lru_cache(maxsize=1)
+def _prior_condition_keys() -> set[str]:
+    priors = globals().get("PRIORS")
+    if not isinstance(priors, dict):
+        return set()
+    keys: set[str] = set()
+    for key in priors.get("benchmark_condition", {}):
+        parts = _split_prior_key(str(key), 2)
+        if parts:
+            keys.add(parts[1])
+    for key in priors.get("subject_category", {}):
+        parts = _split_prior_key(str(key), 3)
+        if parts:
+            keys.add(parts[2])
+    return keys
+
+
+def _unique_alias_map(keys: set[str], signature_fn) -> dict[str, str]:
+    buckets: dict[str, list[str]] = {}
+    for key in keys:
+        buckets.setdefault(signature_fn(key), []).append(key)
+    return {
+        signature: values[0]
+        for signature, values in buckets.items()
+        if len(set(values)) == 1
+    }
+
+
+@lru_cache(maxsize=1)
+def _benchmark_alias_map() -> dict[str, str]:
+    return _unique_alias_map(_prior_benchmark_keys(), _benchmark_signature)
 
 
 def _normalize_benchmark_key(benchmark: str) -> str:
-    return str(benchmark).strip().lower()
+    basic = _normalize_benchmark_basic(benchmark)
+    keys = _prior_benchmark_keys()
+    if basic in keys:
+        return basic
+    return _benchmark_alias_map().get(_benchmark_signature(basic), basic)
+
+
+def _normalize_condition_basic(condition: object) -> str:
+    text = PIPE_SEP.sub("|", _clean_text(condition))
+    return WHITESPACE.sub(" ", text)
+
+
+def _empty_condition_canonical(keys: set[str]) -> str | None:
+    if "none" in keys and "" not in keys:
+        return "none"
+    if "" in keys and "none" not in keys:
+        return ""
+    return None
+
+
+def _condition_signature(condition: object) -> str:
+    basic = _normalize_condition_basic(condition)
+    lowered = basic.lower()
+    if lowered in CONDITION_EMPTY_ALIASES:
+        return "none"
+    return lowered
+
+
+@lru_cache(maxsize=1)
+def _condition_alias_map() -> dict[str, str]:
+    return _unique_alias_map(_prior_condition_keys(), _condition_signature)
 
 
 def _normalize_condition_key(condition: str) -> str:
-    return PIPE_SEP.sub("|", str(condition).strip())
+    basic = _normalize_condition_basic(condition)
+    keys = _prior_condition_keys()
+    if basic in keys:
+        return basic
+    lowered = basic.lower()
+    empty_canonical = _empty_condition_canonical(keys)
+    if empty_canonical is not None and lowered in CONDITION_EMPTY_ALIASES:
+        return empty_canonical
+    return _condition_alias_map().get(_condition_signature(basic), basic)
 
 
 def _build_head(in_dim: int, out_dim: int, head_type: str, hidden: int):
