@@ -292,6 +292,8 @@ def _run_seed(
     all_labels: list[int] = []
     categories: dict[str, dict[str, Any]] = {}
     reveal_methods: dict[str, str] = {}
+    total_to_score = sum(len(rows) for rows in sampled_groups.values())
+    scored = 0
 
     # First pass: select K labeled rows for only m revealed categories, then
     # pool them into a single round-level labeled list. Per competition spec
@@ -325,6 +327,9 @@ def _run_seed(
                 raise ValueError(f"sampled row has non-binary label: {row.get('label')!r}")
             category_predictions.append(pred)
             category_labels.append(label)
+            scored += 1
+            if scored % 1000 == 0:
+                print(f"[eval] seed {seed}: scored {scored}/{total_to_score}", flush=True)
 
         category_id = _format_category(category)
         categories[category_id] = {
@@ -493,6 +498,25 @@ def eval_submission(
     )
 
     seeds = _parse_seeds(seed_csv)
+    precompute = getattr(model, "_precompute_item_residual_embeddings", None)
+    if callable(precompute):
+        precompute_inputs: list[dict[str, str]] = []
+        for seed in seeds:
+            sampled = _sample_groups(
+                groups,
+                random.Random(seed),
+                max_rows=max_rows,
+                max_per_category=max_per_category,
+            )
+            for category in sorted(sampled):
+                precompute_inputs.extend(_input_from_row(row) for row in sampled[category])
+        print(
+            f"[eval] precomputing item residual embeddings for {len(precompute_inputs)} sampled rows",
+            flush=True,
+        )
+        precompute_result = precompute(precompute_inputs, batch_size=32)
+        print(f"[eval] item residual precompute: {precompute_result}", flush=True)
+
     results = []
     for seed in seeds:
         result = _run_seed(
@@ -551,6 +575,7 @@ def main(
     split_seed: int = 0,
     stage1: str = "/data/stage1/kfactor_k4",
     stage2: str = "/data/stage2/kfactor_mpnet_linear_v1",
+    out: str = "",
 ) -> None:
     path = (LOCAL_ROOT / zip).resolve() if not Path(zip).is_absolute() else Path(zip)
     if not path.exists():
@@ -561,7 +586,7 @@ def main(
         f"and running eval (seeds={seeds}, max_rows={max_rows}, "
         f"per_category={per_category}, k={k}, m_categories={m_categories})"
     )
-    eval_submission.remote(
+    result = eval_submission.remote(
         path.read_bytes(),
         seeds,
         max_rows,
@@ -573,3 +598,8 @@ def main(
         stage1,
         stage2,
     )
+    if out:
+        out_path = (LOCAL_ROOT / out).resolve() if not Path(out).is_absolute() else Path(out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        print(f"[local] wrote eval summary to {out_path}")

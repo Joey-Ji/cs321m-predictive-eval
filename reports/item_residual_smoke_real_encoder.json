@@ -1,0 +1,17 @@
+{
+  "cold_subject_delta": -0.25,
+  "cold_subject_prediction": 0.6240178314887824,
+  "dense_delta": -0.25,
+  "dense_prediction": 0.4096193217885717,
+  "dense_prior_only_prob": 0.4401534527138454,
+  "dummy_encoder": false,
+  "item_residual_ok": true,
+  "prior_only": true,
+  "runtime_delta_clip": 0.25,
+  "sample_delta_max": 0.1527826488018036,
+  "sample_delta_min": -0.25,
+  "sample_size": 32,
+  "unseen_item_delta": -0.25,
+  "weight_w": 0.5,
+  "zip": "submissions/v1_kfactor_item_residual_v1.zip"
+}

@@ -54,6 +54,8 @@ RUNTIME_STATE_FILES = {
     "prior_only.json",
     "residual.pt",
     "head.json",
+    "item_residual_model.pt",
+    "item_residual_meta.json",
 }
 SUBMISSION_RUNTIME_STATE_FILES = {
     "v1_kfactor": {
@@ -81,6 +83,8 @@ SUBMISSION_RUNTIME_STATE_FILES = {
         "prior_only.json",
         "residual.pt",
         "head.json",
+        "item_residual_model.pt",
+        "item_residual_meta.json",
     },
     "v1_irt": {
         "head.pt",

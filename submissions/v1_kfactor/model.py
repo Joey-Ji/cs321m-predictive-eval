@@ -422,6 +422,48 @@ if RESIDUAL_META_PATH is not None and RESIDUAL_WEIGHTS_PATH is not None:
         RESIDUAL_OK = False
         print(f"[v1_kfactor] residual load failed: {exc!r}", flush=True)
 
+ITEM_RESIDUAL_META_PATH = _resolve_file("item_residual_meta.json", "item_residual", required=False)
+ITEM_RESIDUAL_WEIGHTS_PATH = _resolve_file("item_residual_model.pt", "item_residual", required=False)
+ITEM_RESIDUAL_META = None
+ITEM_RESIDUAL_COEF = None
+ITEM_RESIDUAL_INTERCEPT = None
+ITEM_RESIDUAL_FEATURE_MEAN = None
+ITEM_RESIDUAL_FEATURE_STD = None
+ITEM_RESIDUAL_WEIGHT = 0.0
+ITEM_RESIDUAL_DELTA_CLIP = 0.25
+ITEM_RESIDUAL_OK = False
+if ITEM_RESIDUAL_META_PATH is not None and ITEM_RESIDUAL_WEIGHTS_PATH is not None:
+    try:
+        ITEM_RESIDUAL_META = json.loads(ITEM_RESIDUAL_META_PATH.read_text())
+        item_residual_state = _torch_load(ITEM_RESIDUAL_WEIGHTS_PATH)
+        ITEM_RESIDUAL_COEF = item_residual_state["coef"].detach().cpu().float().reshape(-1)
+        intercept = item_residual_state["intercept"]
+        ITEM_RESIDUAL_INTERCEPT = float(intercept.detach().cpu()) if torch.is_tensor(intercept) else float(intercept)
+        ITEM_RESIDUAL_FEATURE_MEAN = torch.tensor(ITEM_RESIDUAL_META["feature_mean"], dtype=torch.float32)
+        ITEM_RESIDUAL_FEATURE_STD = torch.tensor(ITEM_RESIDUAL_META["feature_std"], dtype=torch.float32)
+        ITEM_RESIDUAL_FEATURE_STD = torch.clamp(ITEM_RESIDUAL_FEATURE_STD, min=1e-6)
+        ITEM_RESIDUAL_WEIGHT = float(ITEM_RESIDUAL_META.get("weight_w", 0.0))
+        ITEM_RESIDUAL_DELTA_CLIP = float(ITEM_RESIDUAL_META.get("runtime_delta_clip", 0.25))
+        expected_dim = int(ITEM_RESIDUAL_META["input_dim"])
+        if ITEM_RESIDUAL_COEF.numel() != expected_dim:
+            raise ValueError(
+                f"item residual coef dim {ITEM_RESIDUAL_COEF.numel()} != expected {expected_dim}"
+            )
+        if ITEM_RESIDUAL_FEATURE_MEAN.numel() != expected_dim or ITEM_RESIDUAL_FEATURE_STD.numel() != expected_dim:
+            raise ValueError("item residual feature stats do not match input_dim")
+        ITEM_RESIDUAL_OK = PRIORS is not None
+        if not ITEM_RESIDUAL_OK:
+            print("[v1_kfactor] item residual disabled: runtime_priors.json missing", flush=True)
+    except Exception as exc:  # noqa: BLE001
+        ITEM_RESIDUAL_META = None
+        ITEM_RESIDUAL_COEF = None
+        ITEM_RESIDUAL_INTERCEPT = None
+        ITEM_RESIDUAL_FEATURE_MEAN = None
+        ITEM_RESIDUAL_FEATURE_STD = None
+        ITEM_RESIDUAL_WEIGHT = 0.0
+        ITEM_RESIDUAL_OK = False
+        print(f"[v1_kfactor] item residual load failed: {exc!r}", flush=True)
+
 ONLINE_PLATT_MIN_EXAMPLES = 4
 ONLINE_PLATT_L2 = 0.05
 ONLINE_PLATT_MIN_ALPHA = 0.05
@@ -457,6 +499,82 @@ def _item_context(
     item_z = float(pred[K])
     emb_tuple = tuple(float(x) for x in emb)
     return item_v, item_z, emb_tuple
+
+
+_ITEM_EMBEDDING_BATCH_CACHE: dict[str, tuple[float, ...]] = {}
+
+
+@lru_cache(maxsize=20000)
+def _item_embedding(item_content: str) -> tuple[float, ...]:
+    text = item_content[:MAX_CHARS]
+    cached = _ITEM_EMBEDDING_BATCH_CACHE.get(text)
+    if cached is not None:
+        return cached
+    with torch.no_grad():
+        emb = ENCODER.encode(text, convert_to_tensor=True).float().reshape(-1)
+    if emb.numel() != EMBEDDING_DIM:
+        raise ValueError(f"item embedding dim {emb.numel()} != expected {EMBEDDING_DIM}")
+    if not torch.isfinite(emb).all():
+        raise ValueError("non-finite item embedding")
+    emb_tuple = tuple(float(x) for x in emb)
+    if len(_ITEM_EMBEDDING_BATCH_CACHE) < 20000:
+        _ITEM_EMBEDDING_BATCH_CACHE[text] = emb_tuple
+    return emb_tuple
+
+
+def _precompute_item_residual_embeddings(inputs: list[dict], batch_size: int = 128) -> dict[str, int | bool]:
+    """Batch-prewarm item embeddings for local/proxy evaluation.
+
+    This uses only item_content and does not read labels. predict() remains the
+    source of truth; prewarming just avoids thousands of single-row encoder
+    calls when a harness can see the round rows ahead of time.
+    """
+    if not ITEM_RESIDUAL_OK or not ENCODER_OK:
+        return {"enabled": False, "requested": 0, "computed": 0, "cached": len(_ITEM_EMBEDDING_BATCH_CACHE)}
+    unique: list[str] = []
+    seen: set[str] = set()
+    for row in inputs:
+        if not isinstance(row, dict):
+            continue
+        text = str(row.get("item_content") or "")[:MAX_CHARS]
+        if text in seen or text in _ITEM_EMBEDDING_BATCH_CACHE:
+            continue
+        seen.add(text)
+        unique.append(text)
+    if not unique:
+        return {"enabled": True, "requested": 0, "computed": 0, "cached": len(_ITEM_EMBEDDING_BATCH_CACHE)}
+    total_batches = (len(unique) + int(batch_size) - 1) // int(batch_size)
+    print(
+        f"[v1_kfactor] item residual embedding precompute unique={len(unique)} "
+        f"batch_size={int(batch_size)} batches={total_batches}",
+        flush=True,
+    )
+    computed = 0
+    with torch.no_grad():
+        for start in range(0, len(unique), int(batch_size)):
+            batch = unique[start : start + int(batch_size)]
+            batch_idx = start // int(batch_size) + 1
+            print(
+                f"[v1_kfactor] item residual embedding precompute batch {batch_idx}/{total_batches}",
+                flush=True,
+            )
+            emb = ENCODER.encode(
+                batch,
+                convert_to_tensor=True,
+                batch_size=int(batch_size),
+                show_progress_bar=False,
+            ).float()
+            if emb.ndim == 1:
+                emb = emb.reshape(1, -1)
+            if emb.shape[1] != EMBEDDING_DIM:
+                raise ValueError(f"batch item embedding dim {emb.shape[1]} != expected {EMBEDDING_DIM}")
+            if not torch.isfinite(emb).all():
+                raise ValueError("non-finite batch item embedding")
+            for text, row_emb in zip(batch, emb):
+                _ITEM_EMBEDDING_BATCH_CACHE[text] = tuple(float(x) for x in row_emb.reshape(-1))
+                computed += 1
+    _item_embedding.cache_clear()
+    return {"enabled": True, "requested": len(unique), "computed": computed, "cached": len(_ITEM_EMBEDDING_BATCH_CACHE)}
 
 
 def _item_params(item_content: str, benchmark: str, condition: str) -> tuple[tuple[float, ...], float]:
@@ -643,6 +761,43 @@ def _residual_value(
     if not math.isfinite(value):
         raise ValueError("non-finite residual prediction")
     return value
+
+
+@lru_cache(maxsize=20000)
+def _item_residual_delta_cached(item_content: str, benchmark_key: str, condition_key: str) -> float:
+    side = encode_side_features({"benchmark": benchmark_key, "condition": condition_key}, VOCAB)
+    emb_tuple = _item_embedding(item_content)
+    with torch.no_grad():
+        feature = torch.cat(
+            [
+                torch.tensor(emb_tuple, dtype=torch.float32),
+                torch.from_numpy(side).float(),
+            ],
+            dim=0,
+        )
+        if feature.numel() != ITEM_RESIDUAL_FEATURE_MEAN.numel():
+            raise ValueError(
+                f"item residual feature dim {feature.numel()} != expected {ITEM_RESIDUAL_FEATURE_MEAN.numel()}"
+            )
+        x = (feature - ITEM_RESIDUAL_FEATURE_MEAN) / ITEM_RESIDUAL_FEATURE_STD
+        delta = float((x * ITEM_RESIDUAL_COEF).sum() + ITEM_RESIDUAL_INTERCEPT)
+    if not math.isfinite(delta):
+        raise ValueError("non-finite item residual prediction")
+    return float(max(min(delta, ITEM_RESIDUAL_DELTA_CLIP), -ITEM_RESIDUAL_DELTA_CLIP))
+
+
+def _item_residual_delta(input: dict) -> float:
+    if (
+        not ITEM_RESIDUAL_OK
+        or ITEM_RESIDUAL_COEF is None
+        or ITEM_RESIDUAL_INTERCEPT is None
+        or ITEM_RESIDUAL_FEATURE_MEAN is None
+        or ITEM_RESIDUAL_FEATURE_STD is None
+    ):
+        return 0.0
+    benchmark_key = _normalize_benchmark_key(str(input.get("benchmark") or ""))
+    condition_key = _normalize_condition_key(str(input.get("condition") or ""))
+    return _item_residual_delta_cached(str(input.get("item_content") or ""), benchmark_key, condition_key)
 
 
 def _raw_logit(input: dict) -> float:
@@ -883,6 +1038,8 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
     try:
         logit = _raw_logit(input)
         if PRIOR_ONLY:
+            if ITEM_RESIDUAL_OK and ITEM_RESIDUAL_WEIGHT != 0.0:
+                logit = logit + ITEM_RESIDUAL_WEIGHT * _item_residual_delta(input)
             return _clip_prob(_sigmoid(logit))
         shifts = _per_subject_shifts(labeled)
         subject_key = _normalize_subject(str(input.get("subject_content") or ""))
