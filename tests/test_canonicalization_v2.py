@@ -134,11 +134,59 @@ def test_condition_variants_and_collision_safety() -> None:
     _assert_no_collisions(condition_keys, normalize_condition, "condition")
 
 
+def test_subject_normalizer_parity_with_lever_l_utils() -> None:
+    # Lock the cross-module mirror: model._normalize_subject and
+    # lever_l_utils.normalize_subject must produce identical output. Both are
+    # hand-mirrored; this prevents silent drift on future edits.
+    import sys
+
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from lever_l_utils import normalize_subject as lever_normalize
+
+    priors = json.loads(_find_locked_runtime_priors().read_text())
+    ns = _load_model_normalizers(priors)
+    model_normalize = ns["_normalize_subject"]
+
+    subject = next(k for k in sorted(priors["subject"]) if not k.endswith((".", ",", ";")))
+    inputs = [
+        "",
+        subject,
+        f"Name: {subject}",
+        f"name: {subject}",
+        f"NAME: {subject}",
+        f"Name : {subject}",
+        f"Name:{subject}",
+        f"Name：{subject}",
+        f"Subject: {subject}",
+        f"Model: {subject}",
+        f"display_name: {subject}",
+        f"- Name: {subject}",
+        f"* Name: {subject}",
+        f"> Name: {subject}",
+        f'"Name: {subject}"',
+        f"'Name: {subject}'",
+        f"`Name: {subject}`",
+        f"Name: {subject}.",
+        f"Name: {subject},",
+        f"Name: {subject};",
+        f"  Name:   {subject}  ",
+        "no prefix here",
+        "Random text\nName: GPT-4o\nMore text",
+    ]
+    mismatches = [
+        (raw, model_normalize(raw), lever_normalize(raw))
+        for raw in inputs
+        if model_normalize(raw) != lever_normalize(raw)
+    ]
+    assert not mismatches, f"subject normalizer parity broken: {mismatches}"
+
+
 def main() -> int:
     tests = [
         test_subject_prefix_variants_and_collision_safety,
         test_benchmark_alias_variants_and_collision_safety,
         test_condition_variants_and_collision_safety,
+        test_subject_normalizer_parity_with_lever_l_utils,
     ]
     for test in tests:
         test()
