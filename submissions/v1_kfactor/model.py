@@ -983,6 +983,16 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
     try:
         if PRIOR_ONLY:
             logit = _raw_logit(input)
+            # Lever F: per-subject shrunk shift from labeled rows on top of the prior.
+            # _fit_per_subject_shifts already uses _raw_logit, which returns the prior
+            # logit under PRIOR_ONLY, so the existing helper does the right thing.
+            # NEVER apply _calibrate_logit here — calibration.json was fit against
+            # K-factor logits, and applying it to prior logits regressed sub 8.
+            shifts = _per_subject_shifts(labeled)
+            if shifts:
+                subject_key = _normalize_subject(str(input.get("subject_content") or ""))
+                if subject_key in shifts:
+                    logit = logit + shifts[subject_key]
             return _clip_prob(_sigmoid(logit))
         if JE_IRT_ACTIVE:
             return _je_irt_probability(input)
