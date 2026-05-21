@@ -302,6 +302,18 @@ def _build_residual(input_dim: int, hidden: int, layers: int, dropout: float):
     return nn.Sequential(*blocks)
 
 
+class _JEIRTModel(nn.Module):
+    def __init__(self, n_subjects: int, in_dim: int, hidden: int, dim: int, dropout: float) -> None:
+        super().__init__()
+        self.adapter = nn.Sequential(
+            nn.Linear(in_dim, hidden),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, dim),
+        )
+        self.subject_embedding = nn.Embedding(n_subjects, dim)
+
+
 class _DummyEncoder:
     def __init__(self, dim: int):
         self.dim = dim
@@ -385,6 +397,52 @@ if PRIORS is not None:
     PRIOR_KEY_SEP = str(PRIORS.get("key_sep", PRIOR_KEY_SEP))
 PRIOR_ONLY_PATH = _resolve_file("prior_only.json", "priors", required=False)
 PRIOR_ONLY = PRIOR_ONLY_PATH is not None
+
+JE_IRT_HEAD_PATH = _resolve_file("je_irt/je_irt_head.pt", "je_irt", required=False)
+JE_IRT_CONFIG_PATH = _resolve_file("je_irt/config.json", "je_irt", required=False)
+JE_IRT_SUBJECT_PATH = _resolve_file("je_irt/subject_to_id.json", "je_irt", required=False)
+JE_IRT = None
+JE_IRT_ENCODER = None
+JE_IRT_CONFIG = None
+JE_IRT_SUBJECT_TO_ID: dict[str, int] = {}
+JE_IRT_MAX_CHARS = MAX_CHARS
+JE_IRT_ACTIVE = False
+if JE_IRT_HEAD_PATH is not None and not PRIOR_ONLY:
+    try:
+        if JE_IRT_CONFIG_PATH is None or JE_IRT_SUBJECT_PATH is None:
+            raise FileNotFoundError("JE-IRT config.json and subject_to_id.json are required with je_irt_head.pt")
+        JE_IRT_CONFIG = json.loads(JE_IRT_CONFIG_PATH.read_text())
+        JE_IRT_SUBJECT_TO_ID = {
+            str(k): int(v)
+            for k, v in json.loads(JE_IRT_SUBJECT_PATH.read_text()).items()
+        }
+        JE_IRT_MAX_CHARS = int(JE_IRT_CONFIG.get("max_chars", MAX_CHARS))
+        JE_IRT = _JEIRTModel(
+            len(JE_IRT_SUBJECT_TO_ID),
+            int(JE_IRT_CONFIG.get("encoder_dim", EMBEDDING_DIM)),
+            int(JE_IRT_CONFIG.get("hidden", 256)),
+            int(JE_IRT_CONFIG.get("dim", 256)),
+            float(JE_IRT_CONFIG.get("dropout", 0.1)),
+        )
+        JE_IRT.load_state_dict(_torch_load(JE_IRT_HEAD_PATH))
+        JE_IRT.eval()
+        je_encoder_name = str(JE_IRT_CONFIG.get("encoder", HEAD_META["encoder"]))
+        if DUMMY_ENCODER:
+            JE_IRT_ENCODER = _DummyEncoder(int(JE_IRT_CONFIG.get("encoder_dim", EMBEDDING_DIM)))
+        elif ENCODER_OK and je_encoder_name == str(HEAD_META["encoder"]):
+            JE_IRT_ENCODER = ENCODER
+        else:
+            from sentence_transformers import SentenceTransformer  # noqa: E402
+
+            JE_IRT_ENCODER = SentenceTransformer(je_encoder_name, cache_folder=HF_CACHE_DIR)
+        JE_IRT_ENCODER.eval()
+        JE_IRT_ACTIVE = True
+    except Exception as exc:  # noqa: BLE001
+        JE_IRT = None
+        JE_IRT_ENCODER = None
+        JE_IRT_SUBJECT_TO_ID = {}
+        JE_IRT_ACTIVE = False
+        print(f"[v1_kfactor] JE-IRT load failed: {exc!r}", flush=True)
 
 RESIDUAL_META_PATH = _resolve_file("head.json", "residual", required=False)
 RESIDUAL_WEIGHTS_PATH = _resolve_file("residual.pt", "residual", required=False)
@@ -657,6 +715,47 @@ def _raw_logit(input: dict) -> float:
     return base_logit + _residual_value(base_logit, subject_bias, subject_u, emb_tuple, priors)
 
 
+def _prior_probability_for_input(input: dict) -> float:
+    benchmark = str(input.get("benchmark") or "")
+    condition = str(input.get("condition") or "")
+    subject_content = str(input.get("subject_content") or "")
+    subject_key = _normalize_subject(subject_content)
+    return _clip_prob(_prior_values(subject_key, benchmark, condition, raw_subject_content=subject_content)[-1])
+
+
+@lru_cache(maxsize=2048)
+def _je_irt_item_q(item_content: str) -> tuple[float, ...]:
+    if JE_IRT is None or JE_IRT_ENCODER is None:
+        raise ValueError("JE-IRT requested but artifacts are not loaded")
+    text = item_content[:JE_IRT_MAX_CHARS]
+    with torch.no_grad():
+        emb = JE_IRT_ENCODER.encode(text, convert_to_tensor=True).float().reshape(1, -1)
+        q = JE_IRT.adapter(emb).reshape(-1)
+    if not torch.isfinite(q).all():
+        raise ValueError("non-finite JE-IRT item embedding")
+    return tuple(float(x) for x in q)
+
+
+def _je_irt_probability(input: dict) -> float:
+    if JE_IRT is None:
+        return _prior_probability_for_input(input)
+    subject_id = input.get("subject_id")
+    if subject_id is None or str(subject_id) == "":
+        return _prior_probability_for_input(input)
+    subject_idx = JE_IRT_SUBJECT_TO_ID.get(str(subject_id))
+    if subject_idx is None:
+        return _prior_probability_for_input(input)
+    q = torch.tensor(_je_irt_item_q(str(input.get("item_content") or "")), dtype=torch.float32)
+    with torch.no_grad():
+        subject = JE_IRT.subject_embedding(torch.tensor([int(subject_idx)], dtype=torch.long)).reshape(-1)
+        q_norm = torch.linalg.vector_norm(q).clamp_min(1e-8)
+        logit = (subject * q).sum() / q_norm - q_norm
+    value = float(logit)
+    if not math.isfinite(value):
+        raise ValueError("non-finite JE-IRT logit")
+    return _clip_prob(_sigmoid(value))
+
+
 def _label_value(row: dict) -> int | None:
     label = row.get("label")
     if isinstance(label, bool):
@@ -878,12 +977,15 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
     predict() never raises; any exception degrades gracefully so the platform
     always receives a valid float and the round is scored.
     """
-    if not ENCODER_OK:
+    if not ENCODER_OK and not JE_IRT_ACTIVE:
         return _subject_only_prob(input)
     try:
-        logit = _raw_logit(input)
         if PRIOR_ONLY:
+            logit = _raw_logit(input)
             return _clip_prob(_sigmoid(logit))
+        if JE_IRT_ACTIVE:
+            return _je_irt_probability(input)
+        logit = _raw_logit(input)
         shifts = _per_subject_shifts(labeled)
         subject_key = _normalize_subject(str(input.get("subject_content") or ""))
         if shifts and subject_key in shifts:

@@ -29,6 +29,7 @@ RUN THE PIPELINE:
     modal run modal_stage2.py --stage train --head mlp --emb data/embeddings/bge_large_v1 --out data/stage2/kfactor_bge_mlp_v1
     modal run modal_stage2.py --stage eval     # just evaluate the default linear head
     modal run modal_stage2.py --stage eval --out data/stage2/kfactor_mpnet_mlp_v1
+    modal run modal_stage2.py --stage je_irt --out data/stage2/je_irt_v1
 
 PULL RESULTS BACK LOCALLY (after running):
 
@@ -158,6 +159,42 @@ def train_head(
 
 @app.function(
     image=image,
+    gpu=GPU,
+    volumes={DATA_DIR: volume},
+    timeout=2 * 60 * 60,
+)
+def train_je_irt(
+    emb: str = EMB_DIR,
+    out: str = "data/stage2/je_irt_v1",
+    epochs: int = 5,
+    lr: float = 1e-3,
+    val_frac: float = 0.1,
+    seed: int = 0,
+    hidden: int = 256,
+    dim: int = 256,
+    batch: int = 8192,
+) -> None:
+    _run(
+        [
+            "python",
+            "scripts/train_je_irt.py",
+            "--joined", "data/joined.parquet",
+            "--emb", emb,
+            "--out", out,
+            "--epochs", str(epochs),
+            "--lr", str(lr),
+            "--val-frac", str(val_frac),
+            "--seed", str(seed),
+            "--hidden", str(hidden),
+            "--dim", str(dim),
+            "--batch", str(batch),
+        ]
+    )
+    volume.commit()
+
+
+@app.function(
+    image=image,
     volumes={DATA_DIR: volume},
     timeout=30 * 60,
 )
@@ -197,13 +234,15 @@ def main(
     epochs: int = 200,
     lr: float = 1e-3,
     out: str = "data/stage2/kfactor_mpnet_linear_v1",
+    je_epochs: int = 5,
+    je_batch: int = 8192,
     split: str = "item-cold",
     val_frac: float = 0.1,
     seed: int = 0,
 ) -> None:
-    """Run the requested stage(s). `stage` is one of: encode | train | eval | all."""
-    if stage not in ("encode", "train", "eval", "all"):
-        raise SystemExit(f"unknown stage {stage!r}; expected encode|train|eval|all")
+    """Run the requested stage(s). `stage` is one of: encode | train | eval | je_irt | all."""
+    if stage not in ("encode", "train", "eval", "je_irt", "all"):
+        raise SystemExit(f"unknown stage {stage!r}; expected encode|train|eval|je_irt|all")
     if stage in ("encode", "all"):
         print(">>> encode_items")
         encode_items.remote(batch=batch, max_chars=max_chars, encoder=encoder, out=emb_out)
@@ -218,6 +257,21 @@ def main(
             lr=lr,
             val_frac=val_frac,
             seed=seed,
+        )
+    if stage == "je_irt":
+        print(">>> train_je_irt")
+        je_out = out
+        if je_out == "data/stage2/kfactor_mpnet_linear_v1":
+            je_out = "data/stage2/je_irt_v1"
+        train_je_irt.remote(
+            hidden=hidden,
+            emb=emb,
+            out=je_out,
+            epochs=je_epochs,
+            lr=lr,
+            val_frac=val_frac,
+            seed=seed,
+            batch=je_batch,
         )
     if stage in ("eval", "all"):
         print(">>> evaluate")
