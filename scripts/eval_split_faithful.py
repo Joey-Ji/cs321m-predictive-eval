@@ -236,7 +236,7 @@ def main(
     print("loading data and frozen item state", flush=True)
     df = _load_joined_frame(joined)
     item_ids = [str(iid) for iid in json.loads((emb / "item_id_order.json").read_text())]
-    item_state = load_item_state(stage2, emb)
+    item_state = load_item_state(stage2, emb, joined_path=joined)
     runtime_subjects = load_runtime_subject_state(stage1)
     residual_model, residual_mean, residual_std, residual_meta = load_residual(residual, device)
     residual_seed = None if residual_meta is None else int(residual_meta.get("seed", -1))
