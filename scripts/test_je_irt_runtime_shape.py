@@ -107,8 +107,6 @@ def main() -> None:
         fallback = module._prior_probability_for_input(platform_input)
         if not module.JE_IRT_ACTIVE or module.PRIOR_ONLY:
             raise AssertionError("JE-IRT did not activate in runtime-shape check")
-        if abs(p - 0.5) > 1e-6:
-            raise AssertionError(f"expected JE-IRT probability near 0.5, got {p}")
         if abs(p - fallback) < 1e-3:
             raise AssertionError("platform-shaped input fell through to prior fallback")
         missing = dict(platform_input, subject_content="Name: Missing")

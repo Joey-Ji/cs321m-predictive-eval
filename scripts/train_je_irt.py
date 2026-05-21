@@ -152,6 +152,7 @@ def main(
     val_rows: int,
     per_category: int,
     patience: int,
+    full_data: bool = False,
 ) -> None:
     _set_deterministic(seed)
     out.mkdir(parents=True, exist_ok=True)
@@ -169,14 +170,19 @@ def main(
     if item_embeddings.ndim != 2 or item_embeddings.shape[0] != len(item_id_order):
         raise ValueError(f"embedding shape {item_embeddings.shape} inconsistent with item ID order")
 
-    held_out, train_df, val_df = split_faithful_eval_rows(
-        df,
-        item_id_order,
-        val_frac=val_frac,
-        seed=seed,
-        max_rows=val_rows,
-        per_category=per_category,
-    )
+    if full_data:
+        held_out = []
+        train_df = df.copy()
+        val_df = train_df.iloc[:0].copy()
+    else:
+        held_out, train_df, val_df = split_faithful_eval_rows(
+            df,
+            item_id_order,
+            val_frac=val_frac,
+            seed=seed,
+            max_rows=val_rows,
+            per_category=per_category,
+        )
     if max_rows > 0 and len(train_df) > max_rows:
         train_df = train_df.sample(n=max_rows, random_state=seed).reset_index(drop=True)
         print(f"sampled train rows to {len(train_df):,}", flush=True)
@@ -185,7 +191,7 @@ def main(
     val_subject_idx, val_item_idx, val_labels = _arrays_for_rows(val_df, subject_to_id, item_to_row)
     if len(train_labels) == 0:
         raise ValueError("no train rows have both normalized subject key and cached item embedding")
-    if len(val_labels) == 0:
+    if not full_data and len(val_labels) == 0:
         raise ValueError("no validation rows have both normalized subject key and cached item embedding")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -222,8 +228,11 @@ def main(
             seed + epoch,
             device,
         )
-        metrics = _evaluate(model, val_subject_idx, val_item_idx, val_labels, item_embeddings_t, batch, device)
         train_mll_trajectory.append(_finite_float(train_mll))
+        if full_data:
+            print(f"epoch={epoch + 1} train_mll={train_mll:.6f}", flush=True)
+            continue
+        metrics = _evaluate(model, val_subject_idx, val_item_idx, val_labels, item_embeddings_t, batch, device)
         val_mll_trajectory.append(_finite_float(metrics["mean_log_likelihood"]))
         val_auc_trajectory.append(_finite_float(metrics["auc_roc"]))
         print(
@@ -241,9 +250,12 @@ def main(
                 print(f"early_stop epoch={epoch + 1} best_val_mll={best_mll:.6f}", flush=True)
                 break
 
-    if best_state is not None:
+    if not full_data and best_state is not None:
         model.load_state_dict(best_state)
-    final_metrics = _evaluate(model, val_subject_idx, val_item_idx, val_labels, item_embeddings_t, batch, device)
+    if full_data:
+        final_metrics = {"mean_log_likelihood": float("nan"), "auc_roc": float("nan")}
+    else:
+        final_metrics = _evaluate(model, val_subject_idx, val_item_idx, val_labels, item_embeddings_t, batch, device)
 
     torch.save({k: v.detach().cpu() for k, v in model.state_dict().items()}, out / "je_irt_head.pt")
     (out / "subject_to_id.json").write_text(json.dumps(subject_to_id, indent=2, sort_keys=True) + "\n")
@@ -275,8 +287,9 @@ def main(
         "n_train_rows": int(len(train_labels)),
         "n_val_rows": int(len(val_labels)),
         "n_held_out_items": int(len(held_out)),
-        "val_mll": _finite_float(final_metrics["mean_log_likelihood"]),
-        "val_auc": _finite_float(final_metrics["auc_roc"]),
+        "full_data": bool(full_data),
+        "val_mll": (None if full_data else _finite_float(final_metrics["mean_log_likelihood"])),
+        "val_auc": (None if full_data else _finite_float(final_metrics["auc_roc"])),
         "train_mll_trajectory": train_mll_trajectory,
         "val_mll_trajectory": val_mll_trajectory,
         "val_auc_trajectory": val_auc_trajectory,
@@ -305,6 +318,7 @@ if __name__ == "__main__":
     parser.add_argument("--val-rows", type=int, default=1500)
     parser.add_argument("--per-category", type=int, default=300)
     parser.add_argument("--patience", type=int, default=1)
+    parser.add_argument("--full-data", action="store_true")
     args = parser.parse_args()
     main(
         args.joined,
@@ -323,4 +337,5 @@ if __name__ == "__main__":
         args.val_rows,
         args.per_category,
         args.patience,
+        args.full_data,
     )

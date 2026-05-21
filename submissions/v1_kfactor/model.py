@@ -407,6 +407,7 @@ JE_IRT_ENCODER = None
 JE_IRT_CONFIG = None
 JE_IRT_SUBJECT_TO_ID: dict[str, int] = {}
 JE_IRT_MAX_CHARS = MAX_CHARS
+JE_IRT_BLEND_ALPHA = 0.5
 JE_IRT_ACTIVE = False
 if JE_IRT_HEAD_PATH is not None and not PRIOR_ONLY:
     try:
@@ -418,6 +419,7 @@ if JE_IRT_HEAD_PATH is not None and not PRIOR_ONLY:
             for k, v in json.loads(JE_IRT_SUBJECT_PATH.read_text()).items()
         }
         JE_IRT_MAX_CHARS = int(JE_IRT_CONFIG.get("max_chars", MAX_CHARS))
+        JE_IRT_BLEND_ALPHA = float(JE_IRT_CONFIG.get("blend_alpha", 0.5))
         JE_IRT = _JEIRTModel(
             len(JE_IRT_SUBJECT_TO_ID),
             int(JE_IRT_CONFIG.get("encoder_dim", EMBEDDING_DIM)),
@@ -730,7 +732,7 @@ def _je_irt_item_q(item_content: str) -> tuple[float, ...]:
         raise ValueError("JE-IRT requested but artifacts are not loaded")
     text = item_content[:JE_IRT_MAX_CHARS]
     with torch.no_grad():
-        emb = JE_IRT_ENCODER.encode(text, convert_to_tensor=True).float().reshape(1, -1)
+        emb = JE_IRT_ENCODER.encode(text, convert_to_tensor=True).float().reshape(1, -1).cpu()
         q = JE_IRT.adapter(emb).reshape(-1)
     if not torch.isfinite(q).all():
         raise ValueError("non-finite JE-IRT item embedding")
@@ -751,10 +753,21 @@ def _je_irt_probability(input: dict) -> float:
         subject = JE_IRT.subject_embedding(torch.tensor([int(subject_idx)], dtype=torch.long)).reshape(-1)
         q_norm = torch.linalg.vector_norm(q).clamp_min(1e-8)
         logit = (subject * q).sum() / q_norm - q_norm
-    value = float(logit)
-    if not math.isfinite(value):
+    je_logit = float(logit)
+    if not math.isfinite(je_logit):
         raise ValueError("non-finite JE-IRT logit")
-    return _clip_prob(_sigmoid(value))
+    # Logit-space blend with the prior: split-faithful proxy chose alpha=0.5
+    # unanimously across 3 honest seeds; JE-IRT contributes ranking, prior contributes calibration.
+    prior_p = _prior_values(
+        subject_key,
+        str(input.get("benchmark") or ""),
+        str(input.get("condition") or ""),
+        raw_subject_content=str(input.get("subject_content") or ""),
+    )[-1]
+    prior_p_clipped = min(max(prior_p, 1e-6), 1.0 - 1e-6)
+    prior_logit = math.log(prior_p_clipped / (1.0 - prior_p_clipped))
+    blended = JE_IRT_BLEND_ALPHA * je_logit + (1.0 - JE_IRT_BLEND_ALPHA) * prior_logit
+    return _clip_prob(_sigmoid(blended))
 
 
 def _label_value(row: dict) -> int | None:
