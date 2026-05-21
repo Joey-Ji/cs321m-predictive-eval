@@ -13,6 +13,7 @@ recursively, but only known runtime state files are flattened into the ZIP.
 Usage:
     python scripts/build_submission.py v1_irt
     python scripts/build_submission.py v1_irt --include data/head data/irt data/embeddings
+    python scripts/build_submission.py v1_kfactor --je-irt data/stage2/je_irt_v1
 """
 
 from __future__ import annotations
@@ -118,6 +119,7 @@ SUBMISSION_DEFAULT_INCLUDES = {
     ],
     "v1_irt": ["data/head", "data/irt"],
 }
+JE_IRT_FILES = ("je_irt_head.pt", "subject_to_id.json", "config.json")
 
 
 def gather_state_files(extra_dirs: list[Path], allowed_names: set[str]) -> list[Path]:
@@ -136,7 +138,13 @@ def gather_state_files(extra_dirs: list[Path], allowed_names: set[str]) -> list[
     return [files_by_name[name] for name in sorted(files_by_name)]
 
 
-def main(name: str, includes: list[Path] | None, out_dir: Path, zip_name: str | None = None) -> None:
+def main(
+    name: str,
+    includes: list[Path] | None,
+    out_dir: Path,
+    zip_name: str | None = None,
+    je_irt: Path | None = None,
+) -> None:
     submissions_root = Path(__file__).resolve().parent.parent / "submissions"
     sub_dir = submissions_root / name
     if not sub_dir.exists():
@@ -173,6 +181,13 @@ def main(name: str, includes: list[Path] | None, out_dir: Path, zip_name: str | 
     if zip_path.exists():
         zip_path.unlink()
 
+    je_irt_files: list[Path] = []
+    if je_irt is not None:
+        missing = [filename for filename in JE_IRT_FILES if not (je_irt / filename).exists()]
+        if missing:
+            sys.exit(f"missing JE-IRT artifact(s) under {je_irt}: {', '.join(missing)}")
+        je_irt_files = [je_irt / filename for filename in JE_IRT_FILES]
+
     print(f"Building {zip_path} ...")
     written_names: set[str] = set()
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
@@ -188,6 +203,10 @@ def main(name: str, includes: list[Path] | None, out_dir: Path, zip_name: str | 
             z.write(p, p.name)
             written_names.add(p.name)
             print(f"  + {p.name}  (from {p.parent})")
+        for p in je_irt_files:
+            arcname = f"je_irt/{p.name}"
+            z.write(p, arcname)
+            print(f"  + {arcname}  (from {p.parent})")
 
     size = zip_path.stat().st_size
     print(f"Done. {zip_path} ({size / 1024:.1f} KB)")
@@ -204,5 +223,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("--out", default="submissions", type=Path)
     parser.add_argument("--zip-name", default=None, help="Optional output ZIP filename.")
+    parser.add_argument("--je-irt", default=None, type=Path, help="Optional JE-IRT artifact directory.")
     args = parser.parse_args()
-    main(args.name, None if args.include is None else [Path(p) for p in args.include], args.out, args.zip_name)
+    main(
+        args.name,
+        None if args.include is None else [Path(p) for p in args.include],
+        args.out,
+        args.zip_name,
+        args.je_irt,
+    )

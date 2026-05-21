@@ -435,6 +435,39 @@ def sample_groups(
     return sampled
 
 
+def split_faithful_eval_rows(
+    df,
+    item_ids: list[str],
+    val_frac: float,
+    seed: int,
+    max_rows: int,
+    per_category: int,
+):
+    held_out = validation_item_ids(item_ids, val_frac=val_frac, seed=seed)
+    val_all = df[df["item_id"].isin(held_out)]
+    rows = val_all[["item_id", "subject_id", "subject_key", "benchmark", "condition", "label"]].to_dict(
+        orient="records"
+    )
+    sampled_groups = sample_groups(
+        group_rows_by_category(rows),
+        random.Random(seed),
+        max_rows=max_rows,
+        max_per_category=per_category,
+    )
+    sampled_rows = [row for category in sorted(sampled_groups) for row in sampled_groups[category]]
+    if not sampled_rows:
+        raise ValueError("split produced no validation rows")
+    sampled_index = {(r["subject_id"], r["item_id"]) for r in sampled_rows}
+    val_df = val_all[
+        [
+            (row.subject_id, row.item_id) in sampled_index
+            for row in val_all[["subject_id", "item_id"]].itertuples(index=False)
+        ]
+    ].copy()
+    train_df = df[~df["item_id"].isin(held_out)].copy()
+    return held_out, train_df.reset_index(drop=True), val_df.reset_index(drop=True)
+
+
 def sigmoid(logit: np.ndarray | float) -> np.ndarray | float:
     return 1.0 / (1.0 + np.exp(-logit))
 
