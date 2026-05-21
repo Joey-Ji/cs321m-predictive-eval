@@ -86,7 +86,7 @@ def _run_seed(
         "auc": float(auc_roc(je_probs, labels)),
         "fallback_rows": int(
             (
-                val_df["subject_id"].map(subject_to_id).isna()
+                val_df["subject_key"].map(subject_to_id).isna()
                 | val_df["item_id"].map(item_to_row).isna()
             ).sum()
         ),

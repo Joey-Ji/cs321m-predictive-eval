@@ -72,7 +72,7 @@ def predict_je_irt_probs(
     batch_size: int,
     device: str,
 ) -> np.ndarray:
-    subject_idx = df["subject_id"].map(subject_to_id).fillna(-1).to_numpy(dtype=np.int64)
+    subject_idx = df["subject_key"].map(subject_to_id).fillna(-1).to_numpy(dtype=np.int64)
     item_idx = df["item_id"].map(item_to_row).fillna(-1).to_numpy(dtype=np.int64)
     fallback = (subject_idx < 0) | (item_idx < 0)
     probs = np.asarray(prior_probs, dtype=np.float64).copy()

@@ -54,12 +54,12 @@ def _set_deterministic(seed: int) -> None:
 
 
 def _subject_mapping(df) -> dict[str, int]:
-    subjects = sorted(str(subject_id) for subject_id in df["subject_id"].dropna().unique().tolist())
-    return {subject_id: idx for idx, subject_id in enumerate(subjects)}
+    subjects = sorted(str(subject_key) for subject_key in df["subject_key"].dropna().unique().tolist())
+    return {subject_key: idx for idx, subject_key in enumerate(subjects)}
 
 
 def _arrays_for_rows(df, subject_to_id: dict[str, int], item_to_row: dict[str, int]) -> tuple[np.ndarray, ...]:
-    subject_idx = df["subject_id"].map(subject_to_id).fillna(-1).to_numpy(dtype=np.int64)
+    subject_idx = df["subject_key"].map(subject_to_id).fillna(-1).to_numpy(dtype=np.int64)
     item_idx = df["item_id"].map(item_to_row).fillna(-1).to_numpy(dtype=np.int64)
     labels = df["label"].to_numpy(dtype=np.float32)
     keep = (subject_idx >= 0) & (item_idx >= 0)
@@ -160,7 +160,7 @@ def main(
     df = _load_joined_frame(joined)
     subject_to_id = _subject_mapping(df)
     if not subject_to_id:
-        raise ValueError("no subject_id values found in joined data")
+        raise ValueError("no normalized subject keys found in joined data")
 
     item_id_order = [str(iid) for iid in json.loads((emb / "item_id_order.json").read_text())]
     item_to_row = {item_id: idx for idx, item_id in enumerate(item_id_order)}
@@ -184,9 +184,9 @@ def main(
     train_subject_idx, train_item_idx, train_labels = _arrays_for_rows(train_df, subject_to_id, item_to_row)
     val_subject_idx, val_item_idx, val_labels = _arrays_for_rows(val_df, subject_to_id, item_to_row)
     if len(train_labels) == 0:
-        raise ValueError("no train rows have both subject_id and cached item embedding")
+        raise ValueError("no train rows have both normalized subject key and cached item embedding")
     if len(val_labels) == 0:
-        raise ValueError("no validation rows have both subject_id and cached item embedding")
+        raise ValueError("no validation rows have both normalized subject key and cached item embedding")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     item_embeddings_t = torch.from_numpy(item_embeddings).to(device)
@@ -250,6 +250,7 @@ def main(
     config: dict[str, Any] = {
         "model": "je_irt",
         "formula": "(E_M dot E_Q) / ||E_Q|| - ||E_Q||",
+        "subject_key": "normalize_subject(subject_content)",
         "encoder": enc_meta.get("encoder"),
         "encoder_dim": int(item_embeddings.shape[1]),
         "embedding_representation_version": enc_meta.get("representation_version"),

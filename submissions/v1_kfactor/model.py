@@ -398,6 +398,7 @@ if PRIORS is not None:
 PRIOR_ONLY_PATH = _resolve_file("prior_only.json", "priors", required=False)
 PRIOR_ONLY = PRIOR_ONLY_PATH is not None
 
+# Submission ZIP entries preserve je_irt/ under ROOT; keep this nested lookup.
 JE_IRT_HEAD_PATH = _resolve_file("je_irt/je_irt_head.pt", "je_irt", required=False)
 JE_IRT_CONFIG_PATH = _resolve_file("je_irt/config.json", "je_irt", required=False)
 JE_IRT_SUBJECT_PATH = _resolve_file("je_irt/subject_to_id.json", "je_irt", required=False)
@@ -739,10 +740,10 @@ def _je_irt_item_q(item_content: str) -> tuple[float, ...]:
 def _je_irt_probability(input: dict) -> float:
     if JE_IRT is None:
         return _prior_probability_for_input(input)
-    subject_id = input.get("subject_id")
-    if subject_id is None or str(subject_id) == "":
+    subject_key = _normalize_subject(str(input.get("subject_content") or ""))
+    if not subject_key:
         return _prior_probability_for_input(input)
-    subject_idx = JE_IRT_SUBJECT_TO_ID.get(str(subject_id))
+    subject_idx = JE_IRT_SUBJECT_TO_ID.get(subject_key)
     if subject_idx is None:
         return _prior_probability_for_input(input)
     q = torch.tensor(_je_irt_item_q(str(input.get("item_content") or "")), dtype=torch.float32)
