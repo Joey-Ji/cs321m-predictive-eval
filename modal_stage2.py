@@ -173,23 +173,31 @@ def train_je_irt(
     hidden: int = 256,
     dim: int = 256,
     batch: int = 8192,
+    dropout: float = 0.1,
+    weight_decay: float = 1e-4,
+    patience: int = 1,
+    full_data: bool = False,
 ) -> None:
-    _run(
-        [
-            "python",
-            "scripts/train_je_irt.py",
-            "--joined", "data/joined.parquet",
-            "--emb", emb,
-            "--out", out,
-            "--epochs", str(epochs),
-            "--lr", str(lr),
-            "--val-frac", str(val_frac),
-            "--seed", str(seed),
-            "--hidden", str(hidden),
-            "--dim", str(dim),
-            "--batch", str(batch),
-        ]
-    )
+    cmd = [
+        "python",
+        "scripts/train_je_irt.py",
+        "--joined", "data/joined.parquet",
+        "--emb", emb,
+        "--out", out,
+        "--epochs", str(epochs),
+        "--lr", str(lr),
+        "--val-frac", str(val_frac),
+        "--seed", str(seed),
+        "--hidden", str(hidden),
+        "--dim", str(dim),
+        "--batch", str(batch),
+        "--dropout", str(dropout),
+        "--weight-decay", str(weight_decay),
+        "--patience", str(patience),
+    ]
+    if full_data:
+        cmd.append("--full-data")
+    _run(cmd)
     volume.commit()
 
 
