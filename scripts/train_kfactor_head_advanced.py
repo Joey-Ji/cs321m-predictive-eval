@@ -181,8 +181,14 @@ def main(
     X_side = np.stack([side_features[row_idx] for row_idx, _, _, _ in rows]).astype(np.float32)
     X_advanced = np.stack([adv_feat for _, _, _, adv_feat in rows]).astype(np.float32)
 
-    # Concatenate: [embedding | side_features | advanced_features]
-    X = np.concatenate([X_emb, X_side, X_advanced], axis=1).astype(np.float32)
+    # Standardize advanced features before concatenation
+    X_advanced_mean = X_advanced.mean(axis=0)
+    X_advanced_std = X_advanced.std(axis=0)
+    X_advanced_std = np.where(X_advanced_std < 1e-6, 1.0, X_advanced_std)
+    X_advanced_normalized = (X_advanced - X_advanced_mean) / X_advanced_std
+
+    # Concatenate: [embedding | side_features | normalized_advanced_features]
+    X = np.concatenate([X_emb, X_side, X_advanced_normalized], axis=1).astype(np.float32)
     embedding_dim = int(X_emb.shape[1])
     advanced_feature_dim = int(X_advanced.shape[1])
 
@@ -289,6 +295,8 @@ def main(
                 "side_feature_dim": side_feature_dim,
                 "advanced_feature_dim": advanced_feature_dim,
                 "advanced_feature_names": feature_extractor.feature_names,
+                "advanced_feature_mean": X_advanced_mean.astype(float).tolist(),
+                "advanced_feature_std": X_advanced_std.astype(float).tolist(),
                 "out_dim": out_dim,
                 "k": k,
                 "target_order": target_order,
