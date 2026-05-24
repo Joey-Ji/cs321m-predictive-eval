@@ -1,0 +1,11 @@
+loading data and frozen item state
+Traceback (most recent call last):
+  File "/Users/guanruijia/Desktop/Stanford/CS321M/Evaluation Competition/cs321m-predictive-eval/scripts/eval_split_faithful.py", line 303, in <module>
+    main(
+  File "/Users/guanruijia/Desktop/Stanford/CS321M/Evaluation Competition/cs321m-predictive-eval/scripts/eval_split_faithful.py", line 239, in main
+    item_state = load_item_state(stage2, emb, joined_path=joined)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/guanruijia/Desktop/Stanford/CS321M/Evaluation Competition/cs321m-predictive-eval/scripts/train_kfactor_residual.py", line 189, in load_item_state
+    advanced_features_array = (advanced_features_array - adv_mean) / adv_std
+                               ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+ValueError: operands could not be broadcast together with shapes (70873,15) (6,) 
