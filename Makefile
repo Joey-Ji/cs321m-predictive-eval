@@ -1,4 +1,4 @@
-.PHONY: help install data eda irt irt-2pl irt-mock irt-mock-2pl encode encode-bge head head-mlp head-2pl kfactor-export kfactor kfactor-fixture test-kfactor kfactor-encode-dummy kfactor-head kfactor-eval submission smoke-test test test-quick clean clean-state list
+.PHONY: help install data eda irt irt-2pl irt-mock irt-mock-2pl encode encode-bge head head-mlp head-2pl kfactor-export kfactor kfactor-fixture test-kfactor kfactor-encode-dummy kfactor-head kfactor-eval submission submission-v5 smoke-test test test-quick clean clean-state list
 
 # Default encoder for encode_items.py; override with `make encode ENCODER=...`
 ENCODER ?= sentence-transformers/all-mpnet-base-v2
@@ -37,6 +37,7 @@ help:
 	@echo ""
 	@echo "  Submissions:"
 	@echo "    make submission NAME=v1_irt          Build submissions/v1_irt.zip"
+	@echo "    make submission-v5                  Build team-best v5 zip + run smoke test"
 	@echo "    make smoke-test SUB=submissions/v1_irt   CPU-test predict() locally"
 	@echo ""
 	@echo "  Testing:"
@@ -121,6 +122,10 @@ kfactor-eval: kfactor-head
 submission:
 	@if [ -z "$(NAME)" ]; then echo "ERROR: usage: make submission NAME=v1_irt"; exit 1; fi
 	uv run python scripts/build_submission.py $(NAME)
+
+submission-v5:
+	uv run python scripts/build_submission.py v1_subject_ability_v5
+	uv run python scripts/smoke_test.py submissions/v1_subject_ability_v5
 
 smoke-test:
 	@if [ -z "$(SUB)" ]; then echo "ERROR: usage: make smoke-test SUB=submissions/v1_irt"; exit 1; fi

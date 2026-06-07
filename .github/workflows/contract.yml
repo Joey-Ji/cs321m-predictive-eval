@@ -21,6 +21,12 @@ jobs:
       - name: Sync deps
         run: uv sync
 
+      - name: Run v1_subject_ability_v5 unit tests
+        run: uv run python tests/test_v1_subject_ability_v5.py
+
+      - name: Run v1_subject_ability_v5 smoke test
+        run: uv run python scripts/smoke_test.py submissions/v1_subject_ability_v5
+
       - name: Generate joined.parquet stub for mock_irt
         run: |
           mkdir -p data
