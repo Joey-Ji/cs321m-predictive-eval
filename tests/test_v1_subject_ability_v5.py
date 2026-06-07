@@ -241,17 +241,30 @@ def test_predict_multi_benchmark_labeled() -> None:
 # P2 tests
 # --------------------------------------------------------------------------- #
 def test_import_no_network() -> None:
-    # Re-importing model.py with all socket entry points poisoned must succeed,
-    # guarding against a future regression that adds a module-level download.
+    # Re-import model.py AND exercise predict()/acquisition_function() with every
+    # network entry point poisoned. Poisoning socket at the lowest level also
+    # blocks urllib/http indirectly; urllib.urlopen + http.client are patched too
+    # so a future regression adding an outbound call at import OR in a call is caught.
+    import http.client
+    import urllib.request
+
     def _boom(*args, **kwargs):
-        raise AssertionError("network access during model.py import")
+        raise AssertionError("network access in the submission")
 
     with mock.patch.object(socket, "socket", _boom), mock.patch.object(
         socket, "getaddrinfo", _boom
-    ), mock.patch.object(socket, "create_connection", _boom):
+    ), mock.patch.object(socket, "create_connection", _boom), mock.patch.object(
+        urllib.request, "urlopen", _boom
+    ), mock.patch.object(http.client, "HTTPConnection", _boom):
         module = _load_module("v1_subject_ability_v5_model_nonet", MODEL_PATH)
+        labeling = _load_module("v1_subject_ability_v5_labeling_nonet", LABELING_PATH)
+        # Exercise the runtime paths, not just import.
+        pred = module.predict(_sample_input(), _skewed_labeled())
+        acq = labeling.acquisition_function(_sample_input())
     assert callable(module.predict)
     assert module.CLIP_LO == CLIP_LO and module.CLIP_HI == CLIP_HI
+    assert type(pred) is float and _is_finite(pred)
+    assert type(acq) is float and _is_finite(acq)
 
 
 def test_model_self_contained() -> None:

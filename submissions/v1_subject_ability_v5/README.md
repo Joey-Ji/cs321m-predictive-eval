@@ -33,8 +33,9 @@ calls, so there is nothing to declare. The submission ZIP is just the two `.py` 
 - `scipy` (>= 1.11) — used for `scipy.optimize.minimize` (L-BFGS-B calibration fit) and
   `scipy.special.expit`.
 
-Both are present on the Codabench platform runtime (numpy directly; scipy ships with the platform's
-scientific Python stack). They are declared explicitly in `requirements.txt`.
+Both are declared explicitly in `requirements.txt` (and in the project's `pyproject.toml`), so the
+runtime resolves them. The submission uses only long-stable APIs (`scipy.optimize.minimize`,
+`scipy.special.expit`, core numpy), keeping the dependency easy to satisfy.
 
 ## Reproduce / verify
 
