@@ -1,0 +1,50 @@
+Loading training data...
+  Loaded 4,443,797 training rows
+Building advanced feature extractor...
+  Feature dimension: 6
+  Feature names: bench_avg_correct, cond_avg_correct, interaction_avg_correct, stage1_z_mean, item_length, item_length_log
+Loading Stage 1 targets...
+Loading embeddings and side features...
+Mapping items to joined rows for feature extraction...
+Aligning embeddings with Stage 1 targets and extracting advanced features...
+  Aligned 70,873 items
+Splitting train/validation...
+
+Feature dimensions:
+  Embedding:        768
+  Side features:    231
+  Advanced features: 6
+  Total input:      1005
+  Output (k+1):     5
+
+Dataset split:
+  Train: 63,740 items
+  Val:   7,133 items
+
+Training mlp head for 30 epochs on cpu...
+  epoch    1/30 train_mse_std=1.00060 val_mse_std=0.98102
+  epoch    3/30 train_mse_std=0.97938 val_mse_std=0.96211
+  epoch    6/30 train_mse_std=0.95279 val_mse_std=0.93739
+  epoch    9/30 train_mse_std=0.92974 val_mse_std=0.91637
+  epoch   12/30 train_mse_std=0.91152 val_mse_std=0.89981
+  epoch   15/30 train_mse_std=0.89646 val_mse_std=0.88611
+  epoch   18/30 train_mse_std=0.88380 val_mse_std=0.87418
+  epoch   21/30 train_mse_std=0.87269 val_mse_std=0.86364
+  epoch   24/30 train_mse_std=0.86275 val_mse_std=0.85403
+  epoch   27/30 train_mse_std=0.85367 val_mse_std=0.84510
+  epoch   30/30 train_mse_std=0.84545 val_mse_std=0.83719
+
+Computing final metrics...
+
+Validation metrics:
+  MSE (standardized): 0.83719
+  MSE (original):     0.97853
+  R² per dimension:   ['0.139', '0.174', '0.099', '0.119', '0.246']
+
+Saving outputs...
+
+Done! Outputs saved to data/stage2/kfactor_mpnet_advanced_v3
+  head.pt
+  head_meta.json
+  advanced_feature_extractor.json
+  metrics.json

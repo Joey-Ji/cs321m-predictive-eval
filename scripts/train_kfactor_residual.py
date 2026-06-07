@@ -40,6 +40,7 @@ from lever_l_utils import (
 )
 from scripts.train_kfactor_head import build_head
 from src.kfactor import load_subject_state
+from src.advanced_features import AdvancedFeatureExtractor
 
 
 @dataclass
@@ -123,7 +124,7 @@ def _eval_rows_for_split(df, item_ids: list[str], val_frac: float, seed: int, ma
     )
 
 
-def load_item_state(stage2_dir: Path, emb_dir: Path, batch_size: int = 8192) -> ItemState:
+def load_item_state(stage2_dir: Path, emb_dir: Path, joined_path: Path | None = None, batch_size: int = 8192) -> ItemState:
     head_meta = json.loads((stage2_dir / "head_meta.json").read_text())
     scaler = json.loads((stage2_dir / "target_scaler.json").read_text())
     item_id_order = [str(iid) for iid in json.loads((emb_dir / "item_id_order.json").read_text())]
@@ -131,6 +132,43 @@ def load_item_state(stage2_dir: Path, emb_dir: Path, batch_size: int = 8192) -> 
     side_features = np.load(emb_dir / "item_side_features.npy").astype(np.float32)
     if embeddings.ndim != 2 or side_features.ndim != 2 or embeddings.shape[0] != side_features.shape[0]:
         raise ValueError(f"bad embedding/side shapes: {embeddings.shape} {side_features.shape}")
+
+    # Check if this model uses advanced features
+    uses_advanced = head_meta.get("uses_advanced_features", False)
+    advanced_features_array = None
+
+    if uses_advanced:
+        if joined_path is None:
+            raise ValueError("Model uses advanced features but --joined path not provided")
+
+        # Load advanced feature extractor
+        extractor_path = stage2_dir / "advanced_feature_extractor.json"
+        if not extractor_path.exists():
+            raise FileNotFoundError(f"Advanced feature extractor not found: {extractor_path}")
+
+        feature_extractor = AdvancedFeatureExtractor.load(extractor_path)
+
+        # Load joined data to extract features
+        import pandas as pd
+        joined_df = pd.read_parquet(joined_path)
+        item_to_row = {str(row["item_id"]): row for _, row in joined_df.iterrows() if pd.notna(row.get("item_id"))}
+
+        # Extract advanced features for all items
+        advanced_features_list = []
+        for item_id in item_id_order:
+            joined_row = item_to_row.get(item_id)
+            if joined_row is None:
+                # Item not in joined data, use zero vector
+                advanced_features_list.append(np.zeros(feature_extractor.feature_dim, dtype=np.float32))
+            else:
+                advanced_features_list.append(feature_extractor.extract(joined_row))
+
+        advanced_features_array = np.stack(advanced_features_list).astype(np.float32)
+
+        # Normalize advanced features using saved statistics
+        adv_mean = np.array(head_meta["advanced_feature_mean"], dtype=np.float32)
+        adv_std = np.array(head_meta["advanced_feature_std"], dtype=np.float32)
+        advanced_features_array = (advanced_features_array - adv_mean) / adv_std
 
     head = build_head(
         int(head_meta["in_dim"]),
@@ -147,7 +185,17 @@ def load_item_state(stage2_dir: Path, emb_dir: Path, batch_size: int = 8192) -> 
     with torch.no_grad():
         for start in range(0, len(item_id_order), batch_size):
             stop = min(start + batch_size, len(item_id_order))
-            x_np = np.concatenate([embeddings[start:stop], side_features[start:stop]], axis=1).astype(np.float32)
+
+            # Concatenate features: embeddings, side_features, and optionally advanced_features
+            if uses_advanced and advanced_features_array is not None:
+                x_np = np.concatenate([
+                    embeddings[start:stop],
+                    side_features[start:stop],
+                    advanced_features_array[start:stop]
+                ], axis=1).astype(np.float32)
+            else:
+                x_np = np.concatenate([embeddings[start:stop], side_features[start:stop]], axis=1).astype(np.float32)
+
             pred = head(torch.from_numpy(x_np)) * std + mean
             preds.append(pred.cpu().numpy().astype(np.float32))
     pred_all = np.concatenate(preds, axis=0)
