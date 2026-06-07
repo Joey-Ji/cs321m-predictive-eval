@@ -1,3 +1,31 @@
+<!-- ====================================================================== -->
+<!--  FINAL SUBMISSION POINTER — read this first.                          -->
+<!-- ====================================================================== -->
+
+# Final submission
+
+> **Our final, graded submission is [`submissions/v1_subject_ability_v5/`](submissions/v1_subject_ability_v5/).**
+> It produced our best Codabench leaderboard score, **-0.59** (negative log-loss, higher is better).
+> The graded code is that directory's **`model.py`** and **`labeling.py`**; see its
+> [**README**](submissions/v1_subject_ability_v5/README.md) for the method, dependencies, and reproduce steps.
+>
+> Everything else under `submissions/` (the `v1_kfactor*`, `v1_irt`, and other
+> `v1_subject_ability*` variants) is **exploratory history** retained for the
+> report's ablations — it is **not** the final entry.
+
+**Approach in one line:** pure online, CPU-only inference — Laplace-smoothed per-subject
+ability -> per-benchmark logistic calibration -> blend toward the benchmark base rate. No
+training, no pretrained weights, no network (hence no `models.txt`).
+
+**Reproduce / verify the final submission:**
+
+```bash
+make submission-v5                                   # build the submission ZIP + run the CPU smoke test
+uv run python tests/test_v1_subject_ability_v5.py    # 16 contract / determinism / no-network tests
+```
+
+---
+
 # Starting Kit
 
 This starting kit supports the active code-submission path for the Predictive
