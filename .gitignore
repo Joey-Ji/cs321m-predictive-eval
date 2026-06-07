@@ -21,8 +21,13 @@ modal.toml.local
 !sample_code_submission/**
 !templates/**
 
-# Submission ZIPs (regenerated from source)
+# Submission ZIPs (regenerated from source; /*.zip also catches root-level uploads)
 submissions/*.zip
+/*.zip
+
+# Logs and binary docs (not source)
+*.log
+*.pdf
 
 # OS junk
 .DS_Store
