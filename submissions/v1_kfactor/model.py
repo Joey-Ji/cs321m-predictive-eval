@@ -398,6 +398,55 @@ if PRIORS is not None:
 PRIOR_ONLY_PATH = _resolve_file("prior_only.json", "priors", required=False)
 PRIOR_ONLY = PRIOR_ONLY_PATH is not None
 
+# GBM: HistGradientBoosting on engineered features + mpnet-PCA. Only activates when
+# PRIOR_ONLY is set (replaces the prior path), since its features depend on prior_logit
+# and on subject-level encodings derived from the training data.
+GBM_MODEL_PATH = _resolve_file("gbm/model.pkl", "gbm", required=False)
+GBM_PCA_PATH = _resolve_file("gbm/pca.pkl", "gbm", required=False)
+GBM_FEATURE_META_PATH = _resolve_file("gbm/feature_meta.json", "gbm", required=False)
+GBM_MODEL = None
+GBM_PCA = None
+GBM_FEATURE_META = None
+GBM_ENCODER = None
+GBM_BENCHMARK_TO_ID: dict[str, int] = {}
+GBM_CONDITION_TO_ID: dict[str, int] = {}
+GBM_SUBJECT_MEAN: dict[str, float] = {}
+GBM_SUBJECT_N: dict[str, float] = {}
+GBM_MAX_CHARS = MAX_CHARS
+GBM_PCA_DIM = 32
+GBM_ACTIVE = False
+if GBM_MODEL_PATH is not None and PRIOR_ONLY:
+    try:
+        if GBM_PCA_PATH is None or GBM_FEATURE_META_PATH is None:
+            raise FileNotFoundError("GBM pca.pkl and feature_meta.json are required with model.pkl")
+        import pickle as _pickle
+        GBM_MODEL = _pickle.loads(GBM_MODEL_PATH.read_bytes())
+        GBM_PCA = _pickle.loads(GBM_PCA_PATH.read_bytes())
+        GBM_FEATURE_META = json.loads(GBM_FEATURE_META_PATH.read_text())
+        GBM_PCA_DIM = int(GBM_FEATURE_META.get("pca_dim", 32))
+        GBM_MAX_CHARS = int(GBM_FEATURE_META.get("max_chars", MAX_CHARS))
+        GBM_BENCHMARK_TO_ID = {str(k): int(v) for k, v in GBM_FEATURE_META["benchmark_to_id"].items()}
+        GBM_CONDITION_TO_ID = {str(k): int(v) for k, v in GBM_FEATURE_META["condition_to_id"].items()}
+        GBM_SUBJECT_MEAN = {str(k): float(v) for k, v in GBM_FEATURE_META["subject_mean_correct"].items()}
+        GBM_SUBJECT_N = {str(k): float(v) for k, v in GBM_FEATURE_META["subject_n_obs"].items()}
+        # Encoder for on-the-fly item PCA — share with JE-IRT/K-factor encoder if same name.
+        gbm_encoder_name = str(GBM_FEATURE_META.get("encoder", HEAD_META["encoder"]))
+        if DUMMY_ENCODER:
+            GBM_ENCODER = _DummyEncoder(int(GBM_FEATURE_META.get("encoder_dim", EMBEDDING_DIM)))
+        elif ENCODER_OK and gbm_encoder_name == str(HEAD_META["encoder"]):
+            GBM_ENCODER = ENCODER
+        else:
+            from sentence_transformers import SentenceTransformer  # noqa: E402
+            GBM_ENCODER = SentenceTransformer(gbm_encoder_name, cache_folder=HF_CACHE_DIR)
+        GBM_ACTIVE = True
+    except Exception as exc:  # noqa: BLE001
+        GBM_MODEL = None
+        GBM_PCA = None
+        GBM_FEATURE_META = None
+        GBM_ENCODER = None
+        GBM_ACTIVE = False
+        print(f"[v1_kfactor] GBM load failed: {exc!r}", flush=True)
+
 # Submission ZIP entries preserve je_irt/ under ROOT; keep this nested lookup.
 JE_IRT_HEAD_PATH = _resolve_file("je_irt/je_irt_head.pt", "je_irt", required=False)
 JE_IRT_CONFIG_PATH = _resolve_file("je_irt/config.json", "je_irt", required=False)
@@ -716,6 +765,50 @@ def _raw_logit(input: dict) -> float:
     return base_logit + _residual_value(base_logit, subject_bias, subject_u, emb_tuple, priors)
 
 
+@lru_cache(maxsize=2048)
+def _gbm_item_pca(item_content: str) -> tuple[float, ...]:
+    if GBM_PCA is None or GBM_ENCODER is None:
+        raise ValueError("GBM requested but artifacts are not loaded")
+    text = item_content[:GBM_MAX_CHARS]
+    with torch.no_grad():
+        emb = GBM_ENCODER.encode(text, convert_to_tensor=True).float().reshape(1, -1).cpu().numpy()
+    pca = GBM_PCA.transform(emb)[0].astype(np.float32)
+    if not np.isfinite(pca).all():
+        raise ValueError("non-finite GBM PCA features")
+    return tuple(float(x) for x in pca)
+
+
+def _gbm_probability(input: dict) -> float:
+    if GBM_MODEL is None:
+        return _prior_probability_for_input(input)
+    benchmark = str(input.get("benchmark") or "")
+    condition = str(input.get("condition") or "")
+    subject_content = str(input.get("subject_content") or "")
+    item_content = str(input.get("item_content") or "")
+    subject_key = _normalize_subject(subject_content)
+    prior_p = _prior_values(subject_key, benchmark, condition, raw_subject_content=subject_content)[-1]
+    prior_p_clipped = min(max(prior_p, 1e-6), 1.0 - 1e-6)
+    prior_logit = math.log(prior_p_clipped / (1.0 - prior_p_clipped))
+    pca = _gbm_item_pca(item_content)
+    item_has_numbers = 1.0 if any(ch.isdigit() for ch in item_content) else 0.0
+    item_has_code = 1.0 if ("```" in item_content or "def " in item_content or "class " in item_content) else 0.0
+    row = np.array([[
+        GBM_BENCHMARK_TO_ID.get(benchmark, -1),
+        GBM_CONDITION_TO_ID.get(condition, -1),
+        float(len(item_content)),
+        item_has_numbers,
+        item_has_code,
+        GBM_SUBJECT_MEAN.get(subject_key, 0.5),
+        GBM_SUBJECT_N.get(subject_key, 0.0),
+        prior_logit,
+        *pca,
+    ]], dtype=np.float64)
+    p = float(GBM_MODEL.predict_proba(row)[0, 1])
+    if not math.isfinite(p):
+        return _clip_prob(prior_p)
+    return _clip_prob(p)
+
+
 def _prior_probability_for_input(input: dict) -> float:
     benchmark = str(input.get("benchmark") or "")
     condition = str(input.get("condition") or "")
@@ -978,11 +1071,19 @@ def predict(input: dict, labeled: list[dict] | None = None) -> float:
     predict() never raises; any exception degrades gracefully so the platform
     always receives a valid float and the round is scored.
     """
-    if not ENCODER_OK and not JE_IRT_ACTIVE:
+    if not ENCODER_OK and not JE_IRT_ACTIVE and not GBM_ACTIVE:
         return _subject_only_prob(input)
     try:
         if PRIOR_ONLY:
+            if GBM_ACTIVE:
+                return _gbm_probability(input)
             logit = _raw_logit(input)
+            # Lever F: per-subject shrunk shift from labeled rows on top of the prior.
+            shifts = _per_subject_shifts(labeled)
+            if shifts:
+                subject_key = _normalize_subject(str(input.get("subject_content") or ""))
+                if subject_key in shifts:
+                    logit = logit + shifts[subject_key]
             return _clip_prob(_sigmoid(logit))
         if JE_IRT_ACTIVE:
             return _je_irt_probability(input)

@@ -120,6 +120,7 @@ SUBMISSION_DEFAULT_INCLUDES = {
     "v1_irt": ["data/head", "data/irt"],
 }
 JE_IRT_FILES = ("je_irt_head.pt", "subject_to_id.json", "config.json")
+GBM_FILES = ("model.pkl", "pca.pkl", "feature_meta.json", "config.json")
 
 
 def gather_state_files(extra_dirs: list[Path], allowed_names: set[str]) -> list[Path]:
@@ -144,6 +145,7 @@ def main(
     out_dir: Path,
     zip_name: str | None = None,
     je_irt: Path | None = None,
+    gbm: Path | None = None,
 ) -> None:
     submissions_root = Path(__file__).resolve().parent.parent / "submissions"
     sub_dir = submissions_root / name
@@ -188,6 +190,13 @@ def main(
             sys.exit(f"missing JE-IRT artifact(s) under {je_irt}: {', '.join(missing)}")
         je_irt_files = [je_irt / filename for filename in JE_IRT_FILES]
 
+    gbm_files: list[Path] = []
+    if gbm is not None:
+        missing = [filename for filename in GBM_FILES if not (gbm / filename).exists()]
+        if missing:
+            sys.exit(f"missing GBM artifact(s) under {gbm}: {', '.join(missing)}")
+        gbm_files = [gbm / filename for filename in GBM_FILES]
+
     print(f"Building {zip_path} ...")
     written_names: set[str] = set()
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
@@ -207,6 +216,10 @@ def main(
             arcname = f"je_irt/{p.name}"
             z.write(p, arcname)
             print(f"  + {arcname}  (from {p.parent})")
+        for p in gbm_files:
+            arcname = f"gbm/{p.name}"
+            z.write(p, arcname)
+            print(f"  + {arcname}  (from {p.parent})")
 
     size = zip_path.stat().st_size
     print(f"Done. {zip_path} ({size / 1024:.1f} KB)")
@@ -224,6 +237,7 @@ if __name__ == "__main__":
     parser.add_argument("--out", default="submissions", type=Path)
     parser.add_argument("--zip-name", default=None, help="Optional output ZIP filename.")
     parser.add_argument("--je-irt", default=None, type=Path, help="Optional JE-IRT artifact directory.")
+    parser.add_argument("--gbm", default=None, type=Path, help="Optional GBM artifact directory.")
     args = parser.parse_args()
     main(
         args.name,
@@ -231,4 +245,5 @@ if __name__ == "__main__":
         args.out,
         args.zip_name,
         args.je_irt,
+        args.gbm,
     )
